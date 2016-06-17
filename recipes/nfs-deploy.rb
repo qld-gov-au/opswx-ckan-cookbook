@@ -23,7 +23,7 @@
 
 # Create NFS directories
 #
-node['datashades']['nfs']['paths'].each do |nfs_path|
+node['datashades']['nfs']['exports'].each do |nfs_path|
 	directory nfs_path do
 	  owner 'root'
 	  group 'ec2-user'
