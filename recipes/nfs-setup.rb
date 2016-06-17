@@ -23,6 +23,8 @@
 
 include_recipe "datashades::default"
 
+::Chef::Recipe.send(:include, LayerSetup)
+
 LayerSetup.installpkgs 'nfs'
 LayerSetup.adddns 'nfs'
 

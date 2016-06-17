@@ -23,6 +23,8 @@
 
 include_recipe "datashades::default"
 
+::Chef::Recipe.send(:include, LayerSetup)
+
 LayerSetup.installpkgs 'redis'
 LayerSetup.adddns 'redis'
 

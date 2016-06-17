@@ -21,7 +21,6 @@
 # limitations under the License.
 
 include_recipe "datashades::stackparams"
-include LayerSetup
 
 # Set timezone to Canberra
 #
