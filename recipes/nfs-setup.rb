@@ -25,8 +25,8 @@ include_recipe "datashades::default"
 
 ::Chef::Recipe.send(:include, LayerSetup)
 
-LayerSetup.installpkgs 'nfs'
-LayerSetup.adddns 'nfs'
+LayerSetup.installpkgs node['datashades']['nfs']['packages']
+LayerSetup.adddns 'nfs' "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}"
 
 # Create data volume daily backup cron job
 #

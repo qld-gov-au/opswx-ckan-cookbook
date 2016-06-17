@@ -25,6 +25,7 @@ include_recipe "datashades::default"
 
 ::Chef::Recipe.send(:include, LayerSetup)
 
-LayerSetup.installpkgs 'solr'
-LayerSetup.adddns 'solr'
+LayerSetup.installpkgs node['datashades']['solr']['packages']
+LayerSetup.adddns 'solr' "#{node['datashades']['version']}solr.#{node['datashades']['tld']}"
+
 

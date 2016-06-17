@@ -22,17 +22,17 @@
 #
 
 module LayerSetup
-	def self.installpkgs( service_name )
-		node['datashades'][service_name]['packages'].each do |p|
+	def self.installpkgs( packages )
+		packages.each do |p|
 			package p
 		end
 	end
 
-	def self.adddns( service_name )
+	def self.adddns( service_name, host )
 		bash "Add #{service_name} DNS entry" do
 			user "root"
 			code <<-EOS
-				echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}" >> /etc/hostnames
+				echo "#{service_name}_name=#{host}" >> /etc/hostnames
 			EOS
 			not_if "grep -q '#{service_name}_name' /etc/hostnames"
 		end

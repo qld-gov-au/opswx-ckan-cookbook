@@ -25,6 +25,6 @@ include_recipe "datashades::default"
 
 ::Chef::Recipe.send(:include, LayerSetup)
 
-LayerSetup.installpkgs 'redis'
-LayerSetup.adddns 'redis'
+LayerSetup.installpkgs node['datashades']['redis']['packages']
+LayerSetup.adddns 'redis' "#{node['datashades']['version']}redis.#{node['datashades']['tld']}"
 
