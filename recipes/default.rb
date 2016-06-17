@@ -22,17 +22,17 @@
 
 include_recipe "datashades::stackparams"
 
-# Set timezone to Canberra
+# Set timezone to default value
 #
 link "/etc/localtime" do
-  to "/usr/share/zoneinfo/Australia/Canberra"
+  to "/usr/share/zoneinfo/#{node['datashades']['timezone']}"
   link_type :symbolic
 end
 
 # Store timezone config so yum updates don't reset the timezone
 #
-cookbook_file '/etc/sysconfig/clock' do
-  source 'clock'
+template '/etc/sysconfig/clock' do
+  source 'clock.erb'
   owner 'root'
   group 'root'
   mode '0755'
