@@ -1,0 +1,3 @@
+<%- node['datashades']['nfs']['exports'].each do |path| %>
+<%= path  node['datashades']['nfs']['ip']%>/255.255.0.0(rw,sync,no_subtree_check,no_root_squash)
+<%- end %>

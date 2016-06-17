@@ -1,0 +1,67 @@
+#!/bin/bash
+
+echo "Refreshing DNS"
+
+placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=$(echo ${placement%?})
+
+myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+zone_id=$(aws ec2 describe-tags --region $region --filters "Name=resource-id,Values=${myid}" "Name=key,Values=ZoneId" | jq '.Tags[].Value' | tr -d '"')
+if [ -z $zone_id ] && [ -e /etc/awszoneid ]; then
+	zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
+fi
+
+if [ -z $zone_id ]; then
+	echo "No AWS Zone ID configured" 
+	exit 0;
+fi
+
+config_file=/etc/hostnames
+
+function update_dns
+{
+	local dns_name=$1
+	
+	if [ ! -z "zone_id" ]; then
+	    pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
+#	    echo "Updating CNAME for $dns_name to $pub_host"
+	    route53 change_record $zone_id $dns_name CNAME $pub_host 60
+	fi
+}
+
+function update_hostname
+{
+	local dns_name=$1
+	
+	if [ ! -z ${dns_name} ]; then
+	    if [ ! hostname == $dns_name ]; then
+#		    echo "Updating hostname to $dns_name"
+			hostname $dns_name
+	    fi
+
+		update_dns $1	
+	fi
+}
+
+
+i=0
+while read line; do
+	if [[ "$line" =~ ^[^#]*= ]]; then
+		name[i]=`echo $line | cut -d'=' -f 1`
+		value[i]=`echo $line | cut -d'=' -f 2`
+		((i++))
+	fi
+done < ${config_file}
+
+i=0
+for varname in "${name[@]}"
+	do
+		if [ ${varname} = "dns_name" ]; then
+			update_hostname ${value[i]}
+		else
+			update_dns ${value[i]}
+		fi
+		((i++))
+	done
+		
+exit 0
