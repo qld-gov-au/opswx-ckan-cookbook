@@ -27,10 +27,9 @@ default['datashades']['backup']['retention'] = '30'
 
 default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
 
-include_attribute "datashades::nfs"
-include_attribute "datashades::solr"
-include_attribute "datashades::redis"
-include_attribute "datashades::nginx"
-include_attribute "datashades::geoserver"
 include_attribute "datashades::ckan"
+include_attribute "datashades::nfs"
+include_attribute "datashades::nginx"
+include_attribute "datashades::redis"
+include_attribute "datashades::solr"
 
