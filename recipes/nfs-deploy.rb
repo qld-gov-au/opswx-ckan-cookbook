@@ -29,7 +29,7 @@ node['datashades']['nfs']['paths'].each do |nfs_path|
 	  group 'ec2-user'
 	  mode '0775'
 	  action :create
-	  recrusive true
+	  recursive true
 	end
 end
 
