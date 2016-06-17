@@ -22,6 +22,9 @@
 #
 
 module LayerSetup
+
+	include Chef
+
 	def self.installpkgs( packages )
 		packages.each do |p|
 			package p
