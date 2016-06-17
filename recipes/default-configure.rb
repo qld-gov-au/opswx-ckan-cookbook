@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: nfs-configure
+# Recipe:: default-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -20,5 +20,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+# Run updateDNS script
+#
+execute 'update dns' do
+	command	'/sbin/updatedns'
+	user 'root'
+	group 'root'
+end
 

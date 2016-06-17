@@ -23,10 +23,32 @@
 
 include_recipe "datashades::default"
 
-::Chef::Recipe.send(:include, LayerSetup)
+service_name = 'nfs'
 
-LayerSetup.installpkgs node['datashades']['nfs']['packages']
-LayerSetup.adddns 'nfs' "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}"
+# Install necessary packages
+#
+node['datashades'][service_name]['packages'].each do |p|
+  package p
+end
+
+# Add DNS entry for service host
+#
+bash "Add #{service_name} DNS entry" do
+  user "root"
+  code <<-EOS
+    echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}}" >> /etc/hostnames
+  EOS
+  not_if "grep -q '#{service_name}_name' /etc/hostnames"
+end
+
+# Create script to update DNS on configure events
+#
+cookbook_file '/sbin/updatedns' do
+  source 'updatedns'
+  owner 'root'
+  group 'root'
+  mode '0755'
+end
 
 # Create data volume daily backup cron job
 #

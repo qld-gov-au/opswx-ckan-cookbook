@@ -20,7 +20,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-::Chef::Recipe.send(:include, LayerSetup)
-
-LayerSetup.updatedns
+include_recipe "datashades::default-configure"
 
