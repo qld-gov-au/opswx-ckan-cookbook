@@ -1,0 +1,24 @@
+<VirtualHost 127.0.0.1:8000>
+    ServerName <%= @app_url %>
+    ServerAlias www.<%= @app_url %>
+    WSGIScriptAlias <%= node['datashades']['ckan_web']['endpoint'] %> /etc/ckan/default/apache.wsgi
+
+    # Pass authorization info on (needed for rest api).
+    WSGIPassAuthorization On
+
+    # Deploy as a daemon (avoids conflicts between CKAN instances).
+    WSGIDaemonProcess ckan_default display-name=ckan_default processes=2 threads=15
+
+    WSGIProcessGroup ckan_default
+
+    ErrorLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log
+
+    # Log client's real IP address not the proxy's
+    <IfModule mod_remoteip.c>
+        RemoteIPInternalProxy 127.0.0.1
+        RemoteIPHeader x-real-ip
+    </IfModule>
+    
+    LogFormat "%a %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined_proxied
+    CustomLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_custom.log combined_proxied
+</VirtualHost>
