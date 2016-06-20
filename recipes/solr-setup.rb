@@ -36,7 +36,7 @@ end
 bash "Add #{service_name} DNS entry" do
 	user "root"
 	code <<-EOS
-		echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}}" >> /etc/hostnames
+		echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}" >> /etc/hostnames
 	EOS
 	not_if "grep -q '#{service_name}_name' /etc/hostnames"
 end
