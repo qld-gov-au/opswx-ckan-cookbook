@@ -38,6 +38,12 @@ template '/etc/sysconfig/clock' do
   mode '0755'
 end
 
+# Enable RedHat EPEL
+#
+execute "Enable EPEL" do
+	command "sed -i 's/enabled=0/enabled=1/g'  /etc/yum.repos.d/epel.repo"
+end
+
 # Install core packages
 #
 node['datashades']['core']['packages'].each do |p|
