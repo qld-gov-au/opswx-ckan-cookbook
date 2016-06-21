@@ -22,14 +22,16 @@
 
 
 include_recipe "datashades::default"
-include_recipe "datashades::ckanweb-nfs-setup"
-include_recipe "datashades::nginx-setup"
 
 # Install CKAN services and dependencies
 #
 node['datashades']['ckan_web']['packages'].each do |p|
-  package p
+	package p
 end
+
+include_recipe "datashades::ckanweb-nfs-setup"
+include_recipe "datashades::nginx-setup"
+
 
 # Change Apache default port to 8000
 #
