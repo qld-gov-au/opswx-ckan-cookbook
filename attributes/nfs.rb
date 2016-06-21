@@ -22,5 +22,5 @@
 #
 
 default['datashades']['nfs']['packages'] = ['nfs-utils', 'nfs-utils-lib']
-default['datashades']['nfs']['exports'] = ["/data/nfs/shared_content", "/data/nfs/logs/#{node['datashades']['sitename']}_nginx", "/data/nfs/logs/#{node['datashades']['sitename']}_apache"]
+default['datashades']['nfs']['exports'] = []
 default['datashades']['nfs']['cidr'] = '172.31.0.0/16'
