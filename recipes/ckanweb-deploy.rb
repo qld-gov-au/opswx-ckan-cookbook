@@ -133,6 +133,7 @@ template '/etc/httpd/conf.d/ckan.conf' do
   })
 end
 
+
 # Install CKAN extensions
 #
 #include_recipe "linksoe::deploy-ckanweb-exts"

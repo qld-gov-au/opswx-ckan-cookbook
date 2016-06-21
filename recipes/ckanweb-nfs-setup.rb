@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: ckanweb-configure
+# Recipe:: ckanweb-nfs-setup
 #
 # Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -19,8 +19,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-include_recipe "datashades::default-configure"
 
 # Setup NFS directories
 #
@@ -59,4 +57,5 @@ mounts.each do |mount_point, mount_device|
 		action [:mount, :enable]
 	end
 end	
+
 

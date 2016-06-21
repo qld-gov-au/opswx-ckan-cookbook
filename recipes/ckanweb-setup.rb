@@ -22,6 +22,7 @@
 
 
 include_recipe "datashades::default"
+include_recipe "datashades::ckanweb-nfs-setup"
 include_recipe "datashades::nginx-setup"
 
 # Install CKAN services and dependencies
