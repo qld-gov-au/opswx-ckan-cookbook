@@ -75,6 +75,7 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 			cd /usr/lib/ckan/default/src/ckan
 			paster make-config ckan /etc/ckan/default/production.ini
 			deactivate
+			chown -R ckan:ckan /usr/lib/ckan
 		EOS
 	end
 

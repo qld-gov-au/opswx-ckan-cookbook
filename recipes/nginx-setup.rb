@@ -20,6 +20,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
+
 # Install NGINX packages
 #
 node['datashades']['nginx']['packages'].each do |p|
