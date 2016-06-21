@@ -26,8 +26,8 @@ paths =
 {
 	"/var/shared_content" => 'apache', 
 	"/var/www/sites" => 'apache', 
-	"/var/log/nginx/#{node['ld']['sitename']}" => 'nginx', 
-	"/var/log/httpd/#{node['ld']['sitename']}" => 'apache'
+	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx', 
+	"/var/log/httpd/#{node['datashades']['sitename']}" => 'apache'
 }
 
 paths.each do |nfs_path, dir_owner|
@@ -44,9 +44,9 @@ end
 # 
 mounts = 
 { 
-	"/var/shared_content" => "#{node['ld']['version']}nfs.#{node['ld']['tld']}:/data/nfs/shared_content",  
-	"/var/log/nginx/#{node['ld']['sitename']}" => "#{node['ld']['version']}nfs.#{node['ld']['tld']}:/data/nfs/logs/#{node['ld']['sitename']}_nginx",
-	"/var/log/httpd/#{node['ld']['sitename']}" => "#{node['ld']['version']}nfs.#{node['ld']['tld']}:/data/nfs/logs/#{node['ld']['sitename']}_apache"
+	"/var/shared_content" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/shared_content",  
+	"/var/log/nginx/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_nginx",
+	"/var/log/httpd/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_apache"
 }
 
 mounts.each do |mount_point, mount_device|
