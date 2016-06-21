@@ -50,7 +50,6 @@ paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
 	  owner dir_owner
 	  recursive true
-	  group 'link'
 	  mode '0775'
 	  action :create
 	end
