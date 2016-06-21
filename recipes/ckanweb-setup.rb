@@ -59,6 +59,17 @@ user "ckan" do
 	action :create	
 end
 
+# Explicity set permissions on ckan directory so it's readable by Apache
+#
+directory '/usr/lib/ckan' do
+	owner 'ckan'
+	group 'ckan'
+	mode '0755'
+	action :create
+	recursive true
+end
+
+
 # Create ckan app location
 #
 directory '/usr/lib/ckan/default' do

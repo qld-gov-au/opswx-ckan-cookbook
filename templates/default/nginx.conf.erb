@@ -21,7 +21,6 @@
         ssl_certificate     /etc/ssl/certs/wild.<%= node['datashades']['tld'] %>.crt;
         ssl_certificate_key /etc/ssl/certs/wild.<%= node['datashades']['tld'] %>.key;
         <% end -%>
-        
 	    error_log  /var/log/nginx/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log;
 	    access_log /var/log/nginx/<%= node['datashades']['sitename'] %>/<%= @app_name %>_access.log  main;
 
