@@ -33,13 +33,14 @@ include_recipe "datashades::nginx-setup"
 include_recipe "datashades::ckanweb-nfs-setup"
 
 
-# Change Apache default port to 8000
+# Change Apache default port to 8000 and fix access to /
 #
 bash "Change Apache config" do
 	user 'root'
 	group 'root'
 	code <<-EOS
-	sed -i 's~Listen 80~Listen 8000~g' /etc/httpd/conf/httpd.conf	
+	sed -i 's~Listen 80~Listen 8000~g' /etc/httpd/conf/httpd.conf
+	sed -i '/<Directory \/>/{n;n;s/Require all denied/# Require all denied/}' /etc/httpd/conf/httpd.conf
 	EOS
 	not_if "grep 'Listen 8000' /etc/httpd/conf/httpd.conf"
 end
