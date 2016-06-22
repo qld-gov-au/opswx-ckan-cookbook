@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: default
+# Attributes:: gfs
 #
-# Defines default attributes required by Datashades OpsWorks Stack
+# Defines attributes required by GlusterFS Service
 #
 # Copyright 2016, Link Digital
 #
@@ -21,17 +21,6 @@
 # limitations under the License.
 #
 
-default['datashades']['timezone'] = 'Australia/Canberra'
-default['datashades']['sitename'] = 'ckan'
-
-default['datashades']['backup']['retention'] = '30'
-
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
-
-include_attribute "datashades::ckan"
-include_attribute "datashades::nfs"
-include_attribute "datashades::gfs"
-include_attribute "datashades::nginx"
-include_attribute "datashades::redis"
-include_attribute "datashades::solr"
-
+default['datashades']['gfs']['packages'] = ['fuse', 'fuse-libs', 'glusterfs-server', 'glusterfs-fuse', 'nfs-utils', 'nfs-utils-lib']
+default['datashades']['gfs']['exports'] = []
+default['datashades']['gfs']['cidr'] = '172.31.0.0/16'
