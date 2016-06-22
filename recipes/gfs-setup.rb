@@ -41,15 +41,17 @@ node['datashades'][service_name]['packages'].each do |p|
   package p
 end
 
-# Add DNS entry for service host
+# Add DNS entry for gfs host
 #
-#bash "Add #{service_name} DNS entry" do
-#  user "root"
-#  code <<-EOS
-#    echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}" >> /etc/hostnames
-#  EOS
-#  not_if "grep -q '#{service_name}_name' /etc/hostnames"
-#end
+bash "Add #{service_name} DNS entry" do
+  user "root"
+  code <<-EOS
+    zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
+    hostcount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}gfs')].Name" | jq '. | length')
+    echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}$((${hostcount} + 1)).#{node['datashades']['tld']}" >> /etc/hostnames
+  EOS
+  not_if "grep -q '#{service_name}_name' /etc/hostnames"
+end
 
 # Create script to update DNS on configure events
 #
