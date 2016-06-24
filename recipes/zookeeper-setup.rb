@@ -37,7 +37,7 @@ bash "Add #{service_name} DNS entry" do
 	user "root"
 	code <<-EOS
 		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-		hostcount=(($(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}')].Name" | jq '. | length') + 1))
+		hostcount=$(($(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}')].Name" | jq '. | length') + 1))
 		echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		echo ${hostcount} > /etc/zkid
 	EOS
