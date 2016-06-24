@@ -38,8 +38,6 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 	
 	# Create Solr core properties file
 	#
-	solr_node = 1;
-	lazy { solr_node = IO.read("/etc/solrid") }
 	template "/data/solr/data/#{ckan['shortname']}/core.properties" do
 		  source 'solr-ckan-core.erb'
 		  owner 'solr'
@@ -47,7 +45,7 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 		  mode '0755'
 		  variables({
 		   		:app_name =>  ckan['shortname'],
-				:solr_node => solr_node
+				:solr_node => node.['datashades']['hostname'][-1,1]
 		 		})
 		  
 	end
