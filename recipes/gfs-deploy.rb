@@ -36,8 +36,7 @@ node['datashades']['gfs']['exports'].each do |path|
 	end
 end
 
-#service "glusterfs-server" do
-#	action [:enable, :start]
-#end
+
+
 
 

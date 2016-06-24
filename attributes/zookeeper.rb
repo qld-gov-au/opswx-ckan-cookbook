@@ -22,4 +22,4 @@
 #
 
 default['datashades']['zk']['packages'] = []
-default['datashades']['zk']['maxhost'] = 2
+default['datashades']['zk']['maxhosts'] = 2

@@ -35,13 +35,19 @@ unless (::File.directory?("/opt/zookeeper"))
 		mv #{Chef::Config[:file_cache_path]}/zookeeper-${vers} /opt/
 		ln -sf /opt/zookeeper-${vers} /opt/zookeeper
 		mkdir -p /data/zookeeper/data
-		cp /opt/zookeeper/conf/zoo_sample.cfg /data/zookeeper/zoo.cfg
-		ln -sf /data/zookeeper/zoo.cfg /opt/zookeeper/conf/zoo.cfg
-		sed -i 's~dataDir=/tmp/zookeeper~dataDir=/data/zookeeper/data~' /opt/zookeeper/conf/zoo.cfg	
 		ln -sf 	/data/zookeeper/data /opt/zookeeper/data
-		ln -sf /etc/zkid /data/zookeeper/data/myid 
-		myid=$(cat /etc/zkid)
-		echo "server.${myid}=#{node['datashades']['version']}zk${myid}.#{node['datashades']['tld']}:2888:3888" >> /opt/zookeeper/conf/zoo.cfg
+		cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo.cfg
+		sed -i 's~dataDir=/tmp/zookeeper~dataDir=/opt/zookeeper/data~' /opt/zookeeper/conf/zoo.cfg	
+		ln -sf /etc/zkid /opt/zookeeper/data/myid 
+		for sid in {1..#{node['datashades']['zk']['maxhosts'}}}
+		do
+			echo "server.${sid}=#{node['datashades']['version']}zk${sid}.#{node['datashades']['tld']}:2888:3888" >> /opt/zookeeper/conf/zoo.cfg
+		done
 		EOS
-	end		
+	end
+end
+
+execute 'Start Zookeeper'
+	user 'root'
+	command '/opt/zookeeper/bin/zkServer.sh start'
 end
