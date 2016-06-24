@@ -48,7 +48,7 @@ unless (::File.directory?("/opt/zookeeper"))
 	end
 end
 
-execute 'Start Zookeeper'
+execute 'Start Zookeeper' do
 	user 'root'
 	command '/opt/zookeeper/bin/zkServer.sh start'
 end
