@@ -1,7 +1,7 @@
 name=<%= @app_name %>
 config=solrconfig.xml
 schema=schema.xml
-shard=shard<%= @solr_node %>
+shard=shard-<%= node['datashades']['hostname'] %>
 dataDir=/data/solr/data/dev_ckan/<%= @app_name %>
 collection=<%= @app_name %>
-coreNodeName=core_node<%= @solr_node %>
+coreNodeName=core-<%= node['datashades']['hostname'] %>

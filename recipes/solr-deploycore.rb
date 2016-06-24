@@ -44,8 +44,7 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 		  group 'solr'
 		  mode '0755'
 		  variables({
-		   		:app_name =>  ckan['shortname'],
-				:solr_node => node.['datashades']['hostname'][-1,1]
+		   		:app_name =>  ckan['shortname']
 		 		})
 		  
 	end
