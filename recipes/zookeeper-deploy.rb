@@ -32,7 +32,7 @@ unless (::File.directory?("/opt/zookeeper"))
 		cwd '/opt/'
 		code <<-EOS
 		tar -xvzf #{Chef::Config[:file_cache_path]}/zookeeper.tar.gz
-		vers=$(ls #{Chef::Config[:file_cache_path]} | grep 'zookeeper-' | tr -d 'zookeeper-') 
+		vers=$(ls /opt/ | grep 'zookeeper-' | tr -d 'zookeeper-') 
 		ln -sf /opt/zookeeper-${vers} /opt/zookeeper
 		mkdir -p /data/zookeeper/data
 		ln -sf 	/data/zookeeper/data /opt/zookeeper/data
