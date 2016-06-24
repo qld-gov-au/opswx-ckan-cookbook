@@ -38,8 +38,9 @@ unless (::File.directory?("/opt/zookeeper"))
 		ln -sf 	/data/zookeeper/data /opt/zookeeper/data
 		cp /opt/zookeeper/conf/zoo_sample.cfg /opt/zookeeper/conf/zoo.cfg
 		sed -i 's~dataDir=/tmp/zookeeper~dataDir=/opt/zookeeper/data~' /opt/zookeeper/conf/zoo.cfg	
-		ln -sf /etc/zkid /opt/zookeeper/data/myid 
-		for sid in {1..#{node['datashades']['zk']['maxhosts'}}
+		ln -sf /etc/zkid /opt/zookeeper/data/myid
+		maxhosts= #{node['datashades']['zk']['maxhosts']}
+		for sid in {1..${maxhosts}}
 		do
 			echo "server.${sid}=#{node['datashades']['version']}zk${sid}.#{node['datashades']['tld']}:2888:3888" >> /opt/zookeeper/conf/zoo.cfg
 		done
