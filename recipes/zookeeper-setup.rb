@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: solr-setup
+# Recipe:: zookeeper-setup
 #
-# Installs Solr role to Layer
+# Installs Zookeeper to Solr Layer
 #
 # Copyright 2016, Link Digital
 #
@@ -23,7 +23,7 @@
 
 include_recipe "datashades::default"
 
-service_name = 'solr'
+service_name = 'zk'
 
 # Install necessary packages
 #
@@ -39,6 +39,7 @@ bash "Add #{service_name} DNS entry" do
 		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
 		hostcount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}')].Name" | jq '. | length')
 		echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}$((${hostcount} + 1)).#{node['datashades']['tld']}" >> /etc/hostnames
+		echo $((${hostcount} + 1)) >> /etc/zkid
 	EOS
 	not_if "grep -q '#{service_name}_name' /etc/hostnames"
 end

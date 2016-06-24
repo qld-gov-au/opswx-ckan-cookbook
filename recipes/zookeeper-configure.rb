@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: default
+# Recipe:: solr-configure
 #
-# Defines default attributes required by Datashades OpsWorks Stack
+# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2016, Link Digital
 #
@@ -19,20 +19,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-default['datashades']['timezone'] = 'Australia/Canberra'
-default['datashades']['sitename'] = 'ckan'
-
-default['datashades']['backup']['retention'] = '30'
-
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
-
-include_attribute "datashades::ckan"
-include_attribute "datashades::nfs"
-include_attribute "datashades::gfs"
-include_attribute "datashades::nginx"
-include_attribute "datashades::redis"
-include_attribute "datashades::solr"
-include_attribute "datashades::zookeeper"
-
+include_recipe "datashades::default-configure"

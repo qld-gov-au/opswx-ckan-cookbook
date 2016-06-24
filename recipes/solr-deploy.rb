@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: nfs-deploy
+# Recipe:: solr-deploy
 #
 # Deploy Solr service to Solr layer
 #

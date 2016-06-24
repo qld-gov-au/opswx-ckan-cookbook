@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: default
+# Attributes:: zookeeper
 #
-# Defines default attributes required by Datashades OpsWorks Stack
+# Defines attributes required by Apache Zookeeper
 #
 # Copyright 2016, Link Digital
 #
@@ -21,18 +21,5 @@
 # limitations under the License.
 #
 
-default['datashades']['timezone'] = 'Australia/Canberra'
-default['datashades']['sitename'] = 'ckan'
-
-default['datashades']['backup']['retention'] = '30'
-
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
-
-include_attribute "datashades::ckan"
-include_attribute "datashades::nfs"
-include_attribute "datashades::gfs"
-include_attribute "datashades::nginx"
-include_attribute "datashades::redis"
-include_attribute "datashades::solr"
-include_attribute "datashades::zookeeper"
-
+default['datashades']['zk']['packages'] = []
+default['datashades']['zk']['maxhost'] = 2
