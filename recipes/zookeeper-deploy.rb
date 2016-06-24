@@ -28,11 +28,11 @@ unless (::File.directory?("/opt/zookeeper"))
 	end
 	
 	bash "install zookeeper" do
-		user "root"
+		user 'root'
+		cwd '/opt/'
 		code <<-EOS
 		tar -xvzf #{Chef::Config[:file_cache_path]}/zookeeper.tar.gz
 		vers=$(ls #{Chef::Config[:file_cache_path]} | grep 'zookeeper-' | tr -d 'zookeeper-') 
-		mv #{Chef::Config[:file_cache_path]}/zookeeper-${vers} /opt/
 		ln -sf /opt/zookeeper-${vers} /opt/zookeeper
 		mkdir -p /data/zookeeper/data
 		ln -sf 	/data/zookeeper/data /opt/zookeeper/data
