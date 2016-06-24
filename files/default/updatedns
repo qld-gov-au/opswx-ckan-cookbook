@@ -21,11 +21,13 @@ config_file=/etc/hostnames
 function update_dns
 {
 	local dns_name=$1
+	local currec=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, $dns_name)].ResourceRecords[0].Value" | jq .[0] | tr -d '"')
 	
 	if [ ! -z "zone_id" ]; then
 	    pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
-#	    echo "Updating CNAME for $dns_name to $pub_host"
-	    route53 change_record $zone_id $dns_name CNAME $pub_host 60
+	    if [ $pub_host != $currec ]; then
+		    route53 change_record $zone_id $dns_name CNAME $pub_host 60
+		fi
 	fi
 }
 
