@@ -1,4 +1,4 @@
-name=<%= @app_name %>
+name=<%= @app_name %>-<%= node['datashades']['hostname'] %>
 config=solrconfig.xml
 schema=schema.xml
 shard=shard-<%= node['datashades']['hostname'] %>

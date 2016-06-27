@@ -63,6 +63,14 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 	  user 'root'
 	end
 
+	bash 'Upload Solr Core Config to Zookeeper' do
+		code <<-EOS
+		chmod +x /opt/solr/server/scripts/cloud-scripts/zkcli.sh
+		/opt/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 -cmd upconfig -confdir /data/solr/data/#{ckan['shortname']}/conf -confname #{ckan['shortname']}		
+		EOS
+		not_if "/opt/zookeeper/bin/zkCli.sh -server #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 ls /configs | grep #{ckan['shortname']}"
+	end
+	
 	service "solr" do
 		action [:restart]
 	end	
