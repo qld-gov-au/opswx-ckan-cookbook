@@ -53,4 +53,12 @@ cookbook_file '/sbin/updatedns' do
 	mode '0755'
 end
 
+# Run updateDNS script
+#
+execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
+	command	'/sbin/updatedns'
+	user 'root'
+	group 'root'
+end
+
 
