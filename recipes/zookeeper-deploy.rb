@@ -40,7 +40,7 @@ unless (::File.directory?("/opt/zookeeper"))
 		sed -i 's~dataDir=/tmp/zookeeper~dataDir=/opt/zookeeper/data~' /opt/zookeeper/conf/zoo.cfg	
 		ln -sf /etc/zkid /opt/zookeeper/data/myid
 		maxhosts= #{node['datashades']['zk']['maxhosts']}
-		for sid in {1..${maxhosts}}
+		for (( sid=1; sid<=${maxhosts}; sid++ ))
 		do
 			echo "server.${sid}=#{node['datashades']['version']}zk${sid}.#{node['datashades']['tld']}:2888:3888" >> /opt/zookeeper/conf/zoo.cfg
 		done
