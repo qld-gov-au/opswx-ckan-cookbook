@@ -28,7 +28,8 @@ function update_dns
         if [ "${pub_host}" != "${currec}" ]; then
             route53 change_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
         fi
-    fi}
+    fi
+}
 
 function update_hostname
 {
