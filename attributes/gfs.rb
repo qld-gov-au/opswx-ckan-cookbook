@@ -24,3 +24,4 @@
 default['datashades']['gfs']['packages'] = ['fuse', 'fuse-libs', 'glusterfs-server', 'glusterfs-fuse', 'nfs-utils', 'nfs-utils-lib']
 default['datashades']['gfs']['exports'] = []
 default['datashades']['gfs']['cidr'] = '172.31.0.0/16'
+default['datashades']['gfs']['maxhosts'] = 2
