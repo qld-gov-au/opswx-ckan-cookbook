@@ -52,9 +52,9 @@ end
 
 # Enable yum-cron so updates are downloaded on running nodes
 #
-#service "yum-cron" do
-#	action [:enable, :start]
-#end
+service "yum-cron" do
+	action [:enable, :start]
+end
 
 # Enable nano syntax highlighing
 #

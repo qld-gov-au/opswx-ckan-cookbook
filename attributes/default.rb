@@ -26,7 +26,7 @@ default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['clamav', 'gcc', 'jq']
+default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
 
 include_attribute "datashades::ckan"
 include_attribute "datashades::nfs"
