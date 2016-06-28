@@ -38,7 +38,6 @@ end
 
 bash 'Create Gluster Volume' do
 	code <<-EOS
-	service glusterd restart
 	id=$(cat /etc/gfsid)
 	if [ $id == #{node['datashades']['gfs']['maxhosts']} ]; then
 		glusterstatus=$(gluster volume info)

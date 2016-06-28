@@ -101,7 +101,9 @@ bash "Tagging Data Volume Instance" do
   EOS
 end
 
-
+service "glusterd" do
+  action [:enable, :start]
+end
 
 
 
