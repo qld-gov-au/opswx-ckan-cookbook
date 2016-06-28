@@ -65,10 +65,13 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 
 	bash 'Upload Solr Core Config to Zookeeper' do
 		code <<-EOS
-		chmod +x /opt/solr/server/scripts/cloud-scripts/zkcli.sh
-		/opt/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 -cmd upconfig -confdir /data/solr/data/#{ckan['shortname']}/conf -confname #{ckan['shortname']}		
+		sid=$(cat /etc/solrid)
+		if [ $sid == "1" ]; then
+			chmod +x /opt/solr/server/scripts/cloud-scripts/zkcli.sh
+			/opt/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 -cmd upconfig -confdir /data/solr/data/#{ckan['shortname']}/conf -confname #{ckan['shortname']}		
+		fi
 		EOS
-		not_if "/opt/zookeeper/bin/zkCli.sh -server #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 ls /configs | grep #{ckan['shortname']}"
+#		not_if "/opt/zookeeper/bin/zkCli.sh -server #{node['datashades']['version']}zk1.#{node['datashades']['tld']}:2181 ls /configs | grep #{ckan['shortname']}"
 	end
 	
 	service "solr" do
