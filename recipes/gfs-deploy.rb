@@ -36,6 +36,22 @@ node['datashades']['gfs']['exports'].each do |path|
 	end
 end
 
+bash 'Create Gluster Volume' do
+	code <<-EOS
+	service glusterd restart
+	id=$(cat /etc/gfsid)
+	if [ $id == #{node['datashades']['gfs']['maxhosts']} ]; then
+		glusterstatus=$(gluster volume info)
+		if [ glusterstatus == "No volumes present" ]
+			gfs1 = "#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
+			gfs2 = "#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
+			gluster volume create gv0 replica 2 ${gfs1}:/data/gfs ${gfs2}:/data/gfs
+			gluster volume start gv0
+		fi
+	fi
+	EOS
+end
+
 
 
 
