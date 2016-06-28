@@ -44,10 +44,10 @@ unless (::File.directory?("/data/solr"))
 			zkhosts+="#{node['datashades']['version']}zk${sid}.#{node['datashades']['tld']}:2181,"
 		done
 		zkhostlist=$(echo ${zkhosts%?})
-		sed -i "s~#ZK_HOST=\"\"~ZK_HOST=\"${zkhostlist}\"~" /etc/default/solr.in.sh
+		sed -i "/#ZK_HOST=\"\"/aZK_HOST=\"${zkhostlist}\"" /etc/default/solr.in.sh
 		
 		solrhost="#{node['datashades']['version']}solr$(cat /etc/solrid).#{node['datashades']['tld']}"
-		sed -i "s~#SOLR_HOST=\"192.168.1.1\"~SOLR_HOST=\"${solrhost}\"~" /etc/default/solr.in.sh
+		sed -i "/#SOLR_HOST=\"192.168.1.1\"/aSOLR_HOST=\"${solrhost}\"" /etc/default/solr.in.sh
 		
 		EOS
 		not_if { ::File.directory? "/data/solr" }
