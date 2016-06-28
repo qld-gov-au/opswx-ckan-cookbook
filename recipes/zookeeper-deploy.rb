@@ -46,9 +46,14 @@ unless (::File.directory?("/opt/zookeeper"))
 		done
 		EOS
 	end
+	
+	cookbook_file "/etc/init.d/zookeeper" do
+		mode '0755'
+		owner 'root'
+		source 'zookeeper.init.d'
+	end
 end
 
-execute 'Start Zookeeper' do
-	user 'root'
-	command '/opt/zookeeper/bin/zkServer.sh start'
+service 'zookeeper' do
+	action [:enable, :start]
 end
