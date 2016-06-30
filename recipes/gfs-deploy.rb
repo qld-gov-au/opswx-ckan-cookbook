@@ -40,10 +40,10 @@ bash 'Create Gluster Volume' do
 	code <<-EOS
 	id=$(cat /etc/gfsid)
 	if [ $id -eq "#{node['datashades']['gfs']['maxhosts']}" ]; then
-		glusterstatus=$(gluster volume info)
-		if [ "$glusterstatus" == "No volumes present" ]; then
+		if [ ! -d /var/lib/glusterd/vols/gv0 ]; then
 			gfs1 = "#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
 			gfs2 = "#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
+			gluster peer probe ${gfs1}
 			gluster volume create gv0 replica 2 ${gfs1}:/data/gfs ${gfs2}:/data/gfs
 			gluster volume start gv0
 		fi
