@@ -39,7 +39,7 @@ end
 bash 'Create Gluster Volume' do
 	code <<-EOS
 	id=$(cat /etc/gfsid)
-	if [ $id -eq node['datashades']['gfs']['maxhosts'] ]; then
+	if [ $id -eq "#{node['datashades']['gfs']['maxhosts']}" ]; then
 		glusterstatus=$(gluster volume info)
 		if [ "$glusterstatus" == "No volumes present" ]; then
 			gfs1 = "#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
