@@ -42,7 +42,7 @@ bash 'Create Gluster Volume' do
 	if [ "${id}" == "#{node['datashades']['gfs']['maxhosts']}" ]; then
 		if [ ! -d /var/lib/glusterd/vols/gv0 ]; then
 			gfs1="#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
-			gfs2="#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
+			gfs2="#{node['datashades']['version']}gfs2.#{node['datashades']['tld']}" 
 			gluster peer probe ${gfs1}
 			gluster volume create gv0 replica 2 ${gfs1}:/data/gfs ${gfs2}:/data/gfs
 			gluster volume start gv0
