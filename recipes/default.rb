@@ -85,3 +85,12 @@ bash "Adding AWS ZoneID" do
 	fi
 	EOS
 end
+
+# Create DNS helper script
+#
+cookbook_file "/sbin/checkdns" do
+	source "checkdns"
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
