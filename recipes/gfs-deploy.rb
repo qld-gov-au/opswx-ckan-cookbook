@@ -44,6 +44,7 @@ bash 'Create Gluster Volume' do
 			gfs1="#{node['datashades']['version']}gfs1.#{node['datashades']['tld']}"
 			gfs2="#{node['datashades']['version']}gfs2.#{node['datashades']['tld']}" 
 			gluster peer probe ${gfs1}
+			sleep 20
 			gluster volume create gv0 replica 2 ${gfs1}:/data/gfs ${gfs2}:/data/gfs
 			gluster volume start gv0
 		fi
