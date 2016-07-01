@@ -71,6 +71,18 @@ execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
   group 'root'
 end
 
+# Wait for DNS to resolve otherwise glusterd fails to start
+#
+bash "Wait for #{service_name} DNS resolution" do
+  user "root"
+  code <<-EOS
+    id=$(cat /etc/#{service_name}id)
+    hostname="#{node['datashades']['version']}#{service_name}${id}.#{node['datashades']['tld']}"
+    /sbin/checkdns ${hostname}
+    EOS
+end
+
+
 # Create data volume daily backup cron job
 #
 template '/etc/cron.daily/datavol_backup' do
