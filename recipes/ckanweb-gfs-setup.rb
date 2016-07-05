@@ -24,7 +24,7 @@
 #
 paths = 
 {
-	"/data/gfs"
+	"/data/gfs" => 'root',
 	"/var/shared_content" => 'apache', 
 	"/var/www/sites" => 'apache', 
 	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx', 
