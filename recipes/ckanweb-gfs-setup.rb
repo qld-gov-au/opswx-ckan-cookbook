@@ -43,10 +43,7 @@ end
 paths = 
 {
 	"/data/gfs" => 'root',
-	"/var/shared_content" => 'apache', 
-	"/var/www/sites" => 'apache', 
-	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx', 
-	"/var/log/httpd/#{node['datashades']['sitename']}" => 'apache'
+	"/var/www/sites" => 'apache'
 }
 
 paths.each do |nfs_path, dir_owner|
