@@ -20,6 +20,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+service_name = 'gfs-client'
+
+# Setup GlusterFS repo
+#
+bash "Setup #{service_name} repo" do
+	user "root"
+	code <<-EOS
+		wget -P /etc/yum.repos.d http://download.gluster.org/pub/gluster/glusterfs/3.7/3.7.11/EPEL.repo/glusterfs-epel.repo
+		sudo sed -i -e 's/epel-$releasever/epel-6/g' /etc/yum.repos.d/glusterfs-epel.repo
+	EOS
+end
+
+# Install necessary packages
+#
+node['datashades'][service_name]['packages'].each do |p|
+	package p
+end
+
 # Setup GFS directories
 #
 paths = 
