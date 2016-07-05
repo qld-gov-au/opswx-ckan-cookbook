@@ -79,6 +79,15 @@ bash "Wait for #{service_name} DNS resolution" do
     id=$(cat /etc/#{service_name}id)
     hostname="#{node['datashades']['version']}#{service_name}${id}.#{node['datashades']['tld']}"
     /sbin/checkdns ${hostname}
+    if [ ! -d /var/lib/glusterd/vols/gv0 ]; then
+      if [ ${id} -gt 1 ]; then
+        hostname="#{node['datashades']['version']}#{service_name}#{node['datashades']['gfs']['maxhosts']}.#{node['datashades']['tld']}"
+        /sbin/checkdns ${hostname}
+      else
+        hostname="#{node['datashades']['version']}#{service_name}1.#{node['datashades']['tld']}"
+        /sbin/checkdns ${hostname}
+      fi
+    fi
     EOS
 end
 
