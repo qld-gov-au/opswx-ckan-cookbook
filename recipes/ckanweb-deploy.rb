@@ -30,16 +30,17 @@ node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashade
 # Create NGINX Config file
 #
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
-  source 'nginx.conf.erb'
-  owner 'root'
-  group 'root'
-  mode '0755'
-  variables({
-   		:app_name =>  app['shortname'],
+	source 'nginx.conf.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
+	variables({
+		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
    		
- 		})
-	 not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
+	})
+	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
+	action :create_if_missing
 end
 	
 # Setup Site directories
@@ -80,14 +81,15 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 	end
 
 	template '/etc/ckan/default/production.ini' do
-	  source 'ckan_properties.ini.erb'
-	  owner 'root'
-	  group 'root'
-	  mode '0755'
-	  variables({
-	   		:app_name =>  app['shortname'],
+		source 'ckan_properties.ini.erb'
+		owner 'root'
+		group 'root'
+		mode '0755'
+		variables({
+			:app_name =>  app['shortname'],
 			:app_url => app['domains'][0]
-	  })
+		})
+		action :create_if_missing		
 	end
 
 	bash "Init CKAN DB" do
@@ -117,21 +119,22 @@ link "/etc/ckan/default/who.ini" do
 end
 
 cookbook_file '/etc/ckan/default/apache.wsgi' do
-  source 'apache.wsgi'
-  owner 'root'
-  group 'root'
-  mode '0755'
+	source 'apache.wsgi'
+	owner 'root'
+	group 'root'
+	mode '0755'
 end
 
 template '/etc/httpd/conf.d/ckan.conf' do
-  source 'apache_ckan.conf.erb'
-  owner 'apache'
-  group 'apache'
-  mode '0755'
-  variables({
-   		:app_name =>  app['shortname'],
+	source 'apache_ckan.conf.erb'
+	owner 'apache'
+	group 'apache'
+	mode '0755'
+	variables({
+		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
-  })
+	})
+	action :create_if_missing		
 end
 
 
