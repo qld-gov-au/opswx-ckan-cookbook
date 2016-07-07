@@ -71,7 +71,8 @@ bash "Wait for #{service_name} DNS resolution" do
 		/sbin/checkdns ${hostname}
 		if [ -f /opt/zookeeper/conf/zoo.cfg ]; then
 			if [ ${id} -gt 1 ]; then
-				hostname="#{node['datashades']['version']}#{service_name}#{node['datashades']['#{service_name}']['maxhosts']}.#{node['datashades']['tld']}"
+				maxhosts=#{node['datashades'][#{service_name}]['maxhosts']} 
+				hostname="#{node['datashades']['version']}#{service_name}${maxhosts}.#{node['datashades']['tld']}"
 				/sbin/checkdns ${hostname}
 			else
 				hostname="#{node['datashades']['version']}#{service_name}1.#{node['datashades']['tld']}"
