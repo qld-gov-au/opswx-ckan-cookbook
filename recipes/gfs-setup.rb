@@ -87,6 +87,10 @@ bash "Wait for #{service_name} DNS resolution" do
         hostname="#{node['datashades']['version']}#{service_name}1.#{node['datashades']['tld']}"
         /sbin/checkdns ${hostname}
       fi
+      while [ $? -ne 0 ]
+      do
+        /sbin/checkdns ${hostname}
+      done
     fi
     EOS
 end
