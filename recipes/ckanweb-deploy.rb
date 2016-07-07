@@ -20,6 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
 
 app = search("aws_opsworks_app", 'shortname:*ckan_*').first
 
@@ -140,7 +141,7 @@ end
 
 # Install CKAN extensions
 #
-#include_recipe "linksoe::deploy-ckanweb-exts"
+include_recipe "datashades::ckanweb-deploy-exts"
 
 # Restart Web services to enable new configurations
 #
