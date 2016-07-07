@@ -155,7 +155,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# Install any additional pip packages required 		
 			#
-			if extnextras.has_key? pluginname
+			if extextras.has_key? pluginname
 				pip_package = extextras[pluginname]
 				bash "Install extra PIP packages for #{pluginname}" do
 					user "root"
