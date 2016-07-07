@@ -81,7 +81,7 @@ bash "Wait for #{service_name} DNS resolution" do
     /sbin/checkdns ${hostname}
     if [ -d /var/lib/glusterd/vols/gv0 ]; then
       if [ ${id} -gt 1 ]; then
-        maxhosts=#{node['datashades']['#{service_name}']['maxhosts']} 
+        maxhosts="#{node['datashades']['#{service_name}']['maxhosts']}"
         hostname="#{node['datashades']['version']}#{service_name}${maxhosts}.#{node['datashades']['tld']}"
         /sbin/checkdns ${hostname}
       else
