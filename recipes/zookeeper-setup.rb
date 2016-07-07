@@ -61,7 +61,7 @@ execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
 	group 'root'
 end
 
-# Wait for DNS to resolve otherwise zookeeper fails to start correctly
+# Wait for DNS to resolve otherwise service fails to start correctly
 #
 bash "Wait for #{service_name} DNS resolution" do
 	user "root"
@@ -69,6 +69,19 @@ bash "Wait for #{service_name} DNS resolution" do
 		id=$(cat /etc/#{service_name}id)
 		hostname="#{node['datashades']['version']}#{service_name}${id}.#{node['datashades']['tld']}"
 		/sbin/checkdns ${hostname}
+		while [ $? -nq 0 ]
+		do
+			/sbin/checkdns ${hostname}
+		done
+		if [ -f /opt/zookeeper/conf/zoo.cfg ]; then
+			if [ ${id} -gt 1 ]; then
+				hostname="#{node['datashades']['version']}#{service_name}#{node['datashades']['#{service_name}']['maxhosts']}.#{node['datashades']['tld']}"
+				/sbin/checkdns ${hostname}
+			else
+				hostname="#{node['datashades']['version']}#{service_name}1.#{node['datashades']['tld']}"
+				/sbin/checkdns ${hostname}
+			fi
+		fi
 		EOS
 end
 
