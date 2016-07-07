@@ -77,6 +77,7 @@ bash "Wait for #{service_name} DNS resolution" do
 				hostname="${host}2.#{node['datashades']['tld']}"
 			fi
 			/sbin/checkdns ${hostname}
+			service zookeeper restart
 		fi
 		EOS
 end

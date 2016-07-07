@@ -61,13 +61,23 @@ execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
 	group 'root'
 end
 
-# Wait for DNS to resolve otherwise Solr fails to start correctly
+# Wait for DNS to resolve otherwise service fails to start correctly
 #
 bash "Wait for #{service_name} DNS resolution" do
 	user "root"
 	code <<-EOS
 		id=$(cat /etc/#{service_name}id)
-		hostname="#{node['datashades']['version']}#{service_name}${id}.#{node['datashades']['tld']}"
+		host=#{node['datashades']['version']}#{service_name}
+		hostname="${host}${id}.#{node['datashades']['tld']}"
 		/sbin/checkdns ${hostname}
+		if [ -f /opt/zookeeper/conf/zoo.cfg ]; then
+			if [ ${id} -gt 1 ]; then
+				hostname="${host}1.#{node['datashades']['tld']}"
+			else
+				hostname="${host}2.#{node['datashades']['tld']}"
+			fi
+			/sbin/checkdns ${hostname}
+			service #{service_name} restart
+		fi
 		EOS
 end
