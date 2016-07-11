@@ -21,3 +21,9 @@
 # limitations under the License.
 
 include_recipe "datashades::default-configure"
+
+service_name = 'zookeeper'
+
+service service_name do
+	action [:restart]
+end
