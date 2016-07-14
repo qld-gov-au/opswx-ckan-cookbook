@@ -15,3 +15,7 @@ except:
 cur = conn.cursor()
 cur.execute("""CREATE EXTENSION postgis;""")
 cur.execute("""CREATE EXTENSION postgis_topology;""")
+conn.commit()
+
+cur.close()
+conn.close()
