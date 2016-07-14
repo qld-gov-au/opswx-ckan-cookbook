@@ -137,6 +137,16 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	action :create_if_missing		
 end
 
+template '/root/installpostgis.py' do
+	source 'installpostgis.py.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
+	variables({
+		:app_name =>  app['shortname']
+	})
+	action :create_if_missing		
+end
 
 # Install CKAN extensions
 #
