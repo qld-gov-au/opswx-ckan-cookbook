@@ -13,8 +13,5 @@ except:
     sys.exit(1)
 
 cur = conn.cursor()
-cur.execute("""SELECT * FROM pg_extension""")
-rows = cur.fetchall()
-print "Extensions:"
-for row in rows:
-    print "   ", row[0]
+cur.execute("""CREATE EXTENSION postgis;""")
+cur.execute("""CREATE EXTENSION postgis_topology;""")
