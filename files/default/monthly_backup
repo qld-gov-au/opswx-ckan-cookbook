@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# This script is to ensure the consistent backup of our EBS volume onto Amazon Simple Storage Service via snapshots
+
+# Script paramaters
+
+echo -e "Automated Monthly Snapshot of Data Volume\r\n"
+
+placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=$(echo ${placement%?})
+
+myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+volume=$(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values="${myid}" Name=attachment.delete-on-termination,Values=false --region $region)
+vol_id=$(echo ${volume} | jq '.Volumes[].VolumeId' | tr -d '"')
+vol_name=$(aws ec2 describe-tags --region $region --filters "Name=resource-id,Values=${vol_id}" "Name=key,Values=Name" | jq '.Tags[].Value' | tr -d '"')
+
+DATE=$(date +"%Y%m%d_%H%M")
+Description="Monthly ${vol_name} snapshot "${DATE}
+
+vol_id=$(aws ec2 describe-volumes --filters Name=tag-value,Values="${vol_name}" --region $region | jq '.Volumes[].VolumeId' | tr -d '"')
+
+echo "Creating snapshot of $vol_name on $vol_id in $region with Description: ${Description}" >> /var/log/ec2backups.log
+aws ec2 create-snapshot --volume-id $vol_id --description "${Description}" --region $region --output text >> /var/log/ec2snapshot.log

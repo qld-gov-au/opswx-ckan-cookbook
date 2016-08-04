@@ -1,0 +1,7 @@
+name=<%= @app_name %>-<%= node['datashades']['hostname'] %>
+config=solrconfig.xml
+schema=schema.xml
+shard=shard-<%= node['datashades']['hostname'] %>
+dataDir=/data/solr/data/<%= @app_name %>/data
+collection=<%= @app_name %>
+coreNodeName=core-<%= node['datashades']['hostname'] %>
