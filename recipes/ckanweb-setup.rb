@@ -51,13 +51,22 @@ service 'httpd' do
 	action [:enable]
 end
 
+# Create CKAN Group
+#
+group "ckan" do
+	action :create
+	gid '1000'	
+end
+
 # Create CKAN User
 #
 user "ckan" do
 	comment "CKAN User"
 	home "/usr/lib/ckan"
 	shell "/sbin/nologin"
-	action :create	
+	action :create
+	uid '1000'
+	gid '1000'	
 end
 
 # Explicity set permissions on ckan directory so it's readable by Apache

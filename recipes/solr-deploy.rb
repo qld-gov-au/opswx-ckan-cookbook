@@ -27,6 +27,25 @@ unless (::File.directory?("/data/solr"))
 		source app['app_source']['url']
 	end
 	
+	# Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
+	#
+	group "solr" do
+		action :create
+		gid '1001'	
+	end
+
+	# Create Solr User
+	#
+	user "solr" do
+		comment "Solr User"
+		home "/home/solr"
+		shell "/bin/bash"
+		action :create
+		uid '1001'
+		gid '1001'	
+	end
+	
+	
 	bash "install solr" do
 		user "root"
 		code <<-EOS
