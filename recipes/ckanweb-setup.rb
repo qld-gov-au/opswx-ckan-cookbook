@@ -66,7 +66,7 @@ user "ckan" do
 	shell "/sbin/nologin"
 	action :create
 	uid '1000'
-	gid '1000'	
+	group 'ckan'	
 end
 
 # Explicity set permissions on ckan directory so it's readable by Apache
