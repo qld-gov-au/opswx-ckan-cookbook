@@ -64,6 +64,12 @@
                 return 403;
         }
 
+        # This is for D7 and D8
+        location ~ ^/sites/.*/files/styles/
+        {
+            try_files $uri @rewrite;
+        }
+        
         # Block access to "hidden" files and directories whose names begin with a
         # period. This includes directories used by version control systems such
         # as Subversion or Git to store control files.
