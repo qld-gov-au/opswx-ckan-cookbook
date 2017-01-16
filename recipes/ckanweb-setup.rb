@@ -23,6 +23,15 @@
 
 include_recipe "datashades::default"
 
+# Create ASG helper script
+#
+cookbook_file "/sbin/updateasg" do
+	source "updateasg"
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
+
 # Install CKAN services and dependencies
 #
 node['datashades']['ckan_web']['packages'].each do |p|
@@ -30,7 +39,7 @@ node['datashades']['ckan_web']['packages'].each do |p|
 end
 
 include_recipe "datashades::nginx-setup"
-include_recipe "datashades::ckanweb-gfs-setup"
+include_recipe "datashades::ckanweb-nfs-setup"
 
 
 # Change Apache default port to 8000 and fix access to /
@@ -51,6 +60,14 @@ service 'httpd' do
 	action [:enable]
 end
 
+# Get app details so we can version the app setup
+#
+app = search("aws_opsworks_app", 'shortname:*ckan_*').first
+apprelease = app['app_source']['url']
+apprelease.sub! 'ckan/archive/', "ckan.git@" 			
+apprelease.sub! '.zip', ""
+version = apprelease[/@(.*)/].sub! '@', ''
+
 # Create CKAN Group
 #
 group "ckan" do
@@ -62,7 +79,7 @@ end
 #
 user "ckan" do
 	comment "CKAN User"
-	home "/usr/lib/ckan"
+	home "/home/ckan"
 	shell "/sbin/nologin"
 	action :create
 	uid '1000'
@@ -71,7 +88,7 @@ end
 
 # Explicity set permissions on ckan directory so it's readable by Apache
 #
-directory '/usr/lib/ckan' do
+directory '/home/ckan' do
 	owner 'ckan'
 	group 'ckan'
 	mode '0755'
@@ -82,7 +99,7 @@ end
 
 # Create ckan app location
 #
-directory '/usr/lib/ckan/default' do
+directory "/usr/lib/#{version}/default" do
   owner 'ckan'
   group 'ckan'
   mode '0755'
@@ -100,16 +117,16 @@ end
 
 # Create VirtualEnv for CKAN
 #
-if !::File.directory?("/usr/lib/ckan/default/bin")
+if !::File.directory?("/usr/lib/#{version}/default/bin")
 	execute "Create CKAN Default Virtual Environment" do
-		cwd "/usr/lib/ckan"
+		cwd "/usr/lib/#{version}"
 		user "root"
-		command "/usr/bin/virtualenv --no-site-packages /usr/lib/ckan/default"
+		command "/usr/bin/virtualenv --no-site-packages /usr/lib/#{version}/default"
 	end
 	
 	bash "Fix VirtualEnv lib issue" do
 		user "root"
-		cwd "/usr/lib/ckan/default"
+		cwd "/usr/lib/#{version}/default"
 		code <<-EOS
 		mv -f lib/python2.7/site-packages lib64/python2.7/
 		rm -rf lib
@@ -122,7 +139,7 @@ end
 
 # Create CKAN default etc directory
 #
-directory '/usr/lib/ckan/default/etc' do
+directory "/usr/lib/#{version}/default/etc" do
   owner 'ckan'
   group 'ckan'
   mode '0755'
@@ -133,7 +150,14 @@ end
 # Link /etc/ckan to actual CKAN location
 #
 link "/etc/ckan" do
-	to "/usr/lib/ckan/default/etc"
+	to "/usr/lib/#{version}/default/etc"
+	link_type :symbolic
+end
+
+# Link /usr/lib/ckan to actual CKAN location
+#
+link "/usr/lib/ckan" do
+	to "/usr/lib/#{version}"
 	link_type :symbolic
 end
 

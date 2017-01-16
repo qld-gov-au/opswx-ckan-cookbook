@@ -28,25 +28,29 @@ app = search("aws_opsworks_app", 'shortname:*ckan_*').first
 #
 node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"					
 
+node.default['datashades']['auditd']['rules'].push('/etc/ckan/default/production.ini')
+node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
+
+
 # Create NGINX Config file
 #
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
-	source 'nginx.conf.erb'
-	owner 'root'
-	group 'root'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname'],
+  source 'nginx.conf.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
+  variables({
+   		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
    		
-	})
-	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
+ 		})
+	 not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
 	action :create_if_missing
 end
 	
 # Setup Site directories
 #
-paths = {"/var/shared_content/#{app['shortname']}" => 'apache', "/etc/ckan/default" => 'root', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'ckan', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'ckan', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
+paths = {"/var/shared_content/#{app['shortname']}" => 'ckan', "/etc/ckan/default" => 'root', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'ckan', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'ckan', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
@@ -60,46 +64,47 @@ end
 apprelease = app['app_source']['url']
 apprelease.sub! 'ckan/archive/', "ckan.git@" 			
 apprelease.sub! '.zip', ""
-
-template '/root/installpostgis.py' do
-	source 'installpostgis.py.erb'
-	owner 'root'
-	group 'root'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname']
-	})
-	action :create_if_missing		
-end
+version = apprelease[/@(.*)/].sub! '@', ''
 
 # Install CKAN
 #
-unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
-	bash "Install CKAN" do
+unless (::File.exists?("/usr/lib/#{version}/default/src/ckan/requirements.txt"))
+	bash "Install CKAN #{version}" do
 		user "root"
 		code <<-EOS
-			. /usr/lib/ckan/default/bin/activate
+			. /usr/lib/#{version}/default/bin/activate
 			pip install -e "git+#{apprelease}#egg=ckan"
-			cd /usr/lib/ckan/default/src/ckan
+			cd /usr/lib/#{version}/default/src/ckan
 			pip install --upgrade setuptools
 			pip install --upgrade bleach
-			pip install -r /usr/lib/ckan/default/src/ckan/requirements.txt
+			pip install -r /usr/lib/#{version}/default/src/ckan/requirements.txt
 			deactivate
-			. /usr/lib/ckan/default/bin/activate
-			cd /usr/lib/ckan/default/src/ckan
+			. /usr/lib/#{version}/default/bin/activate
+			cd /usr/lib/#{version}/default/src/ckan
 			deactivate
-			chown -R ckan:ckan /usr/lib/ckan
+			chown -R ckan:ckan /usr/lib/#{version}
 		EOS
 	end
 
 	template '/etc/ckan/default/production.ini' do
-		source 'ckan_properties.ini.erb'
+	  source 'ckan_properties.ini.erb'
+	  owner 'root'
+	  group 'root'
+	  mode '0755'
+	  variables({
+	   		:app_name =>  app['shortname'],
+			:app_url => app['domains'][0]
+	  })
+		action :create_if_missing		
+	end
+
+	template '/root/installpostgis.py' do
+		source 'installpostgis.py.erb'
 		owner 'root'
 		group 'root'
 		mode '0755'
 		variables({
-			:app_name =>  app['shortname'],
-			:app_url => app['domains'][0]
+			:app_name =>  app['shortname']
 		})
 		action :create_if_missing		
 	end
@@ -107,10 +112,10 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 	bash "Init CKAN DB" do
 		user "root"
 		code <<-EOS
-			mkdir -p "/var/shared_content/#{app['shortname']}/private"
+			mkdir -p /var/shared_content/"#{app['shortname']}"/private
 			. /usr/lib/ckan/default/bin/activate
 			cd /usr/lib/ckan/default/src/ckan
-			paster db init -c /etc/ckan/default/production.ini > "/var/shared_content/#{app['shortname']}/private/ckan_db_init.log"
+			paster db init -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/ckan_db_init.log
 			deactivate
 			/root/installpostgis.py
 		EOS
@@ -131,23 +136,35 @@ link "/etc/ckan/default/who.ini" do
 	link_type :symbolic
 end
 
-cookbook_file '/etc/ckan/default/apache.wsgi' do
-	source 'apache.wsgi'
-	owner 'root'
-	group 'root'
-	mode '0755'
+template '/etc/ckan/default/apache.wsgi' do
+  source 'apache.wsgi.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
 end
 
 template '/etc/httpd/conf.d/ckan.conf' do
-	source 'apache_ckan.conf.erb'
-	owner 'apache'
-	group 'apache'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname'],
+  source 'apache_ckan.conf.erb'
+  owner 'apache'
+  group 'apache'
+  mode '0755'
+  variables({
+   		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
-	})
+  })
 	action :create_if_missing		
+end
+
+# Install Raven for Sentry
+#
+bash "Install Raven Sentry client" do
+	user "root"
+	code <<-EOS
+		. /usr/lib/ckan/default/bin/activate
+		cd /usr/lib/ckan/default
+		pip install --upgrade raven
+	EOS
+	not_if { ::File.directory?("/usr/lib/ckan/default/lib/python2.7/site-packages/raven")}
 end
 
 # Install CKAN extensions

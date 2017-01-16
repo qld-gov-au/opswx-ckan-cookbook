@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: solr-configure
+# Attributes:: icinga
 #
-# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
+# Defines attributes required by Solr service
 #
-# Copyright 2016, Link Digital
+# Copyright 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-include_recipe "datashades::default-configure"
-
-service_name = 'zookeeper'
-
-service service_name do
-	action [:restart]
-end
+default['datashades']['icinga']['master'] = ''
+default['datashades']['icinga']['password'] = ''

@@ -55,19 +55,6 @@ unless (::File.directory?("/data/solr"))
 		cd /tmp/solr/solr-${solrvers} 
 		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
 		mv /var/solr /data/
-		
-		maxhosts=#{node['datashades']['zk']['maxhosts']}
-		zkhosts=""
-		for (( sid=1; sid<=${maxhosts}; sid++ ))
-		do
-			zkhosts+="#{node['datashades']['version']}zk${sid}.#{node['datashades']['tld']}:2181,"
-		done
-		zkhostlist=$(echo ${zkhosts%?})
-		sed -i "/#ZK_HOST=/aZK_HOST='${zkhostlist}'" /etc/default/solr.in.sh
-		
-		solrhost="#{node['datashades']['version']}solr$(cat /etc/solrid).#{node['datashades']['tld']}"
-		sed -i "/#SOLR_HOST=/aSOLR_HOST='${solrhost}'" /etc/default/solr.in.sh
-		
 		EOS
 		not_if { ::File.directory? "/data/solr" }
 	end

@@ -28,13 +28,17 @@ default['datashades']['backup']['retention'] = '30'
 
 default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
 
+default['datashades']['jumpbox']['usergroup'] = ''
+default['datashades']['jumpbox']['bucket'] = ''
+
+default['datashades']['auditd']['rules'] = []
+
 include_attribute "datashades::ckan"
 include_attribute "datashades::drupal"
-include_attribute "datashades::gfs"
 include_attribute "datashades::mysql"
 include_attribute "datashades::nfs"
 include_attribute "datashades::nginx"
 include_attribute "datashades::redis"
 include_attribute "datashades::solr"
-include_attribute "datashades::zookeeper"
+include_attribute "datashades::icinga"
 

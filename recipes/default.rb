@@ -50,6 +50,10 @@ node['datashades']['core']['packages'].each do |p|
   package p
 end
 
+# Install Icinga2 package
+#
+include_recipe "datashades::icinga-setup"
+
 # Enable yum-cron so updates are downloaded on running nodes
 #
 service "yum-cron" do
@@ -86,6 +90,14 @@ bash "Adding AWS ZoneID" do
 	EOS
 end
 
+# Install cli53 for Failover recordset creation 
+#
+remote_file "/sbin/cli53" do
+	source "https://github.com/barnybug/cli53/releases/download/0.8.5/cli53-linux-amd64"
+	owner 'root'
+	mode '0755'
+end
+
 # Create DNS helper script
 #
 cookbook_file "/sbin/checkdns" do
@@ -93,4 +105,20 @@ cookbook_file "/sbin/checkdns" do
 	owner 'root'
 	group 'root'
 	mode '0755'
+end
+
+# Add Jumpbox Admin Management cron
+#
+template '/etc/cron.daily/manageadmins' do
+	source 'manageadmins.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
+
+# Add local admins
+#
+execute 'Create Admin users' do
+	command '/etc/cron.daily/manageadmins'
+	user 'root'
 end

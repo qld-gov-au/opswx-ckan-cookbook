@@ -63,18 +63,6 @@ unless (::File.directory?("/data/solr/data/#{ckan['shortname']}/conf"))
 	  user 'root'
 	end
 
-	bash 'Upload Solr Core Config to Zookeeper' do
-		user 'root'
-		code <<-EOS
-		sid=$(cat /etc/solrid)
-		if [ $sid == #{node['datashades']['zk']['maxhosts']} ]; then
-			chmod +x /opt/solr/server/scripts/cloud-scripts/zkcli.sh
-			/opt/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost #{node['datashades']['version']}zk#{node['datashades']['zk']['maxhosts']}.#{node['datashades']['tld']}:2181 -cmd upconfig -confdir /data/solr/data/#{ckan['shortname']}/conf -confname #{ckan['shortname']}		
-		fi
-		EOS
-	end
-	
-	
 	service "solr" do
 		action [:restart]
 	end	

@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: gfs-configure
+# Recipe:: nfs-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -22,3 +22,14 @@
 
 include_recipe "datashades::default-configure"
 
+# Fix Amazon PYTHON_INSTALL_LAYOUT so items are installed in sites/packages not distr/packages
+#
+bash "Fix Python Install Layout" do
+	user 'root'
+	code <<-EOS
+	sed -i 's~setenv PYTHON_INSTALL_LAYOUT "amzn"~# setenv PYTHON_INSTALL_LAYOUT "amzn"~g' /etc/profile.d/python-install-layout.csh
+	sed -i 's~export PYTHON_INSTALL_LAYOUT="amzn"~# export PYTHON_INSTALL_LAYOUT="amzn"~g' /etc/profile.d/python-install-layout.sh
+	unset PYTHON_INSTALL_LAYOUT
+	EOS
+	not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
+end

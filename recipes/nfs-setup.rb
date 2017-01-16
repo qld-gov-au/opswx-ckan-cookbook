@@ -88,6 +88,19 @@ bash "Tagging Data Volume Instance" do
   EOS
 end
 
+# Add listhosts helper script for admins
+#
+cookbook_file '/usr/local/bin/listhosts' do
+  source 'listhosts'
+  owner 'root'
+  group 'root'
+  mode '0755'
+end
+
+link "/usr/local/bin/listwebhosts" do
+  to "/usr/local/bin/listhosts"
+  link_type :symbolic
+end
 
 
 

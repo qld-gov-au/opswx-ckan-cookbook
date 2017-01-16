@@ -40,10 +40,14 @@ bash "Add #{service_name} DNS entry" do
 		reccount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}')].Name" | jq '. | length')
 		aliascount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}.')].Name" | jq '. | length')
 		hostcount=`expr $reccount - $aliascount + 1`
-		echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		echo ${hostcount} > /etc/#{service_name}id
+		if [ ${hostcount} -eq 1 ]; then
+			echo "#{service_name}_master=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
+		else
+			echo "#{service_name}_slave=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames	
+		fi
 	EOS
-	not_if "grep -q '#{service_name}_name' /etc/hostnames"
+	not_if "grep -q '#{service_name}_' /etc/hostnames"
 end
 
 # Create script to update DNS on configure events
@@ -63,23 +67,3 @@ execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
 	group 'root'
 end
 
-# Wait for DNS to resolve otherwise service fails to start correctly
-#
-bash "Wait for #{service_name} DNS resolution" do
-	user "root"
-	code <<-EOS
-		id=$(cat /etc/#{service_name}id)
-		host=#{node['datashades']['version']}#{service_name}
-		hostname="${host}${id}.#{node['datashades']['tld']}"
-		/sbin/checkdns ${hostname}
-		if [ -f /opt/zookeeper/conf/zoo.cfg ]; then
-			if [ ${id} -gt 1 ]; then
-				hostname="${host}1.#{node['datashades']['tld']}"
-			else
-				hostname="${host}2.#{node['datashades']['tld']}"
-			fi
-			/sbin/checkdns ${hostname}
-			service #{service_name} restart
-		fi
-		EOS
-end

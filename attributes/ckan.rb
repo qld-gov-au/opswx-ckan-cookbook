@@ -29,11 +29,14 @@ default['datashades']['ckan_web']['dbname'] = 'ckan_default'
 default['datashades']['ckan_web']['dsuser'] = 'ckan_datastore'
 default['datashades']['ckan_web']['dsname'] = 'ckan_datastore'
 
+default['datashades']['ckan_web']['sentryurl'] = ''
+
 default['datashades']['ckan_web']['disqus'] = 'ckan'
 
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 
 default['datashades']['postgres']['password'] = ""
 
+# Postgres settings
 default['datashades']['ckan_db']['packages'] = ['postgresql94-server', 'postgresql94', 'postgresql94-devel', 'libtool', 'libxml2-devel', 'geos-devel']
 default['datashades']['ckan_db']['version'] = '94'

@@ -23,7 +23,12 @@ port = 5000
 
 [app:main]
 use = egg:ckan
+<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
+full_stack = false
+<% else -%>
 full_stack = true
+<% end -%>
+
 cache_dir = /tmp/%(ckan.site_id)s/
 beaker.session.key = ckan
 
@@ -147,8 +152,14 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 
 ## Email settings
 
+<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
+#email_to = admin@<%= node['datashades']['tld'] %>
+#error_email_from = ckan@<%= @app_url %>
+<% else -%>
 email_to = admin@<%= node['datashades']['tld'] %>
 error_email_from = ckan@<%= @app_url %>
+<% end -%>
+
 smtp.server = localhost
 smtp.starttls = False
 #smtp.user = your_username@gmail.com
@@ -158,29 +169,56 @@ smtp.starttls = False
 
 ## Logging configuration
 [loggers]
-keys = root, ckan, ckanext
+keys = root, ckan, ckanext<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>, sentry<% end -%>
 
 [handlers]
-keys = console
+keys = console<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>, sentry<% end -%>
 
 [formatters]
 keys = generic
 
 [logger_root]
 level = WARNING
-handlers = console
+handlers = console<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>, sentry<% end -%>
 
 [logger_ckan]
 level = INFO
-handlers = console
+handlers = console<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>, sentry<% end -%>
 qualname = ckan
 propagate = 0
 
 [logger_ckanext]
 level = DEBUG
-handlers = console
+handlers = console<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>, sentry<% end -%>
 qualname = ckanext
 propagate = 0
+
+<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
+[logger_sentry]
+level = WARNING
+handlers = console
+qualname = sentry.errors
+propagate = 0
+
+[handler_sentry]
+class = raven.handlers.logging.SentryHandler
+args = ("<%= node['datashades']['ckan_web']['sentryurl'] %>",)
+level = WARNING
+formatter = generic
+<% else -%>
+#[logger_sentry]
+#level = WARNING
+#handlers = console
+#qualname = sentry.errors
+#propagate = 0
+
+#[handler_sentry]
+#class = raven.handlers.logging.SentryHandler
+#args = ("<%= node['datashades']['ckan_web']['sentryurl'] %>",)
+#level = WARNING
+#formatter = generic
+<% end -%>
+
 
 [handler_console]
 class = StreamHandler
@@ -189,4 +227,5 @@ level = NOTSET
 formatter = generic
 
 [formatter_generic]
-format = %(asctime)s %(levelname)-5.5s [%(name)s] %(message)s
+format = %(asctime)s,%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S

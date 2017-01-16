@@ -21,14 +21,31 @@ config_file=/etc/hostnames
 function update_dns
 {
     local dns_name=$1
+	local dns_type=$2
+	
     local currec=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '${dns_name}')].ResourceRecords[0].Value" | jq '.[0]' | tr -d '"')
+	local pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
 
-    if [ ! -z "zone_id" ]; then
-        pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
-        if [ "${pub_host}" != "${currec}" ]; then
-            route53 change_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
-        fi
-    fi
+	# Create a cluster node Alias record based on record type
+	#
+	name=`echo ${dns_name} | cut -d'.' -f 1`
+	alias=`printf '%s\n' "${dns_name//[[:digit:]]/}" | cut -d'.' -f 1`
+	tld=`echo ${dns_name} | cut -d'.' -f 2-`		
+
+	# We always need a base DNS record even for the failover records to point to, so always create it
+	#
+	if [ "${pub_host}" != "${currec}" ]; then
+		route53 change_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
+	fi
+
+	# Create cluster alias records as applicable
+	#
+	if [[ "${dns_type}" == *"_master"*  ]]; then
+		cli53 rrcreate -i ${dns_type} --failover PRIMARY ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+	elif [[ "${dns_type}" == *"_slave"*  ]]; then
+		cli53 rrcreate -i ${dns_type} --failover SECONDARY ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+	fi
+		
 }
 
 function update_hostname
@@ -61,7 +78,7 @@ for varname in "${name[@]}"
 		if [ ${varname} = "dns_name" ]; then
 			update_hostname ${value[i]}
 		else
-			update_dns ${value[i]}
+			update_dns ${value[i]} ${name[i]}
 		fi
 		((i++))
 	done

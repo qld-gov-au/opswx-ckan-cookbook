@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: mysql-configure
+# Recipe:: icinga-setup
 #
-# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
+# Installs binaries for icinga2 from EPEL repo
 #
-# Copyright 2016, Link Digital
+# Copyright 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,5 +20,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+include_recipe "datashades::stackparams"
 
+bash "Install Icinga2" do
+	user "root"
+	code <<-EOS
+		yum install -y https://packages.icinga.org/epel/6/release/noarch/icinga-rpm-release-6-1.el6.noarch.rpm
+		sed -i 's/$releasever/6/g' /etc/yum.repos.d/ICINGA-*.repo
+		yum install -y icinga2 nagios-plugins-all
+	EOS
+	not_if { ::File.directory? "/etc/icinga2" }
+end

@@ -1,0 +1,15 @@
+-b 1024
+-a always,exit -S adjtimex -S settimeofday -S stime -k time-change
+-a always,exit -S clock_settime -k time-change
+-a always,exit -S sethostname -S setdomainname -k system-locale
+-w /etc/group -p wa -k identity
+-w /etc/passwd -p wa -k identity
+-w /etc/shadow -p wa -k identity
+-w /etc/sudoers -p wa -k identity
+-w /var/run/utmp -p wa -k session
+-w /var/log/wtmp -p wa -k session
+-w /var/log/btmp -p wa -k session
+
+<% node['datashades']['auditd']['rules'].each do |path| -%>
+-w <%= path %> -p wa -k session 
+<% end -%>
