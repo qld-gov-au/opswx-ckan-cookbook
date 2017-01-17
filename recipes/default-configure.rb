@@ -26,5 +26,12 @@ execute 'update dns' do
 	command	'/sbin/updatedns'
 	user 'root'
 	group 'root'
+	not_if { ! ::File.directory? "/sbin/updatedns" }
 end
 
+# Update custom auditd rules
+#
+template '/etc/audit/rules.d/link.rules' do
+	source 'auditd.rules.erb'
+	owner 'root'
+end

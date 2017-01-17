@@ -1,0 +1,31 @@
+#!/bin/bash
+
+placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=$(echo ${placement%?})
+myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+
+version=$(aws ec2 describe-tags --region $region --filters "Name=resource-id,Values=${myid}" "Name=key,Values=opsworks:stack" | jq '.Tags[].Value' | tr -d '"')
+
+instances=$(aws ec2 describe-instances --filters "Name=tag:opsworks:stack,Values=${version}" "Name=instance-state-name,Values=running" --region=$region)
+instancetypes=$(echo ${instances} | jq '.Reservations[].Instances[].Tags[] | select(.Key | contains ("opsworks:instance")) | .Value' | tr -d '"')
+instanceips=$(echo ${instances} | jq '.Reservations[].Instances[].PrivateIpAddress' | tr -d '"')
+
+readarray hosts <<< "${instanceips}"
+readarray types <<< "${instancetypes}"
+
+counter=1
+for host in "${hosts[@]}"
+    do
+        hostname=$(echo ${host} | tr -d '\n\r')
+        itype=$(echo ${types[ ${counter} - 1 ]} | tr -d '\n\r')
+        echo -e "[${counter}] ssh ${hostname}\t# ${itype}"
+        (( counter++ ))
+    done
+
+echo "Select Host. [0] to exit: "
+read hostopt
+
+if [ ${hostopt} -gt 0 ]; then
+    host=$(echo ${hosts[ ${hostopt} - 1 ]} | tr -d '\n\r')
+    sudo ssh -i /root/.ssh/webhost.pem ec2-user@${host}
+fi

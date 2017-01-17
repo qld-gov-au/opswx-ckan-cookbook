@@ -24,6 +24,8 @@
 #
 node.default['datashades']['nfs']['exports'] = ["/data/nfs/shared_content", "/data/nfs/logs/#{node['datashades']['sitename']}_nginx", "/data/nfs/logs/#{node['datashades']['sitename']}_apache"]
 
+node.default['datashades']['auditd']['rules'].push('/etc/exports')
+
 # Create NFS directories
 #
 node['datashades']['nfs']['exports'].each do |nfs_path|
@@ -53,3 +55,6 @@ execute 'exportfs' do
 	group 'root'
 end
 
+if node['datashades']['icinga']['password']
+	include_recipe "datashades::icinga-deploy"
+end

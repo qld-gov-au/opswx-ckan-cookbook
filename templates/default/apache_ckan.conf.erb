@@ -13,12 +13,13 @@
 
     ErrorLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log
 
-    # Log client's real IP address not the proxy's
     <IfModule mod_remoteip.c>
+        # nginx
         RemoteIPInternalProxy 127.0.0.1
-        RemoteIPHeader x-real-ip
+        # ELB: VPC internal subnet
+        RemoteIPTrustedProxy 172.31.0.0/16
+        RemoteIPHeader X-Forwarded-For
     </IfModule>
-    
-    LogFormat "%a %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined_proxied
+    LogFormat "%a %{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined_proxied
     CustomLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_custom.log combined_proxied
 </VirtualHost>

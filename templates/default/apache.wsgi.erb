@@ -1,0 +1,31 @@
+import os
+activate_this = os.path.join('/usr/lib/ckan/default/bin/activate_this.py')
+execfile(activate_this, dict(__file__=activate_this))
+import site
+site.addsitedir('/usr/lib/ckan/default/lib/python2.7/site-packages')
+
+from paste.deploy import loadapp
+config_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'production.ini')
+from paste.script.util.logging_config import fileConfig
+fileConfig(config_filepath)
+application = loadapp('config:%s' % config_filepath)
+
+# Add raven Sentry client middleware to the stack if sentryurl provided
+#
+<% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
+from raven import Client
+from raven.middleware import Sentry
+client = Client("<%= node['datashades']['ckan_web']['sentryurl'] %>", tags={"<%= node['datashades']['version'] %>"})
+application = Sentry(application, client=client)
+# ensure 404s are redirected to a page that looks nice,
+from pylons.middleware import StatusCodeRedirect
+application = StatusCodeRedirect(application , [400, 404, 500])
+<% else -%>
+#from raven import Client
+#from raven.middleware import Sentry
+#client = Client("<insert sentryurl>", tags={"<%= node['datashades']['version'] %>"})
+#application = Sentry(application, client=client)
+# ensure 404s are redirected to a page that looks nice,
+#from pylons.middleware import StatusCodeRedirect
+#application = StatusCodeRedirect(application , [400, 404, 500])
+<% end -%>

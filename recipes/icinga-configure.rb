@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: gfs
+# Recipe:: icinga2-configure
 #
-# Defines attributes required by GlusterFS Service
+# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-default['datashades']['gfs']['packages'] = ['fuse', 'fuse-libs', 'glusterfs-server', 'glusterfs-fuse', 'nfs-utils', 'nfs-utils-lib']
-default['datashades']['gfs']['exports'] = []
-default['datashades']['gfs']['cidr'] = '172.31.0.0/16'
-default['datashades']['gfs']['maxhosts'] = 2
+include_recipe "datashades::default-configure"
 
-default['datashades']['gfs-client']['packages'] = ['fuse', 'fuse-libs', 'glusterfs-fuse', 'nfs-utils', 'nfs-utils-lib']
+service_name = 'icinga2'
+
+service service_name do
+	action [:restart]
+end

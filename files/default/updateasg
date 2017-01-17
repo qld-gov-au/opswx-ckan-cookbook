@@ -1,0 +1,202 @@
+#!/bin/bash
+#
+# This script snapshots the current instance volume, and updates the ASG from it
+
+# ============== Script Parameters =======================
+
+placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+region=$(echo ${placement%?})
+
+myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+volume=$(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values="${myid}" Name=attachment.device,Values='/dev/xvda' --region $region)
+vol_id=$(echo ${volume} | jq '.Volumes[].VolumeId' | tr -d '"')
+vol_size=$(echo ${volume} | jq '.Volumes[].Size' | tr -d '"')
+
+instance=$(aws ec2 describe-instances --region $region --instance-ids $myid)
+secgrps=$(echo ${instance} | jq '.Reservations[].Instances[].SecurityGroups[].GroupId' | tr -d '"')
+instsize=$(echo ${instance} | jq '.Reservations[].Instances[].InstanceType' | tr -d '"')
+keyname=$(echo ${instance} | jq '.Reservations[].Instances[].KeyName' | tr -d '"')
+
+DATE=$(date +"%Y%m%d_%H%M")
+Description="Automated GM snapshot of ${vol_id} "${DATE}
+
+# ============== Function Definitions =======================
+
+# Creates snapshot for new AMI
+#
+function create_snapshot
+{
+       	echo -ne "Creating snapshot of $vol_id"
+
+       	snapid=$(aws ec2 create-snapshot --volume-id $vol_id --description "${Description}" --region $region | jq '.SnapshotId' | tr -d '"')
+       	snapstatus='pending'
+       	while [ $snapstatus = 'pending' ]; do
+       		snapshot=$(aws ec2 describe-snapshots --snapshot-id ${snapid} --region $region)
+       		snapstatus=$(echo $snapshot | jq '.Snapshots[0].State' | tr -d '"')
+       		snappc=$(echo $snapshot | jq '.Snapshots[0].Progress' | tr -d '"')
+       		bs=$(printf '%0.s\b' $(seq 1 ${#snappc}))
+       		echo -ne ".${snappc}"
+       		sleep 5
+       		echo -ne "${bs}"
+       	done
+}
+
+# Creates new AMI from snapshot, and new Launch config from generated AMI
+#
+function create_ami
+{
+       	echo -ne ".Creating AMI..."
+       	ami=$(aws ec2 register-image --name "AUTO-WEB-GM_${DATE}" --root-device-name "/dev/sda1" --architecture "x86_64" --virtualization-type "hvm" --region $region --block-device-mappings "{\"DeviceName\": \"/dev/sda1\",\"Ebs\":{\"DeleteOnTermination\": true,\"VolumeType\":\"gp2\",\"VolumeSize\":${vol_size},\"SnapshotId\": \"${snapid}\"}}" | jq '.ImageId' | tr -d '"')
+
+       	launchid=$(aws autoscaling create-launch-configuration --launch-configuration-name "AUTO-WEB-GM_${DATE}" --image-id ${ami} --instance-type ${instsize}  --security-groups ${secgrps} --key-name ${keyname} --block-device-mappings "{\"DeviceName\": \"/dev/sda1\",\"Ebs\":{\"DeleteOnTermination\": true,\"VolumeType\":\"gp2\",\"VolumeSize\":${vol_size},\"SnapshotId\": \"$snapid\"}}" --region $region)
+       	echo "Done."
+}
+
+# Updates selected ASG with new Launch config
+#
+function update_asg
+{
+       	aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${asg} --launch-configuration-name AUTO-WEB-GM_${DATE} --region ${region}
+       	echo "${asg} updated to 'AUTO-WEB-GM_${DATE}'"
+}
+
+# Checks the running state of an instance id
+#
+function get_instance_state
+{
+       	local istate=$(aws ec2 describe-instances --instance-ids $1 --region ${region} | jq '.Reservations[].Instances[].State.Name' | tr -d '"')
+       	echo ${istate} | tr -d '\r\n'
+}
+
+function terminate_instance
+{
+       	local killid=$1
+       	echo "Terminating old ASG instance ${killid}"
+       	instate=$(get_instance_state ${killid})
+    if [ "${instate}" != "terminated" ]; then
+       		echo "I didn't kill ${killid}"
+       	fi
+}
+
+# ============== Script Body =======================
+
+echo -e "Automated ASG Update\r\n"
+
+if [ -z $vol_id ]; then
+       	echo 'Unable to identify root volume'
+       	exit 1;
+fi
+
+create_snapshot
+create_ami
+
+# Get a list of Autoscale Groups for user selectable update of launch config
+#
+asglist=$(aws autoscaling describe-auto-scaling-groups --region $region | jq '.AutoScalingGroups[].AutoScalingGroupName' | tr -d '"')
+readarray asgs <<< "${asglist}"
+
+counter=1
+for asg in "${asgs[@]}"
+       	do
+       		asgname=$(echo ${asg} | tr -d '\n\r')
+       		echo -e "[${counter}] ${asgname}"
+       		(( counter++ ))
+       	done
+
+echo "Select AutoScaleGroup to update. [0] to exit: "
+read asgopt
+
+# Exit if user doesn't want to update any Autoscale Groups
+#
+if [ ${asgopt} -eq 0 ]; then
+       	echo "Update ASG with Launch configuration 'AUTO-WEB-GM_${DATE}'"
+       	exit 0;
+fi
+
+# Make sure user really wants to update the selected ASG
+#
+asg=$(echo ${asgs[ ${asgopt} - 1 ]} | tr -d '\n\r')
+echo -ne "Update ${asg} with Launch configuration 'AUTO-WEB-GM_${DATE}'? Type 'yes' to proceed: "
+read updateasg
+
+if [ $updateasg != 'yes' ]; then
+       	echo "Update ASG with Launch configuration 'AUTO-WEB-GM_${DATE}'"
+       	exit 0
+fi
+
+update_asg
+
+# Get info about the selected ASG so we can optionally churn out existing instances if any are running
+#
+asginfo=$(aws autoscaling describe-auto-scaling-groups --region $region --auto-scaling-group-name $asg)
+asgdesired=$(echo $asginfo | jq '.AutoScalingGroups[0].DesiredCapacity' | tr -d '"')
+
+# Exit if no instances to churn
+#
+if [ ${asgdesired} -lt 1 ]; then
+       	echo "No web nodes in ${asg} to churn out."
+       	exit 0
+fi
+
+# Check user wants to churn out existing instances in ASG
+#
+echo -ne "${asg} has ${asgdesired} instances to churn. Churn instances? Type 'yes' to proceed: "
+read churnasg
+
+# Bail if churn not desired
+#
+if [ ${churnasg} != 'yes' ]; then
+       	echo "Churn ${asg} instances manually."
+       	exit 0
+fi
+
+# Churn two instances at a time unless the ASG only has 2 instances
+#
+spawnqty=2
+if [ ${asgdesired} -lt 2  ]; then
+       	spawnqty=1
+fi
+
+# Work out whether maxsize accomodates the extra instances we'll start up for uninterupted churn.
+#
+required=$((${asgdesired} + ${spawnqty}))
+
+# Get existing instance ids so we can monitor their termination
+#
+asginstids=$(echo ${asginfo} | jq '.AutoScalingGroups[0].Instances[].InstanceId' | tr -d '"')
+
+echo "Adding ${spawnqty} more instances to ${asg}."
+
+asgmaxsize=$(echo ${asginfo} | jq '.AutoScalingGroups[0].MaxSize' | tr -d '"')
+maxsize=${asgmaxsize}
+if [ ${asgmaxsize} -lt ${required} ]; then
+       	maxsize=${required}
+fi
+
+aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${asg} --max-size ${maxsize} --desired-capacity ${required}
+sleep 10
+
+# Wait for new instances to come online
+#
+curinsts=$(aws autoscaling describe-auto-scaling-groups --region $region --auto-scaling-group-name $asg | jq '.AutoScalingGroups[0].Instances[].InstanceId' | tr -d '"')
+readarray ilist <<< "${curinsts}"
+online=0
+while [ ${online} -lt ${required} ]; do
+       	for inst in "${ilist[@]}"; do
+       		instid=$(echo $inst | tr -d '\n\r')
+       		instate=$(get_instance_state ${instid})
+       	if [ "${instate}" == "running" ]; then
+       			(( online++ ))
+       		fi
+    done
+       	echo -ne "${online} of ${#ilist[@]} instances online\r\033[K"
+done
+
+# Terminate old instances one at a time accounting for a 5 minute cool-off period before the ASG adds another instance
+#
+readarray ilist <<< "${asginstids}"
+for inst in "${ilist[@]}"; do
+       	instid=$(echo $inst | tr -d '\n\r')
+       	terminate_instance ${instid}
+done
+
