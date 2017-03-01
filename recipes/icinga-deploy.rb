@@ -50,6 +50,6 @@ bash "Deploy Icinga2" do
 		chkconfig icinga2 on
 		service icinga2 start
 	EOS
-	not_if { ::File.directory? "/etc/icinga2pki/${client}.crt" }
+	not_if { ::File.exists? "/etc/icinga2/pki/#{node['datashades']['icinga']['master']}.crt" }
 end
 

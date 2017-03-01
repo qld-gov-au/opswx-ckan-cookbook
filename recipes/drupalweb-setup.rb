@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: drupal
+# Recipe:: drupalweb-setup
 #
-# Defines attributes required by Drupal recipes
+# Creates NGINX Web server for Drupal
 #
 # Copyright 2016, Link Digital
 #
@@ -19,7 +19,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-default['datashades']['drupal_web']['packages'] = []
-default['datashades']['drupal_web']['adminpw'] = []
+
+include_recipe "datashades::default"
+
+# Install Drupal services and dependencies
+#
+node['datashades']['drupal_web']['packages'].each do |p|
+	package p
+end
+
+include_recipe "datashades::nginx-setup"
+include_recipe "datashades::ckanweb-nfs-setup"
+
+

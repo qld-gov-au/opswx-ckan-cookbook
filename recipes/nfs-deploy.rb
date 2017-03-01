@@ -20,6 +20,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
+
 # Exports need to be defined here so sitename is set correctly
 #
 node.default['datashades']['nfs']['exports'] = ["/data/nfs/shared_content", "/data/nfs/logs/#{node['datashades']['sitename']}_nginx", "/data/nfs/logs/#{node['datashades']['sitename']}_apache"]

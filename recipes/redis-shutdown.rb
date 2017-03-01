@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: drupal
+# Recipe:: solr-shutdown
 #
-# Defines attributes required by Drupal recipes
+# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2016, Link Digital
 #
@@ -19,7 +19,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-default['datashades']['drupal_web']['packages'] = []
-default['datashades']['drupal_web']['adminpw'] = []
+service_name = 'redis'
+
+# Remove DNS records to stop requests to this host
+#
+bash "Delete #{service_name} DNS record" do
+	user "root"
+	code <<-EOS
+	zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
+	pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
+	dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
+	route53 del_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
+	EOS
+end

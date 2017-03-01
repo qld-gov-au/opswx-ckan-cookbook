@@ -29,6 +29,9 @@ default['datashades']['ckan_web']['dbname'] = 'ckan_default'
 default['datashades']['ckan_web']['dsuser'] = 'ckan_datastore'
 default['datashades']['ckan_web']['dsname'] = 'ckan_datastore'
 
+default['datashades']['ckan_web']['adminpw'] = 'adminpw'
+default['datashades']['ckan_web']['adminemail'] = 'admin@nowhere.com'
+
 default['datashades']['ckan_web']['sentryurl'] = ''
 
 default['datashades']['ckan_web']['disqus'] = 'ckan'

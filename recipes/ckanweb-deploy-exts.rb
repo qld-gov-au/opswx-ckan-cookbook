@@ -121,6 +121,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					if [ -f "/usr/lib/ckan/default/src/#{app['shortname']}/requirements.txt" ]; then
 					    /usr/lib/ckan/default/bin/pip install -r "/usr/lib/ckan/default/src/#{app['shortname']}/requirements.txt"
 					fi
+					if [ -f "/usr/lib/ckan/default/src/#{app['shortname']}/pip-requirements.txt" ]; then
+					    /usr/lib/ckan/default/bin/pip install -r "/usr/lib/ckan/default/src/#{app['shortname']}/pip-requirements.txt"
+					fi
 				EOS
 			end
 

@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Attributes:: drupal
+# Recipe:: drupalweb-configure
 #
-# Defines attributes required by Drupal recipes
+# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2016, Link Digital
 #
@@ -19,7 +19,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-default['datashades']['drupal_web']['packages'] = []
-default['datashades']['drupal_web']['adminpw'] = []
+include_recipe "datashades::default-configure"
+

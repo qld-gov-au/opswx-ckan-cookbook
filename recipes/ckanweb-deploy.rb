@@ -50,7 +50,7 @@ end
 	
 # Setup Site directories
 #
-paths = {"/var/shared_content/#{app['shortname']}" => 'ckan', "/etc/ckan/default" => 'root', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'ckan', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'ckan', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
+paths = {"/var/shared_content/#{app['shortname']}" => 'ckan', "/etc/ckan/default" => 'root', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'apache', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'apache', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
@@ -68,21 +68,21 @@ version = apprelease[/@(.*)/].sub! '@', ''
 
 # Install CKAN
 #
-unless (::File.exists?("/usr/lib/#{version}/default/src/ckan/requirements.txt"))
+unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 	bash "Install CKAN #{version}" do
 		user "root"
 		code <<-EOS
-			. /usr/lib/#{version}/default/bin/activate
+			. /usr/lib/ckan/default/bin/activate
 			pip install -e "git+#{apprelease}#egg=ckan"
-			cd /usr/lib/#{version}/default/src/ckan
+			cd /usr/lib/ckan/default/src/ckan
 			pip install --upgrade setuptools
 			pip install --upgrade bleach
-			pip install -r /usr/lib/#{version}/default/src/ckan/requirements.txt
+			pip install -r /usr/lib/ckan/default/src/ckan/requirements.txt
 			deactivate
-			. /usr/lib/#{version}/default/bin/activate
-			cd /usr/lib/#{version}/default/src/ckan
+			. /usr/lib/ckan/default/bin/activate
+			cd /usr/lib/ckan/default/src/ckan
 			deactivate
-			chown -R ckan:ckan /usr/lib/#{version}
+			chown -R ckan:ckan /usr/lib/ckan
 		EOS
 	end
 
@@ -98,8 +98,30 @@ unless (::File.exists?("/usr/lib/#{version}/default/src/ckan/requirements.txt"))
 		action :create_if_missing		
 	end
 
+	template '/root/installckandbuser.py' do
+		source 'installckandbuser.py.erb'
+		owner 'root'
+		group 'root'
+		mode '0755'
+		variables({
+			:app_name =>  app['shortname']
+		})
+		action :create_if_missing		
+	end
+
 	template '/root/installpostgis.py' do
 		source 'installpostgis.py.erb'
+		owner 'root'
+		group 'root'
+		mode '0755'
+		variables({
+			:app_name =>  app['shortname']
+		})
+		action :create_if_missing		
+	end
+
+	template '/root/installdatastore.py' do
+		source 'installdatastore.py.erb'
 		owner 'root'
 		group 'root'
 		mode '0755'
@@ -112,6 +134,7 @@ unless (::File.exists?("/usr/lib/#{version}/default/src/ckan/requirements.txt"))
 	bash "Init CKAN DB" do
 		user "root"
 		code <<-EOS
+			/root/installckandbuser.py
 			mkdir -p /var/shared_content/"#{app['shortname']}"/private
 			. /usr/lib/ckan/default/bin/activate
 			cd /usr/lib/ckan/default/src/ckan
@@ -120,6 +143,20 @@ unless (::File.exists?("/usr/lib/#{version}/default/src/ckan/requirements.txt"))
 			/root/installpostgis.py
 		EOS
 		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }	
+	end
+
+	bash "Init Datastore resources" do
+		user "root"
+		code <<-EOS
+			mkdir -p /var/shared_content/"#{app['shortname']}"/private
+			/root/installdatastore.py
+			touch /var/shared_content/"#{app['shortname']}"/private/datastore_db_init.log
+			if [ -z  "$(cat /etc/ckan/default/production.ini | grep 'datastore')" ]; then
+				sed -i "/^ckan.plugins/ s/$/ datastore/" /etc/ckan/default/production.ini
+			fi
+
+		EOS
+		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/datastore_db_init.log" }	
 	end
 
 end
@@ -179,4 +216,18 @@ services.each do |servicename|
 	service servicename do
 		action [:restart]
 	end
+end
+
+# Create admin user
+#
+bash "Create CKAN Admin user" do
+	user "root"
+	code <<-EOS
+		. /usr/lib/ckan/default/bin/activate
+		cd /usr/lib/ckan/default/src/ckan
+		paster user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c /etc/ckan/default/production.ini
+		paster sysadmin add sysadmin -c /etc/ckan/default/production.ini
+		touch /var/shared_content/"#{app['shortname']}"/private/ckan_admin.log
+	EOS
+	not_if { ::File.directory?("/var/shared_content/#{app['shortname']}/private/ckan_admin.log")}
 end

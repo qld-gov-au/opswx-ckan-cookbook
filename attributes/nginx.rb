@@ -23,7 +23,7 @@
 
 default['datashades']['nginx']['packages'] = ['nfs-utils', 'nfs-utils-lib', 'nginx', 'perl', 'libaio', 'git', 'telnet', 'ghostscript', 'ImageMagick', 'php55', 'php55-fpm', 'php55-opcache', 'php55-pecl-apcu', 'php55-pdo', 'php55-mysqlnd', 'php55-pecl-memcache', 'php55-pecl-memcached', 'php55-mbstring', 'php55-gd', 'php55-mcrypt', 'php55-soap', 'mysql']
 default['datashades']['nginx']['ssl'] = false
-default['datashades']['nginx']['maxdl'] = '32M'
+default['datashades']['nginx']['maxdl'] = '512M'
 default['datashades']['nginx']['mem_limit'] = '256M'
 default['datashades']['nginx']['default_server'] = ''
 default['datashades']['nginx']['locations'] = ''

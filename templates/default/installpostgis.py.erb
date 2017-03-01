@@ -8,7 +8,7 @@ sys.path.append("/usr/lib/ckan/default/lib/python2.7/site-packages")
 import psycopg2
 
 try:
-    conn = psycopg2.connect("dbname='<%= node['datashades']['ckan_web']['dbname'] %>' user='<%= node['datashades']['ckan_web']['dbuser'] %>' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
+    conn = psycopg2.connect("dbname='<%= node['datashades']['ckan_web']['dbname'] %>' user='pg_dba' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
 except:
     sys.exit(1)
 

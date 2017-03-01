@@ -20,8 +20,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::stackparams"
-
 # Set timezone to default value
 #
 link "/etc/localtime" do
@@ -47,8 +45,12 @@ end
 # Install core packages
 #
 node['datashades']['core']['packages'].each do |p|
-  package p
+	package p
 end
+
+# real basic stuff needs to go in first so jq available for new stack params that uses jq early on
+#
+include_recipe "datashades::stackparams"
 
 # Install Icinga2 package
 #
