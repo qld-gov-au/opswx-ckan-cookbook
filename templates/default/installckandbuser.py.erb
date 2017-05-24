@@ -9,7 +9,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 try:
-    conn = psycopg2.connect("dbname='postgres' user='pg_dba' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
+    conn = psycopg2.connect("dbname='postgres' user='ckan_dba' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
 except:
     sys.exit(1)
 
@@ -17,7 +17,7 @@ conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
 cur = conn.cursor()
 cur.execute("""CREATE ROLE <%= node['datashades']['ckan_web']['dbuser'] %> WITH PASSWORD '<%= node['datashades']['postgres']['password'] %>' LOGIN;""")
-cur.execute("""GRANT <%= node['datashades']['ckan_web']['dbuser'] %> to pg_dba;""")
+cur.execute("""GRANT <%= node['datashades']['ckan_web']['dbuser'] %> to ckan_dba;""")
 cur.execute("""GRANT rds_superuser to <%= node['datashades']['ckan_web']['dbuser'] %>;""")
 
 cur.execute("""GRANT all privileges on all tables in schema public to <%= node['datashades']['ckan_web']['dbuser'] %>;""")
