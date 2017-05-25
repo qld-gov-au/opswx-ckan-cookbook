@@ -9,7 +9,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 try:
-    conn = psycopg2.connect("dbname='postgres' user='pg_dba' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
+    conn = psycopg2.connect("dbname='postgres' user='ckan_dba' host='<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>' password='<%= node['datashades']['postgres']['password'] %>'")
 except:
     sys.exit(1)
 
