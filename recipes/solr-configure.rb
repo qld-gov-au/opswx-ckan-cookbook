@@ -22,6 +22,3 @@
 
 include_recipe "datashades::default-configure"
 
-service "solr" do
-	action [:restart]
-end
