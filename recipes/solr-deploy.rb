@@ -55,6 +55,7 @@ unless (::File.directory?("/data/solr"))
 		cd /tmp/solr/solr-${solrvers} 
 		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
 		mv /var/solr /data/
+		chkconfig solr on --level 5
 		EOS
 		not_if { ::File.directory? "/data/solr" }
 	end
@@ -65,7 +66,7 @@ unless (::File.directory?("/data/solr"))
 	end
 	
 	service "solr" do
-		action [:enable, :start]
+		action [:start]
 	end
 end
 
