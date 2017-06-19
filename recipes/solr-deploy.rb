@@ -49,6 +49,7 @@ unless (::File.directory?("/data/solr"))
 	bash "install solr" do
 		user "root"
 		code <<-EOS
+		mkdir -p /home/solr
 		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
 		solrvers=$(ls /tmp/solr/ | grep 'solr-' | tr -d 'solr-') 
 		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
@@ -67,6 +68,16 @@ unless (::File.directory?("/data/solr"))
 	service "solr" do
 		action [:enable, :start]
 	end
+end
+
+# Create Monit config file to restart Solr when port 8983 not available
+# Solves instance start issue after Solr install when /data doesn't mount fast enough
+#
+cookbook_file '/etc/monit.d/solr.monitrc' do
+	source 'solr.monitrc'
+	owner 'root'
+	group 'root'
+	mode '0755'
 end
 
 include_recipe "datashades::solr-deploycore"

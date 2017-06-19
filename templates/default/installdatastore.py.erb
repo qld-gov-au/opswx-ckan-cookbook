@@ -19,7 +19,7 @@ cur = conn.cursor()
 cur.execute("""CREATE USER <%= node['datashades']['ckan_web']['dsuser'] %>_rw WITH PASSWORD '<%= node['datashades']['postgres']['password'] %>' LOGIN;""")
 cur.execute("""CREATE USER <%= node['datashades']['ckan_web']['dsuser'] %>_ro WITH PASSWORD '<%= node['datashades']['postgres']['password'] %>' LOGIN;""")
 
-cur.execute("""GRANT <%= node['datashades']['ckan_web']['dsuser'] %>_rw TO pg_dba;""")
+cur.execute("""GRANT <%= node['datashades']['ckan_web']['dsuser'] %>_rw TO ckan_dba;""")
 cur.execute("""GRANT rds_superuser TO <%= node['datashades']['ckan_web']['dsuser'] %>_rw;""")
 
 cur.execute("""CREATE DATABASE <%= node['datashades']['ckan_web']['dsname'] %> WITH OWNER <%= node['datashades']['ckan_web']['dsuser'] %>_rw ENCODING 'utf-8';""")
