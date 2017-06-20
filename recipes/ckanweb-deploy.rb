@@ -140,7 +140,9 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 			cd /usr/lib/ckan/default/src/ckan
 			paster db init -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/ckan_db_init.log
 			deactivate
-			/root/installpostgis.py
+			if [ "#{node['datashades']['postgres']['rds']}" = 'true' ]; then 
+				/root/installpostgis.py
+			fi
 		EOS
 		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }	
 	end
