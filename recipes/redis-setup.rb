@@ -23,6 +23,10 @@
 
 include_recipe "datashades::default"
 
+# Create and mount EFS Data directory
+#
+include_recipe "datashades::efs-setup"
+
 service_name = 'redis'
 
 # Install necessary packages
