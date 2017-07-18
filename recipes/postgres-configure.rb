@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: solr-configure
+# Recipe:: postgres-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -22,6 +22,3 @@
 
 include_recipe "datashades::default-configure"
 
-service "solr" do
-	action [:start]
-end

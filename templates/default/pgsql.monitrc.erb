@@ -1,0 +1,8 @@
+check process postgresql with pidfile /data/pgsql/data/postmaster.pid
+group postgres
+start program = "/etc/init.d/postgresql<%= node['datashades']['postgres']['version'] %> start"
+stop program = "/etc/init.d/postgresql<%= node['datashades']['postgres']['version'] %> stop"
+if failed
+	port 5432
+then restart
+if 5 restarts within 5 cycles then timeout

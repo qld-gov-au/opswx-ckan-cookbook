@@ -41,5 +41,6 @@ default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 default['datashades']['postgres']['password'] = ""
 
 # Postgres settings
-default['datashades']['ckan_db']['packages'] = ['postgresql94-server', 'postgresql94', 'postgresql94-devel', 'libtool', 'libxml2-devel', 'geos-devel']
-default['datashades']['ckan_db']['version'] = '94'
+default['datashades']['postgres']['rds'] = 'true'
+default['datashades']['postgres']['packages'] = ['postgresql95-server', 'postgresql95', 'postgresql95-devel', 'libtool', 'libxml2-devel', 'geos-devel', 'postgis']
+default['datashades']['postgres']['version'] = '95'

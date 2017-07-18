@@ -1,9 +1,9 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: solr-configure
+# Recipe:: postgres-deploy
 #
-# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
+# Deploy Postgres service to Postgres layer
 #
 # Copyright 2016, Link Digital
 #
@@ -20,8 +20,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+unless (::File.directory?("/data/pgsql#{node['datashades']['postgres']['version']}"))	
+	pgserv = "postgresql" + node['datashades']['postgres']['version']
+	pgdir = "pgsql" + node['datashades']['postgres']['version'] 
 
-service "solr" do
-	action [:start]
+	bash 'install_postgres' do
+		code <<-EOS
+			service "#{pgserv}" initdb
+			mv /var/lib/"#{pgdir}" /data/
+			ln -sf /data/"#{pgdir}" /var/lib/"#{pgdir}"
+			echo "listen_addresses = '*'" >> /data/"#{pgdir}"/data/postgresql.conf
+		EOS
+	end
+
+	template "/data/#{pgdir}/data/pg_hba.conf" do
+	  source 'pg_hba.conf.erb'
+	end
+
+	service "#{pgserv}" do
+		action [:start, :enable]	
+	end
 end
