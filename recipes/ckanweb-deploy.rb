@@ -86,6 +86,8 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 		EOS
 	end
 
+end
+
 unless (::File.exists?("/etc/ckan/default/production.ini"))
 	template '/etc/ckan/default/production.ini' do
 	  source 'ckan_properties.ini.erb'
