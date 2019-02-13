@@ -74,7 +74,7 @@ ckan.auth.roles_that_cascade_to_sub_groups = admin
 
 ## Search Settings
 
-ckan.site_id = default
+ckan.site_id = <%= node['datashades']['ckan_web']['app_id'] %>
 solr_url = http://<%= node['datashades']['version'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
 
 #ckan.simple_search = 1
@@ -93,7 +93,8 @@ ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
 disqus.name = <%= node['datashades']['ckan_web']['disqus'] %>
 ckan.harvest.mq.type = redis
-ckan.harvest.mq.hostname = <%= node['datashades']['version'] %>redis.<%= node['datashades']['tld'] %>
+ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
+ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
 ## Google Analytics
 googleanalytics.id =
@@ -142,7 +143,7 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 #ckan.datapusher.formats =
 #ckan.datapusher.url = http://127.0.0.1:8800/
 
-ckan.redis.url = <%= node['datashades']['redis']['url'] %>
+ckan.redis.url = redis://<%= node['datashades']['redis']['url'] %>:<%= node['datashades']['redis']['port'] %>/0
 
 ## Activity Streams Settings
 
