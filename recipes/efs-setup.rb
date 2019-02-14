@@ -34,7 +34,7 @@ mount 'connect efs root' do
   action :mount
 end
 
-directory "/mnt/efs/#{@app_name}" do
+directory "/mnt/efs/#{node['datashades']['app_id']}" do
 	owner 'ec2-user'
 	group 'ec2-user'
 	mode '0775'
@@ -43,7 +43,7 @@ directory "/mnt/efs/#{@app_name}" do
 end
 
 mount '/data' do
-	device "#{node['datashades']['version']}efs.#{node['datashades']['tld']}:/#{@app_name}"
+	device "#{node['datashades']['version']}efs.#{node['datashades']['tld']}:/#{node['datashades']['app_id']}"
 	fstype "nfs4"
 	options "nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2"
 	action [:mount, :enable]
