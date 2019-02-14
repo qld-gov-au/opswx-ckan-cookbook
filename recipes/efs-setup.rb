@@ -38,6 +38,13 @@ directory "/mnt/efs/#{node['datashades']['app_id']}" do
 	owner 'ec2-user'
 	group 'ec2-user'
 	mode '0775'
+  action :create
+end
+
+directory "/data" do
+	owner 'ec2-user'
+	group 'ec2-user'
+	mode '0775'
 	recursive true
 	action :create
 end
