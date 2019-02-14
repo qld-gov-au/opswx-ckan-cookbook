@@ -62,7 +62,7 @@ end
 
 # Get app details so we can version the app setup
 #
-app = search("aws_opsworks_app", 'shortname:*ckan_*').first
+app = search("aws_opsworks_app", 'shortname:#{node['datashades']['app_id']}').first
 apprelease = app['app_source']['url']
 apprelease.sub! 'ckan/archive/', "ckan.git@" 			
 apprelease.sub! '.zip', ""
