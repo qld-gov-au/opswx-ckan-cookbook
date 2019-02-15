@@ -56,7 +56,14 @@ ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuse
 
 ## Site Settings
 
-ckan.site_url = http://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+
+## QGOV Settings
+
+extra_public_paths = /srv/<%= node['datashades']['app_id'] %>/public
+extra_template_paths = /srv/<%= node['datashades']['app_id'] %>/templates
+feedback_form_recipients = opendata@qld.gov.au
+feedback_redirection = /article/thanks
 
 ## Authorization Settings
 
