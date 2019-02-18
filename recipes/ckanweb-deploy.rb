@@ -22,7 +22,7 @@
 
 include_recipe "datashades::stackparams"
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}").first
+app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
 
 # Define CKAN endpoint NGINX location directive 
 #

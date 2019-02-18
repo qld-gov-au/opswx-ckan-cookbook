@@ -20,7 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ckan = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}").first
+ckan = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
 
 # Install Solr conf if it doesn't exist
 #

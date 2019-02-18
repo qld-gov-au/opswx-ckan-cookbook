@@ -21,7 +21,7 @@
 # limitations under the License.
 
 unless (::File.directory?("/data/solr"))
-	app = search("aws_opsworks_app", 'shortname:*solr*').first
+	app = search("aws_opsworks_app", 'shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*').first
 	
 	remote_file "#{Chef::Config[:file_cache_path]}/solr.zip" do
 		source app['app_source']['url']
