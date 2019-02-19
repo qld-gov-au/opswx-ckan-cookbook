@@ -44,8 +44,7 @@ unless (::File.directory?("/data/solr"))
 		uid '1001'
 		gid '1001'	
 	end
-	
-	
+
 	bash "install solr" do
 		user "root"
 		code <<-EOS
@@ -55,14 +54,19 @@ unless (::File.directory?("/data/solr"))
 		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
 		cd /tmp/solr/solr-${solrvers} 
 		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
-		mv /var/solr /data/
 		EOS
 		not_if { ::File.exists? "/etc/init.d/solr" }
 	end
-	
+
+	bash 'initialize solr data' do
+		user "root"
+		code "mv /var/solr /data/"
+		not_if { ::File.directory? "/data/solr" }
+	end
+
 	link "/var/solr" do
-	 to "/data/solr"
-	 link_type :symbolic
+		to "/data/solr"
+		link_type :symbolic
 	end
 	
 	service "solr" do
