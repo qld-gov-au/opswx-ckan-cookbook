@@ -57,7 +57,7 @@ unless (::File.directory?("/data/solr"))
 		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
 		mv /var/solr /data/
 		EOS
-		not_if { ::File.directory? "/data/solr" }
+		not_if { ::File.exists? "/etc/init.d/solr" }
 	end
 	
 	link "/var/solr" do
