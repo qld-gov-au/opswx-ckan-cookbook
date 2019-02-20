@@ -36,6 +36,7 @@ batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 #
 extnames = 
 {
+	'qgov' => 'qgovext',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
@@ -108,14 +109,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				extname = extnames[pluginname]
 			end
 
-			# Install the extension and add it's name to production.ini
+			# Install the extension and add its name to production.ini
 			#
 			bash "Pip Install #{app['shortname']}" do
 				user "root"
 				cwd "/usr/lib/ckan/default/src"
 				code <<-EOS
 					/usr/lib/ckan/default/bin/pip install -e "#{apprelease}"
-					if [ -z  "$(cat /etc/ckan/default/production.ini | grep '#{extname}')" ]; then
+					if [ -z  "$(cat /etc/ckan/default/production.ini | grep 'ckan.plugins.*#{extname}')" ]; then
 						sed -i "/^ckan.plugins/ s/$/ #{extname}/" /etc/ckan/default/production.ini
 					fi
 					if [ -f "/usr/lib/ckan/default/src/#{app['shortname']}/requirements.txt" ]; then
