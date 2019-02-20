@@ -147,10 +147,18 @@ directory "/usr/lib/ckan/default/etc" do
   recursive true
 end
 
+directory "/etc/ckan" do
+  owner 'ckan'
+  group 'ckan'
+  mode '0755'
+  action :create
+  recursive true
+end
+
 # Link /etc/ckan to actual CKAN location
 #
-link "/etc/ckan" do
-	to "/usr/lib/ckan/default/etc"
+link "/etc/ckan/default" do
+	to "/usr/lib/ckan/default/etc/default"
 	link_type :symbolic
 end
 
