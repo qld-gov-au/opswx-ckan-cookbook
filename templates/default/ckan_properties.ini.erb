@@ -82,7 +82,7 @@ ckan.auth.roles_that_cascade_to_sub_groups = admin
 ## Search Settings
 
 ckan.site_id = <%= @app_name %>
-solr_url = http://<%= node['datashades']['version'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
+solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
 
 #ckan.simple_search = 1
 
