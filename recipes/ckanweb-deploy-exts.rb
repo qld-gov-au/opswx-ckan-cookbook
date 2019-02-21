@@ -128,8 +128,22 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				EOS
 			end
 
+			# DataPusher requires the Datastore, but Datastore is built in and doesn't need separate installation
+			#
+			if "#{pluginname}".eql? 'datapusher' then
+				bash "Enable datastore plugin" do
+					user "root"
+					cwd "/etc/ckan/default"
+					code <<-EOS
+						if [ -z  "$(cat production.ini | grep 'ckan.plugins.*\bdatastore\b')" ]; then
+							sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
+						fi
+					EOS
+				end
+			end
+
 			# Add the extension to the default_views line if required
-			#			
+			#
 			if extviews.has_key? pluginname
 				viewname = extviews[pluginname]
 				bash "#{app['shortname']} ext config" do
