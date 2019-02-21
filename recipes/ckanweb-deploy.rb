@@ -42,15 +42,15 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
   variables({
    		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
-   		
+
  		})
 	 not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
 	action :create_if_missing
 end
-	
+
 # Setup Site directories
 #
-paths = {"/var/shared_content/#{app['shortname']}" => 'ckan', "/etc/ckan/default" => 'root', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'apache', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'apache', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
+paths = {"/var/shared_content/#{app['shortname']}" => 'ckan', "/var/shared_content/#{app['shortname']}/ckan_storage/storage" => 'apache', "/var/shared_content/#{app['shortname']}/ckan_storage/resources" => 'apache', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do

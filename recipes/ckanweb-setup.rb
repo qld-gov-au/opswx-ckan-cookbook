@@ -158,7 +158,7 @@ end
 # Link /etc/ckan to actual CKAN location
 #
 link "/etc/ckan/default" do
-	to "/usr/lib/ckan/default/etc/default"
+	to "/usr/lib/ckan/default/etc"
 	link_type :symbolic
 end
 
