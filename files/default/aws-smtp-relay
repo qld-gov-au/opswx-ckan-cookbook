@@ -1,0 +1,35 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          aws-smtp-relay
+# Required-Start:    $remote_fs $network $named
+# Required-Stop:     $remote_fs
+# Default-Start:     3 4 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Relay SMTP traffic to AWS SES
+# Description:       Mail relay to convert SMTP traffic to Amazon Simple Email Service API calls.
+### END INIT INFO
+
+PIDFILE=/var/run/aws-smtp-relay.pid
+case $1 in
+  start)
+    /bin/sh /usr/local/sbin/start-aws-smtp-relay.sh
+  ;;
+  stop)
+    /bin/sh /usr/local/sbin/stop-aws-smtp-relay.sh
+  ;;
+  status)
+    if [ -e $PIDFILE ]; then
+      PID=`head -1 $PIDFILE`
+    fi
+    if [ "$PID" == "" ]; then
+      echo "AWS SMTP relay is not running"
+    else
+      echo "AWS SMTP relay is running with PID $PID"
+    fi
+  ;;
+  restart)
+    /bin/sh /usr/local/sbin/stop-aws-smtp-relay.sh
+    /bin/sh /usr/local/sbin/start-aws-smtp-relay.sh
+  ;;
+esac
+exit 0

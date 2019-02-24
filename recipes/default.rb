@@ -124,3 +124,23 @@ execute 'Create Admin users' do
 	command '/etc/cron.daily/manageadmins'
 	user 'root'
 end
+
+# Replace default mail relay with Nuxeo AWS SMTP Relay
+bash "Install AWS SMTP relay" do
+	user "root"
+	code <<-EOS
+	mkdir -p /usr/share/aws-smtp-relay
+	cp #{Chef::Config[:file_cache_path]}/aws-smtp-relay-1.0.0-jar-with-dependencies.jar /usr/share/aws-smtp-relay/
+	cp #{Chef::Config[:file_cache_path]}/start-aws-smtp-relay.sh #{Chef::Config[:file_cache_path]}/stop-aws-smtp-relay.sh /usr/local/sbin/
+	cp #{Chef::Config[:file_cache_path]}/aws-smtp-relay /etc/init.d/
+	EOS
+	not_if { ::File.exists? "/etc/init.d/aws-smtp-relay" }
+end
+
+service 'sendmail' do
+	action [:stop, :disable]
+end
+
+service 'aws-smtp-relay' do
+	action [:enable, :start]
+end
