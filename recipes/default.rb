@@ -126,13 +126,20 @@ execute 'Create Admin users' do
 end
 
 # Replace default mail relay with Nuxeo AWS SMTP Relay
+cookbook_file "#{Chef::Config[:file_cache_path]}/aws-smtp-relay.zip" do
+	source "aws-smtp-relay.zip"
+end
+
 bash "Install AWS SMTP relay" do
 	user "root"
 	code <<-EOS
+	unzip -u -q #{Chef::Config[:file_cache_path]}/aws-smtp-relay.zip -d /tmp/aws-smtp-relay
 	mkdir -p /usr/share/aws-smtp-relay
-	cp #{Chef::Config[:file_cache_path]}/aws-smtp-relay-1.0.0-jar-with-dependencies.jar /usr/share/aws-smtp-relay/
-	cp #{Chef::Config[:file_cache_path]}/start-aws-smtp-relay.sh #{Chef::Config[:file_cache_path]}/stop-aws-smtp-relay.sh /usr/local/sbin/
-	cp #{Chef::Config[:file_cache_path]}/aws-smtp-relay /etc/init.d/
+	cd /tmp/aws-smtp-relay
+	cp aws-smtp-relay-1.0.0-jar-with-dependencies.jar /usr/share/aws-smtp-relay/
+	chmod +x aws-smtp-relay *.sh
+	cp *.sh /usr/local/sbin/
+	cp aws-smtp-relay /etc/init.d/
 	EOS
 	not_if { ::File.exists? "/etc/init.d/aws-smtp-relay" }
 end
