@@ -24,9 +24,9 @@ include_recipe "datashades::stackparams"
 
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
 
-# Define CKAN endpoint NGINX location directive 
+# Define CKAN endpoint NGINX location directive
 #
-node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"					
+node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 node.default['datashades']['auditd']['rules'].push('/etc/ckan/default/production.ini')
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
@@ -62,7 +62,7 @@ paths.each do |nfs_path, dir_owner|
 end
 
 apprelease = app['app_source']['url']
-apprelease.sub! 'ckan/archive/', "ckan.git@" 			
+apprelease.sub! 'ckan/archive/', "ckan.git@"
 apprelease.sub! '.zip', ""
 version = apprelease[/@(.*)/].sub! '@', ''
 
@@ -98,7 +98,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 	   		:app_name =>  app['shortname'],
 			:app_url => app['domains'][0]
 	  })
-		action :create_if_missing		
+		action :create_if_missing
 	end
 
 	template '/root/installckandbuser.py' do
@@ -109,7 +109,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 		variables({
 			:app_name =>  app['shortname']
 		})
-		action :create_if_missing		
+		action :create_if_missing
 	end
 
 	template '/root/installpostgis.py' do
@@ -120,7 +120,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 		variables({
 			:app_name =>  app['shortname']
 		})
-		action :create_if_missing		
+		action :create_if_missing
 	end
 
 	template '/root/installdatastore.py' do
@@ -131,7 +131,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 		variables({
 			:app_name =>  app['shortname']
 		})
-		action :create_if_missing		
+		action :create_if_missing
 	end
 
 	bash "Init CKAN DB" do
@@ -142,11 +142,11 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 			cd /usr/lib/ckan/default/src/ckan
 			paster db init -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/ckan_db_init.log
 			deactivate
-			if [ "#{node['datashades']['postgres']['rds']}" = 'true' ]; then 
+			if [ "#{node['datashades']['postgres']['rds']}" = 'true' ]; then
 				/root/installpostgis.py
 			fi
 		EOS
-		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }	
+		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }
 	end
 
 	bash "Init Datastore resources" do
@@ -159,7 +159,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 			fi
 
 		EOS
-		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/datastore_db_init.log" }	
+		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/datastore_db_init.log" }
 	end
 
 end
@@ -192,7 +192,7 @@ template '/etc/httpd/conf.d/ckan.conf' do
    		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
   })
-	action :create_if_missing		
+	action :create_if_missing
 end
 
 # Install Raven for Sentry
@@ -210,6 +210,17 @@ end
 # Install CKAN extensions
 #
 include_recipe "datashades::ckanweb-deploy-exts"
+
+# Prepare front-end CSS and JavaScript
+# This needs to be after any extensions since they may affect the result.
+bash "Create front-end resources" do
+	user "ckan"
+	code <<-EOS
+		. /usr/lib/ckan/default/bin/activate
+		paster --plugin=ckan front-end-build -c /etc/ckan/default/production.ini
+		deactivate
+	EOS
+end
 
 # Restart Web services to enable new configurations
 #
