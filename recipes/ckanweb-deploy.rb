@@ -232,7 +232,7 @@ bash "Build search index" do
 		paster --plugin=ckan search-index rebuild -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/solr-index-build.log
 		deactivate
 	EOS
-	not_if { ::File.exists "/var/shared_content/#{app['shortname']}/private/solr-index-build.log" }
+	not_if { ::File.exists? "/var/shared_content/#{app['shortname']}/private/solr-index-build.log" }
 end
 
 # Restart Web services to enable new configurations
