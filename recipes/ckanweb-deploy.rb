@@ -222,6 +222,19 @@ bash "Create front-end resources" do
 	EOS
 end
 
+# Build the Solr search index in case we have pre-existing data.
+bash "Build search index" do
+	user "root"
+	code <<-EOS
+		mkdir -p /var/shared_content/"#{app['shortname']}"/private
+		. /usr/lib/ckan/default/bin/activate
+		touch /var/shared_content/"#{app['shortname']}"/private/solr-index-build.log
+		paster --plugin=ckan search-index rebuild -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/solr-index-build.log
+		deactivate
+	EOS
+	not_if { ::File.exists "/var/shared_content/#{app['shortname']}/private/solr-index-build.log" }
+end
+
 # Restart Web services to enable new configurations
 #
 services = [ 'php-fpm-5.5', 'nginx', 'httpd' ]
