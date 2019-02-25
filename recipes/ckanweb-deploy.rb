@@ -137,7 +137,6 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 	bash "Init CKAN DB" do
 		user "root"
 		code <<-EOS
-			/root/installckandbuser.py
 			mkdir -p /var/shared_content/"#{app['shortname']}"/private
 			. /usr/lib/ckan/default/bin/activate
 			cd /usr/lib/ckan/default/src/ckan
@@ -154,7 +153,6 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 		user "root"
 		code <<-EOS
 			mkdir -p /var/shared_content/"#{app['shortname']}"/private
-			/root/installdatastore.py
 			touch /var/shared_content/"#{app['shortname']}"/private/datastore_db_init.log
 			if [ -z  "$(cat /etc/ckan/default/production.ini | grep 'datastore')" ]; then
 				sed -i "/^ckan.plugins/ s/$/ datastore/" /etc/ckan/default/production.ini
