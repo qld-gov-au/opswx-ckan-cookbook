@@ -126,9 +126,9 @@ ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain a
 
 ## Internationalisation Settings
 ckan.locale_default = en_AU
-ckan.locale_order = 
+ckan.locale_order =
 ckan.locales_offered = en_AU
-ckan.locales_filtered_out = 
+ckan.locales_filtered_out =
 
 ## Feeds Settings
 
@@ -148,7 +148,7 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 # Make sure you have set up the DataStore
 
 #ckan.datapusher.formats =
-#ckan.datapusher.url = http://127.0.0.1:8800/
+ckan.datapusher.url = http://<%= node['datashades']['app_id'] %>datapusher.<%= node['datashades']['tld'] %>:8800/
 
 ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node['datashades']['redis']['port'] %>/0
 

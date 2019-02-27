@@ -128,20 +128,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				EOS
 			end
 
-			# DataPusher requires the Datastore, but Datastore is built in and doesn't need separate installation
-			#
-			if "#{pluginname}".eql? 'datapusher' then
-				bash "Enable datastore plugin" do
-					user "root"
-					cwd "/etc/ckan/default"
-					code <<-EOS
-						if [ -z  "$(cat production.ini | grep 'ckan.plugins.*\bdatastore\b')" ]; then
-							sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
-						fi
-					EOS
-				end
-			end
-
 			# Add the extension to the default_views line if required
 			#
 			if extviews.has_key? pluginname
@@ -197,8 +183,24 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					EOS
 					not_if { ::File.directory?("/usr/lib/node_modules/geojson-extent") }
 				end
-			end		
-			
+			end
+
 		end
 	end
+end
+
+# Enable DataStore and DataPusher extensions if desired
+# No installation necessary in CKAN 2.2+
+bash "Enable DataStore-related extensions" do
+	user "root"
+	cwd "/etc/ckan/default"
+	code <<-EOS
+		if [ -z  "$(grep 'ckan.plugins.*\bdatastore\b' production.ini)" ]; then
+			sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
+		fi
+		if [ -z  "$(grep 'ckan.plugins.*\bdatapusher\b' production.ini)" ]; then
+			sed -i "/^ckan.plugins/ s/$/ datapusher/" production.ini
+		fi
+	EOS
+	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable'] }
 end
