@@ -68,7 +68,7 @@ version = apprelease[/@(.*)/].sub! '@', ''
 
 # Install CKAN
 #
-unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
+unless (::File.exist?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 	bash "Install CKAN #{version}" do
 		user "root"
 		code <<-EOS
@@ -88,7 +88,7 @@ unless (::File.exists?("/usr/lib/ckan/default/src/ckan/requirements.txt"))
 
 end
 
-unless (::File.exists?("/etc/ckan/default/production.ini"))
+unless (::File.exist?("/etc/ckan/default/production.ini"))
 	template '/etc/ckan/default/production.ini' do
 	  source 'ckan_properties.ini.erb'
 	  owner 'root'
@@ -101,39 +101,6 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 		action :create_if_missing
 	end
 
-	template '/root/installckandbuser.py' do
-		source 'installckandbuser.py.erb'
-		owner 'root'
-		group 'root'
-		mode '0755'
-		variables({
-			:app_name =>  app['shortname']
-		})
-		action :create_if_missing
-	end
-
-	template '/root/installpostgis.py' do
-		source 'installpostgis.py.erb'
-		owner 'root'
-		group 'root'
-		mode '0755'
-		variables({
-			:app_name =>  app['shortname']
-		})
-		action :create_if_missing
-	end
-
-	template '/root/installdatastore.py' do
-		source 'installdatastore.py.erb'
-		owner 'root'
-		group 'root'
-		mode '0755'
-		variables({
-			:app_name =>  app['shortname']
-		})
-		action :create_if_missing
-	end
-
 	bash "Init CKAN DB" do
 		user "root"
 		code <<-EOS
@@ -143,7 +110,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 			paster db init -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/ckan_db_init.log
 			deactivate
 		EOS
-		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }
+		not_if { ::File.exist?"/var/shared_content/#{app['shortname']}/private/ckan_db_init.log" }
 	end
 
 	bash "Init Datastore resources" do
@@ -156,7 +123,7 @@ unless (::File.exists?("/etc/ckan/default/production.ini"))
 			fi
 
 		EOS
-		not_if { ::File.exists?"/var/shared_content/#{app['shortname']}/private/datastore_db_init.log" }
+		not_if { ::File.exist?"/var/shared_content/#{app['shortname']}/private/datastore_db_init.log" }
 	end
 
 end
@@ -229,7 +196,7 @@ bash "Build search index" do
 		paster --plugin=ckan search-index rebuild -c /etc/ckan/default/production.ini > /var/shared_content/"#{app['shortname']}"/private/solr-index-build.log
 		deactivate
 	EOS
-	not_if { ::File.exists? "/var/shared_content/#{app['shortname']}/private/solr-index-build.log" }
+	not_if { ::File.exist? "/var/shared_content/#{app['shortname']}/private/solr-index-build.log" }
 end
 
 # Restart Web services to enable new configurations

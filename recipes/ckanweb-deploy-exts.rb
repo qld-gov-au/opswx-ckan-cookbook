@@ -27,14 +27,14 @@ instance = search("aws_opsworks_instance", "self:true").first
 #
 batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-batch").first
 batchnode = false
-unless batchlayer.nil? 
+unless batchlayer.nil?
 	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
 end
 batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 
 # Hash to map extname to pluginname
 #
-extnames = 
+extnames =
 {
 	'qgov' => 'qgovext',
 	'officedocs' => 'officedocs_view',
@@ -46,7 +46,7 @@ extnames =
 	'datajson' => 'datajson datajson_harvest',
 	'harvest' => 'harvest ckan_harvester',
 	'spatial' => 'spatial_metadata spatial_query',
-	'zippreview' => 'zip_view'	
+	'zippreview' => 'zip_view'
 }
 
 # Hash to add plugin to default_views line
@@ -56,7 +56,7 @@ extviews =
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'pdfview' => 'pdf_view',
-	'zippreview' => 'zip_view'	
+	'zippreview' => 'zip_view'
 }
 
 # Hash to install extra pip packages
@@ -66,7 +66,7 @@ extextras =
 	'datajson' => 'jsonschema',
 	'harvest' => 'jsonschema pika',
 	'spatial' => 'geoalchemy2 lxml'
-	
+
 }
 
 # Install any packages required by extensions
@@ -79,7 +79,7 @@ end
 #
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
-	app['shortname'].sub! '_', '-'	
+	app['shortname'].sub! '_', '-'
 	pluginname = "#{app['shortname']}".sub! 'ckanext-', ""
 
 	# Don't install extensions not required by the batch node
@@ -88,11 +88,11 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	unless (!installext)
 		apprelease = app['app_source']['url']
 		apprelease.sub! 'http', "git+http"
-		
+
 		if ! apprelease.include? '#egg' then
-			apprelease << "#egg=#{app['shortname']}"	 			
+			apprelease << "#egg=#{app['shortname']}"
 		end
-								
+
 		# Install Extension
 		#
 		unless (::File.directory?("/usr/lib/ckan/default/src/#{app['shortname']}"))
@@ -142,22 +142,22 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					not_if "grep 'ckan.views.default_views' | grep '#{extname}' /etc/ckan/default/production.ini"
 				end
 			end
-			
+
 			# Viewhelpers is a special case because stats needs to be loaded before it
-			# 
+			#
 			if "#{pluginname}".eql? 'viewhelpers' then
 				bash "View Helpers CKAN ext config" do
 					user "root"
 					code <<-EOS
-						if [ ! -z "$(cat /etc/ckan/default/production.ini | grep 'viewhelpers')" ] && [ -z "$(cat /etc/ckan/default/production.ini | grep 'stats viewhelpers')" ]; then 
-							sed -i "s/viewhelpers/ /g" /etc/ckan/default/production.ini; 
-							sed -i "s/stats/stats viewhelpers/g" /etc/ckan/default/production.ini; 
+						if [ ! -z "$(cat /etc/ckan/default/production.ini | grep 'viewhelpers')" ] && [ -z "$(cat /etc/ckan/default/production.ini | grep 'stats viewhelpers')" ]; then
+							sed -i "s/viewhelpers/ /g" /etc/ckan/default/production.ini;
+							sed -i "s/stats/stats viewhelpers/g" /etc/ckan/default/production.ini;
 						fi
 					EOS
 				end
-			end		
+			end
 
-			# Install any additional pip packages required 		
+			# Install any additional pip packages required
 			#
 			if extextras.has_key? pluginname
 				pip_packages = extextras[pluginname]
@@ -173,7 +173,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				end
 			end
 
-			# Cesium preview requires some NPM extras	
+			# Cesium preview requires some NPM extras
 			#
 			if "#{pluginname}".eql? 'cesiumpreview' then
 				bash "Cesium Preview CKAN ext config" do

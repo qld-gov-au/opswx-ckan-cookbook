@@ -85,14 +85,14 @@ end
 bash "Adding AWS ZoneID" do
 	user "root"
 	code <<-EOS
-	if [ ! -e /etc/awszoneid ]; then 
+	if [ ! -e /etc/awszoneid ]; then
 		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
 		echo "zoneid=${zoneid}" > /etc/awszoneid
 	fi
 	EOS
 end
 
-# Install cli53 for Failover recordset creation 
+# Install cli53 for Failover recordset creation
 #
 remote_file "/sbin/cli53" do
 	source "https://github.com/barnybug/cli53/releases/download/0.8.5/cli53-linux-amd64"
@@ -141,7 +141,7 @@ bash "Install AWS SMTP relay" do
 	cp *.sh /usr/local/sbin/
 	cp aws-smtp-relay /etc/init.d/
 	EOS
-	not_if { ::File.exists? "/etc/init.d/aws-smtp-relay" }
+	not_if { ::File.exist? "/etc/init.d/aws-smtp-relay" }
 end
 
 service 'sendmail' do

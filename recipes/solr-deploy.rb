@@ -55,7 +55,7 @@ unless (::File.directory?("/data/solr"))
 		cd /tmp/solr/solr-${solrvers}
 		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
 		EOS
-		not_if { ::File.exists? "/etc/init.d/solr" }
+		not_if { ::File.exist? "/etc/init.d/solr" }
 	end
 
 	bash 'initialize solr data' do
