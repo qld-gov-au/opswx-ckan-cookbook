@@ -96,50 +96,37 @@ directory '/home/ckan' do
 	recursive true
 end
 
+virtualenv_dir = "/usr/lib/ckan/default"
 
-# Create ckan app location
-#
-directory "/usr/lib/ckan/default" do
-  owner 'ckan'
-  group 'ckan'
-  mode '0755'
-  action :create
-  recursive true
-end
-
-# Install Virtual Environment
-#
 execute "Install Python Virtual Environment" do
 	user "root"
 	command "pip install virtualenv"
-	not_if "pip list | grep virtualenv"
 end
 
-# Create VirtualEnv for CKAN
-#
-if !::File.directory?("/usr/lib/ckan/default/bin")
-	execute "Create CKAN Default Virtual Environment" do
-		cwd "/usr/lib/ckan"
-		user "root"
-		command "/usr/bin/virtualenv --no-site-packages /usr/lib/ckan/default"
-	end
-	
-	bash "Fix VirtualEnv lib issue" do
-		user "root"
-		cwd "/usr/lib/ckan/default"
-		code <<-EOS
+bash "Create CKAN Default Virtual Environment" do
+	user "root"
+	code <<-EOS
+		/usr/bin/virtualenv --no-site-packages #{virtualenv_dir}
+		chown -R ckan:ckan #{virtualenv_dir}
+	EOS
+	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
+end
+
+bash "Fix VirtualEnv lib issue" do
+	user "ckan"
+	group "ckan"
+	cwd "#{virtualenv_dir}"
+	code <<-EOS
 		mv -f lib/python2.7/site-packages lib64/python2.7/
 		rm -rf lib
-		ln -sf lib64 lib 
-		EOS
-	end
-	
-	
+		ln -sf lib64 lib
+	EOS
+	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
 end
 
 # Create CKAN default etc directory
 #
-directory "/usr/lib/ckan/default/etc" do
+directory "#{virtualenv_dir}/etc" do
   owner 'ckan'
   group 'ckan'
   mode '0755'
@@ -158,7 +145,7 @@ end
 # Link /etc/ckan to actual CKAN location
 #
 link "/etc/ckan/default" do
-	to "/usr/lib/ckan/default/etc"
+	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
 end
 

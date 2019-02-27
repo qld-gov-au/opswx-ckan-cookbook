@@ -95,10 +95,11 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		# Install Extension
 		#
-		unless (::File.directory?("/usr/lib/ckan/default/src/#{app['shortname']}"))
+		virtualenv_dir = "/usr/lib/ckan/default"
+		unless (::File.directory?("#{virtualenv_dir}/src/#{app['shortname']}"))
 
 			log 'debug' do
-	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into /usr/lib/ckan/default/src/#{app['shortname']}"
+	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{virtualenv_dir}/src/#{app['shortname']}"
 				level :info
 			end
 
@@ -109,21 +110,30 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				extname = extnames[pluginname]
 			end
 
-			# Install the extension and add its name to production.ini
+			# Install the extension and its requirements
 			#
 			bash "Pip Install #{app['shortname']}" do
-				user "root"
-				cwd "/usr/lib/ckan/default/src"
+				user "ckan"
+				group "ckan"
 				code <<-EOS
-					/usr/lib/ckan/default/bin/pip install -e "#{apprelease}"
-					if [ -z  "$(cat /etc/ckan/default/production.ini | grep 'ckan.plugins.*#{extname}')" ]; then
-						sed -i "/^ckan.plugins/ s/$/ #{extname}/" /etc/ckan/default/production.ini
+					. #{virtualenv_dir}/bin/activate
+					pip install -e "#{apprelease}"
+					if [ -f "requirements.txt" ]; then
+						pip install --cache-dir=/tmp/ -r requirements.txt
 					fi
-					if [ -f "/usr/lib/ckan/default/src/#{app['shortname']}/requirements.txt" ]; then
-					    /usr/lib/ckan/default/bin/pip install -r "/usr/lib/ckan/default/src/#{app['shortname']}/requirements.txt"
+					if [ -f "pip-requirements.txt" ]; then
+						pip install --cache-dir=/tmp/ -r "pip-requirements.txt"
 					fi
-					if [ -f "/usr/lib/ckan/default/src/#{app['shortname']}/pip-requirements.txt" ]; then
-					    /usr/lib/ckan/default/bin/pip install -r "/usr/lib/ckan/default/src/#{app['shortname']}/pip-requirements.txt"
+				EOS
+			end
+
+			# Add the extension to production.ini
+			bash "Enable #{app['shortname']} plugin" do
+				user "root"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+						sed -i "/^ckan.plugins/ s/$/ #{extname}/" production.ini
 					fi
 				EOS
 			end
@@ -134,12 +144,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				viewname = extviews[pluginname]
 				bash "#{app['shortname']} ext config" do
 					user "root"
+					cwd "/etc/ckan/default"
 					code <<-EOS
-						if [ -z  "$(cat /etc/ckan/default/production.ini | grep 'ckan.views.default_views' | grep '#{extname}')" ]; then
-							sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" /etc/ckan/default/production.ini
+						if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
+							sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
 						fi
 					EOS
-					not_if "grep 'ckan.views.default_views' | grep '#{extname}' /etc/ckan/default/production.ini"
 				end
 			end
 
@@ -148,10 +158,11 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			if "#{pluginname}".eql? 'viewhelpers' then
 				bash "View Helpers CKAN ext config" do
 					user "root"
+					cwd "/etc/ckan/default"
 					code <<-EOS
-						if [ ! -z "$(cat /etc/ckan/default/production.ini | grep 'viewhelpers')" ] && [ -z "$(cat /etc/ckan/default/production.ini | grep 'stats viewhelpers')" ]; then
-							sed -i "s/viewhelpers/ /g" /etc/ckan/default/production.ini;
-							sed -i "s/stats/stats viewhelpers/g" /etc/ckan/default/production.ini;
+						if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
+							sed -i "s/viewhelpers/ /g" production.ini;
+							sed -i "s/stats/stats viewhelpers/g" production.ini;
 						fi
 					EOS
 				end
@@ -162,12 +173,13 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			if extextras.has_key? pluginname
 				pip_packages = extextras[pluginname]
 				bash "Install extra PIP packages for #{pluginname}" do
-					user "root"
+					user "ckan"
 					code <<-EOS
+						. #{virtualenv_dir}/bin/activate
 						read -r -a packages <<< "#{pip_packages}"
 						for package in "${packages[@]}"
 						do
-							pip install ${package}
+							pip install --cache-dir=/tmp/ ${package}
 						done
 					EOS
 				end
@@ -176,12 +188,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			# Cesium preview requires some NPM extras
 			#
 			if "#{pluginname}".eql? 'cesiumpreview' then
-				bash "Cesium Preview CKAN ext config" do
+				execute "Cesium Preview CKAN ext config" do
 					user "root"
-					code <<-EOS
-						npm install --save geojson-extent
-					EOS
-					not_if { ::File.directory?("/usr/lib/node_modules/geojson-extent") }
+					command "npm install --save geojson-extent"
 				end
 			end
 
@@ -195,12 +204,12 @@ bash "Enable DataStore-related extensions" do
 	user "root"
 	cwd "/etc/ckan/default"
 	code <<-EOS
-		if [ -z  "$(grep 'ckan.plugins.*\bdatastore\b' production.ini)" ]; then
+		if [ -z  "$(grep 'ckan.plugins.*datastore' production.ini)" ]; then
 			sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
 		fi
-		if [ -z  "$(grep 'ckan.plugins.*\bdatapusher\b' production.ini)" ]; then
+		if [ -z  "$(grep 'ckan.plugins.*datapusher' production.ini)" ]; then
 			sed -i "/^ckan.plugins/ s/$/ datapusher/" production.ini
 		fi
 	EOS
-	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable'] }
+	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable']}
 end

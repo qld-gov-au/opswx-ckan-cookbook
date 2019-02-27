@@ -35,6 +35,13 @@ node['datashades'][service_name]['packages'].each do |p|
 	package p
 end
 
+# Install Virtual Environment
+#
+execute "Install Python Virtual Environment" do
+	user "root"
+	command "pip install virtualenv"
+end
+
 # Add DNS entry for service host
 #
 bash "Add #{service_name} DNS entry" do
