@@ -62,21 +62,21 @@ ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoi
 
 extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public
 extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/templates
-feedback_form_recipients = opendata@qld.gov.au
-feedback_redirection = /article/thanks
+feedback_form_recipients = <%= node['datashades']['ckan_web']['feedback_recipients'] %>
+feedback_redirection = <%= node['datashades']['ckan_web']['feedback_redirection'] %>
 
 ## Authorization Settings
 
-ckan.auth.anon_create_dataset = false
-ckan.auth.create_unowned_dataset = false
-ckan.auth.create_dataset_if_not_in_organization = false
-ckan.auth.user_create_groups = false
-ckan.auth.user_create_organizations = false
-ckan.auth.user_delete_groups = false
-ckan.auth.user_delete_organizations = false
-ckan.auth.create_user_via_api = false
-ckan.auth.create_user_via_web = true
-ckan.auth.roles_that_cascade_to_sub_groups = admin
+ckan.auth.anon_create_dataset = <%= node['datashades']['ckan_web']['auth']['anon_create_dataset'] %>
+ckan.auth.create_unowned_dataset = <%= node['datashades']['ckan_web']['auth']['create_unowned_dataset'] %>
+ckan.auth.create_dataset_if_not_in_organization = <%= node['datashades']['ckan_web']['auth']['create_dataset_if_not_in_organization'] %>
+ckan.auth.user_create_groups = <%= node['datashades']['ckan_web']['auth']['user_create_groups'] %>
+ckan.auth.user_create_organizations = <%= node['datashades']['ckan_web']['auth']['user_create_organizations'] %>
+ckan.auth.user_delete_groups = <%= node['datashades']['ckan_web']['auth']['user_delete_groups'] %>
+ckan.auth.user_delete_organizations = <%= node['datashades']['ckan_web']['auth']['user_delete_organizations'] %>
+ckan.auth.create_user_via_api = <%= node['datashades']['ckan_web']['auth']['create_user_via_api'] %>
+ckan.auth.create_user_via_web = <%= node['datashades']['ckan_web']['auth']['create_user_via_web'] %>
+ckan.auth.roles_that_cascade_to_sub_groups = <%= node['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] %>
 
 
 ## Search Settings

@@ -31,10 +31,23 @@ default['datashades']['ckan_web']['dsname'] = 'ckan_datastore'
 
 default['datashades']['ckan_web']['adminpw'] = 'adminpw'
 default['datashades']['ckan_web']['adminemail'] = 'admin@nowhere.com'
+default['datashades']['ckan_web']['feedback_recipients'] = 'opendata@qld.gov.au'
+default['datashades']['ckan_web']['feedback_redirection'] = '/article/thanks'
 
 default['datashades']['ckan_web']['sentryurl'] = ''
 
 default['datashades']['ckan_web']['disqus'] = 'ckan'
+
+default['datashades']['ckan_web']['auth']['anon_create_dataset'] = false
+default['datashades']['ckan_web']['auth']['create_unowned_dataset'] = false
+default['datashades']['ckan_web']['auth']['create_dataset_if_not_in_organization'] = false
+default['datashades']['ckan_web']['auth']['user_create_groups'] = false
+default['datashades']['ckan_web']['auth']['user_create_organizations'] = false
+default['datashades']['ckan_web']['auth']['user_delete_groups'] = false
+default['datashades']['ckan_web']['auth']['user_delete_organizations'] = false
+default['datashades']['ckan_web']['auth']['create_user_via_api'] = false
+default['datashades']['ckan_web']['auth']['create_user_via_web'] = true
+default['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] = 'admin'
 
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 
