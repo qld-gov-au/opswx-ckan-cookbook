@@ -76,11 +76,14 @@ apprelease.sub! '.zip', ""
 version = apprelease[/@(.*)/].sub! '@', ''
 
 virtualenv_dir = "/usr/lib/ckan/default"
+activate = ". #{virtualenv_dir}/bin/activate"
+pip = "#{virtualenv_dir}/bin/pip"
+paster = "#{virtualenv_dir}/bin/paster"
 install_dir = "#{virtualenv_dir}/src/ckan"
 execute "Install CKAN #{version}" do
 	user "ckan"
 	group "ckan"
-	command "#{virtualenv_dir}/bin/pip install -e 'git+#{apprelease}#egg=ckan'"
+	command "#{pip} install -e 'git+#{apprelease}#egg=ckan'"
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
@@ -88,7 +91,7 @@ bash "Install Python dependencies" do
 	user "ckan"
 	group "ckan"
 	code <<-EOS
-		. #{virtualenv_dir}/bin/activate
+		#{activate}
 		pip install --cache-dir=/tmp/ -r '#{install_dir}/requirements.txt'
 		pip install --cache-dir=/tmp/ --upgrade setuptools bleach
 	EOS
@@ -109,19 +112,8 @@ end
 
 execute "Init CKAN DB" do
 	user "root"
-	command ". #{virtualenv_dir}/bin/paster --plugin=ckan db init -c #{config_file} > '#{shared_fs_dir}/private/ckan_db_init.log'"
+	command "#{paster} --plugin=ckan db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
-end
-
-bash "Init Datastore resources" do
-	user "root"
-	code <<-EOS
-		touch #{shared_fs_dir}/private/datastore_db_init.log
-		if [ -z  "$(cat #{config_file} | grep 'datastore')" ]; then
-			sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
-		fi
-	EOS
-	not_if { ::File.exist? "#{shared_fs_dir}/private/datastore_db_init.log" }
 end
 
 cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
@@ -159,7 +151,7 @@ end
 #
 execute "Install Raven Sentry client" do
 	user "ckan"
-	command "#{virtualenv_dir}/bin/pip install --cache-dir=/tmp/ --upgrade raven"
+	command "#{pip} install --cache-dir=/tmp/ --upgrade raven"
 end
 
 # Install CKAN extensions
@@ -171,13 +163,13 @@ include_recipe "datashades::ckanweb-deploy-exts"
 execute "Create front-end resources" do
 	user "ckan"
 	group "ckan"
-	command "#{virtualenv_dir}/bin/paster --plugin=ckan front-end-build -c #{config_file}"
+	command "#{paster} --plugin=ckan front-end-build -c #{config_file}"
 end
 
 # Build the Solr search index in case we have pre-existing data.
 execute "Build search index" do
 	user "root"
-	command ". #{virtualenv_dir}/bin/paster --plugin=ckan search-index rebuild -c #{config_file} > #{shared_fs_dir}/private/solr-index-build.log"
+	command "#{paster} --plugin=ckan search-index rebuild -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log.tmp' && mv '#{shared_fs_dir}/private/solr-index-build.log.tmp' '#{shared_fs_dir}/private/solr-index-build.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/solr-index-build.log" }
 end
 
@@ -196,9 +188,9 @@ end
 bash "Create CKAN Admin user" do
 	user "root"
 	code <<-EOS
-		. #{virtualenv_dir}/bin/activate
-		paster --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file}
-		paster --plugin=ckan sysadmin add sysadmin -c #{config_file} > "#{shared_fs_dir}/private/ckan_admin.log"
+		#{activate}
+		paster --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
+		paster --plugin=ckan sysadmin add sysadmin -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
 	EOS
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_admin.log"}
 end
