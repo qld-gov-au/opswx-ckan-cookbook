@@ -31,6 +31,7 @@ full_stack = true
 
 cache_dir = /tmp/%(ckan.site_id)s/
 beaker.session.key = ckan
+ckan.tracking_enabled = true
 
 # This is the secret token that the beaker library uses to hash the cookie sent
 # to the client. `paster make-config` generates a unique value for this each
@@ -98,13 +99,20 @@ ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpa
 ckan.views.default_views = image_view text_view recline_view webpage_view recline_grid_view recline_graph_view recline_map_view
 ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
+trak.display_pageviews = true
+
 disqus.name = <%= node['datashades']['ckan_web']['disqus'] %>
 ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
 ## Google Analytics
-googleanalytics.id =
+googleanalytics.id = UA-7276966-13
+googleanalytics.track_frontend_events = false
+googleanalytics.track_backend_events = true
+googleanalytics.collection_url = https://www.google-analytics.com/collect
+googleanalytics_resource_prefix = /downloads/
+googleanalytics.domain = auto
 
 ## Front-End Settings
 ckan.site_title = CKAN
@@ -114,6 +122,11 @@ ckan.favicon = /images/icons/ckan.ico
 ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
+
+ckan.views.default_views = text_view image_view recline_view
+ckan.preview.json_formats = json
+ckan.preview.xml_formats = xml rdf rdf+xml owl+xml atom rss
+ckan.preview.text_formats = text plain text/plain
 
 # package_hide_extras = for_search_index_only
 #package_edit_return_url = http://another.frontend/dataset/<NAME>
@@ -125,9 +138,10 @@ ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain a
 
 
 ## Internationalisation Settings
-ckan.locale_default = en_AU
-ckan.locale_order =
-ckan.locales_offered = en_AU
+
+ckan.locale_default = en_GB
+ckan.locale_order = en pt_BR ja it cs_CZ ca es fr el sv sr sr@latin no sk fi ru de pl nl bg ko_KR hu sa sl lv
+ckan.locales_offered =
 ckan.locales_filtered_out =
 
 ## Feeds Settings
@@ -139,7 +153,7 @@ ckan.feeds.author_link =
 
 ## Storage Settings
 
-ckan.max_resource_size = 100
+ckan.max_resource_size = 200
 ckan.max_image_size = 10
 ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 
@@ -154,13 +168,15 @@ ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node
 
 ## Activity Streams Settings
 
-#ckan.activity_streams_enabled = true
+ckan.activity_streams_enabled = true
 #ckan.activity_list_limit = 31
 #ckan.activity_streams_email_notifications = true
 # ckan.email_notifications_since = 2 days
 
 
 ## Email settings
+ckan.activity_streams_email_notifications = True
+ckan.email_notifications_since = 2 days
 
 <% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
 #email_to = admin@<%= node['datashades']['tld'] %>
@@ -176,6 +192,8 @@ smtp.starttls = False
 #smtp.password = your_password
 smtp.mail_from = no-reply@<%= @app_url %>
 
+# CORS Settings
+ckan.cors.origin_allow_all = True
 
 ## Logging configuration
 [loggers]
