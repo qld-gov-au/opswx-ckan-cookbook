@@ -36,7 +36,7 @@ ckan.tracking_enabled = true
 # This is the secret token that the beaker library uses to hash the cookie sent
 # to the client. `paster make-config` generates a unique value for this each
 # time it generates a config file.
-beaker.session.secret = PhUdJnmRHPhbh7WPbaVVcGXtN
+beaker.session.secret = <%= node['datashades']['ckan_web']['beaker_secret'] %>
 
 # `paster make-config` generates a unique value for this each time it generates
 # a config file.

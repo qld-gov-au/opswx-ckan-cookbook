@@ -46,9 +46,9 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
    		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
 
- 		})
-	 not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
-	action :create_if_missing
+		})
+	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
+	action :create
 end
 
 # Setup Site directories
@@ -106,8 +106,7 @@ template "#{config_file}" do
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
 	})
-	action :create_if_missing
-	not_if { ::File.exist? "#{config_file}" }
+	action :create
 end
 
 execute "Init CKAN DB" do
@@ -144,7 +143,7 @@ template '/etc/httpd/conf.d/ckan.conf' do
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
 	})
-	action :create_if_missing
+	action :create
 end
 
 # Install Raven for Sentry
