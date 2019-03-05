@@ -96,18 +96,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		# Install Extension
 		#
 		virtualenv_dir = "/usr/lib/ckan/default"
+
+		# Many extensions use a different name on the plugins line so these need to be managed
+		#
+		extname = pluginname
+		if extnames.has_key? pluginname
+			extname = extnames[pluginname]
+		end
+
 		unless (::File.directory?("#{virtualenv_dir}/src/#{app['shortname']}"))
 
 			log 'debug' do
 	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{virtualenv_dir}/src/#{app['shortname']}"
 				level :info
-			end
-
-			# Many extensions use a different name on the plugins line so these need to be managed
-			#
-			extname = pluginname
-			if extnames.has_key? pluginname
-				extname = extnames[pluginname]
 			end
 
 			# Install the extension and its requirements
@@ -126,74 +127,73 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					fi
 				EOS
 			end
+		end
 
-			# Add the extension to production.ini
-			bash "Enable #{app['shortname']} plugin" do
+		# Add the extension to production.ini
+		bash "Enable #{app['shortname']} plugin" do
+			user "root"
+			cwd "/etc/ckan/default"
+			code <<-EOS
+				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+					sed -i "/^ckan.plugins/ s/$/ #{extname}/" production.ini
+				fi
+			EOS
+		end
+
+		# Add the extension to the default_views line if required
+		#
+		if extviews.has_key? pluginname
+			viewname = extviews[pluginname]
+			bash "#{app['shortname']} ext config" do
 				user "root"
 				cwd "/etc/ckan/default"
 				code <<-EOS
-					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-						sed -i "/^ckan.plugins/ s/$/ #{extname}/" production.ini
+					if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
+						sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
 					fi
 				EOS
 			end
+		end
 
-			# Add the extension to the default_views line if required
-			#
-			if extviews.has_key? pluginname
-				viewname = extviews[pluginname]
-				bash "#{app['shortname']} ext config" do
-					user "root"
-					cwd "/etc/ckan/default"
-					code <<-EOS
-						if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
-							sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
-						fi
-					EOS
-				end
+		# Viewhelpers is a special case because stats needs to be loaded before it
+		#
+		if "#{pluginname}".eql? 'viewhelpers' then
+			bash "View Helpers CKAN ext config" do
+				user "root"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
+						sed -i "s/viewhelpers/ /g" production.ini;
+						sed -i "s/stats/stats viewhelpers/g" production.ini;
+					fi
+				EOS
 			end
+		end
 
-			# Viewhelpers is a special case because stats needs to be loaded before it
-			#
-			if "#{pluginname}".eql? 'viewhelpers' then
-				bash "View Helpers CKAN ext config" do
-					user "root"
-					cwd "/etc/ckan/default"
-					code <<-EOS
-						if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
-							sed -i "s/viewhelpers/ /g" production.ini;
-							sed -i "s/stats/stats viewhelpers/g" production.ini;
-						fi
-					EOS
-				end
+		# Install any additional pip packages required
+		#
+		if extextras.has_key? pluginname
+			pip_packages = extextras[pluginname]
+			bash "Install extra PIP packages for #{pluginname}" do
+				user "ckan"
+				code <<-EOS
+					. #{virtualenv_dir}/bin/activate
+					read -r -a packages <<< "#{pip_packages}"
+					for package in "${packages[@]}"
+					do
+						pip install --cache-dir=/tmp/ ${package}
+					done
+				EOS
 			end
+		end
 
-			# Install any additional pip packages required
-			#
-			if extextras.has_key? pluginname
-				pip_packages = extextras[pluginname]
-				bash "Install extra PIP packages for #{pluginname}" do
-					user "ckan"
-					code <<-EOS
-						. #{virtualenv_dir}/bin/activate
-						read -r -a packages <<< "#{pip_packages}"
-						for package in "${packages[@]}"
-						do
-							pip install --cache-dir=/tmp/ ${package}
-						done
-					EOS
-				end
+		# Cesium preview requires some NPM extras
+		#
+		if "#{pluginname}".eql? 'cesiumpreview' then
+			execute "Cesium Preview CKAN ext config" do
+				user "root"
+				command "npm install --save geojson-extent"
 			end
-
-			# Cesium preview requires some NPM extras
-			#
-			if "#{pluginname}".eql? 'cesiumpreview' then
-				execute "Cesium Preview CKAN ext config" do
-					user "root"
-					command "npm install --save geojson-extent"
-				end
-			end
-
 		end
 	end
 end

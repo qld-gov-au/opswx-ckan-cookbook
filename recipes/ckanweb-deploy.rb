@@ -78,7 +78,7 @@ version = apprelease[/@(.*)/].sub! '@', ''
 virtualenv_dir = "/usr/lib/ckan/default"
 activate = ". #{virtualenv_dir}/bin/activate"
 pip = "#{virtualenv_dir}/bin/pip"
-paster = "#{virtualenv_dir}/bin/paster"
+paster = "#{virtualenv_dir}/bin/paster --plugin=ckan"
 install_dir = "#{virtualenv_dir}/src/ckan"
 execute "Install CKAN #{version}" do
 	user "ckan"
@@ -111,7 +111,7 @@ end
 
 execute "Init CKAN DB" do
 	user "root"
-	command "#{paster} --plugin=ckan db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
+	command "#{paster} db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
 end
 
@@ -162,13 +162,21 @@ include_recipe "datashades::ckanweb-deploy-exts"
 execute "Create front-end resources" do
 	user "ckan"
 	group "ckan"
-	command "#{paster} --plugin=ckan front-end-build -c #{config_file}"
+	command "#{paster} front-end-build -c #{config_file}"
+end
+
+# Update tracking data
+#
+execute "Tracking update" do
+	user "root"
+	command "#{paster} tracking update -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
+	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
 end
 
 # Build the Solr search index in case we have pre-existing data.
 execute "Build search index" do
 	user "root"
-	command "#{paster} --plugin=ckan search-index rebuild -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log.tmp' && mv '#{shared_fs_dir}/private/solr-index-build.log.tmp' '#{shared_fs_dir}/private/solr-index-build.log'"
+	command "#{paster} search-index rebuild -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log.tmp' && mv '#{shared_fs_dir}/private/solr-index-build.log.tmp' '#{shared_fs_dir}/private/solr-index-build.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/solr-index-build.log" }
 end
 
