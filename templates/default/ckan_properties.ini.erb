@@ -183,14 +183,14 @@ ckan.email_notifications_since = 2 days
 #error_email_from = ckan@<%= @app_url %>
 <% else -%>
 email_to = admin@<%= node['datashades']['tld'] %>
-error_email_from = no-reply@<%= @app_url %>
+error_email_from = onlineproducts@smartservice.qld.gov.au
 <% end -%>
 
 smtp.server = localhost
 smtp.starttls = False
 #smtp.user = your_username@gmail.com
 #smtp.password = your_password
-smtp.mail_from = no-reply@<%= @app_url %>
+smtp.mail_from = onlineproducts@smartservice.qld.gov.au
 
 # CORS Settings
 ckan.cors.origin_allow_all = True
