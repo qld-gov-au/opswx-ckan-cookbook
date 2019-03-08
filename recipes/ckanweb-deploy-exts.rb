@@ -80,7 +80,7 @@ end
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 	app['shortname'].sub! '_', '-'
-	pluginname = "#{app['shortname']}".sub! 'ckanext-', ""
+	pluginname = "#{app['shortname']}".sub! '.*ckanext-', ""
 
 	# Don't install extensions not required by the batch node
 	#
