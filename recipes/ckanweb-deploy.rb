@@ -23,6 +23,9 @@
 include_recipe "datashades::stackparams"
 
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
+if not app
+	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
+end
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"

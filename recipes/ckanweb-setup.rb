@@ -63,8 +63,11 @@ end
 # Get app details so we can version the app setup
 #
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
+if not app
+	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
+end
 apprelease = app['app_source']['url']
-apprelease.sub! 'ckan/archive/', "ckan.git@" 			
+apprelease.sub! 'ckan/archive/', "ckan.git@"
 apprelease.sub! '.zip', ""
 version = apprelease[/@(.*)/].sub! '@', ''
 
@@ -72,7 +75,7 @@ version = apprelease[/@(.*)/].sub! '@', ''
 #
 group "ckan" do
 	action :create
-	gid '1000'	
+	gid '1000'
 end
 
 # Create CKAN User
@@ -83,7 +86,7 @@ user "ckan" do
 	shell "/sbin/nologin"
 	action :create
 	uid '1000'
-	group 'ckan'	
+	group 'ckan'
 end
 
 # Explicity set permissions on ckan directory so it's readable by Apache

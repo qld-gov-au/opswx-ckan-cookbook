@@ -26,6 +26,9 @@ instance = search("aws_opsworks_instance", "self:true").first
 # Ascertain whether or not the instance deploying is a batch node
 #
 batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-batch").first
+if not batchlayer
+	batchlayer = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}-batch").first
+end
 batchnode = false
 unless batchlayer.nil?
 	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
