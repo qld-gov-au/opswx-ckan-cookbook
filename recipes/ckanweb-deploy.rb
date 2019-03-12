@@ -186,8 +186,7 @@ end
 # Build the Solr search index in case we have pre-existing data.
 execute "Build search index" do
 	user "root"
-	command "#{paster} search-index rebuild -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log.tmp' && mv '#{shared_fs_dir}/private/solr-index-build.log.tmp' '#{shared_fs_dir}/private/solr-index-build.log'"
-	not_if { ::File.exist? "#{shared_fs_dir}/private/solr-index-build.log" }
+	command "#{paster} search-index rebuild -r -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log'"
 end
 
 # Restart Web services to enable new configurations
