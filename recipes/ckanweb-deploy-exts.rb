@@ -134,7 +134,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		# Add the extension to production.ini
 		bash "Enable #{app['shortname']} plugin" do
-			user "root"
+			user "ckan"
 			cwd "/etc/ckan/default"
 			code <<-EOS
 				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
@@ -148,7 +148,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if extviews.has_key? pluginname
 			viewname = extviews[pluginname]
 			bash "#{app['shortname']} ext config" do
-				user "root"
+				user "ckan"
 				cwd "/etc/ckan/default"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
@@ -162,7 +162,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		#
 		if "#{pluginname}".eql? 'viewhelpers' then
 			bash "View Helpers CKAN ext config" do
-				user "root"
+				user "ckan"
 				cwd "/etc/ckan/default"
 				code <<-EOS
 					if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
@@ -204,7 +204,7 @@ end
 # Enable DataStore and DataPusher extensions if desired
 # No installation necessary in CKAN 2.2+
 bash "Enable DataStore-related extensions" do
-	user "root"
+	user "ckan"
 	cwd "/etc/ckan/default"
 	code <<-EOS
 		if [ -z  "$(grep 'ckan.plugins.*datastore' production.ini)" ]; then
