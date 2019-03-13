@@ -38,7 +38,6 @@ include_attribute "datashades::drupal"
 include_attribute "datashades::mysql"
 include_attribute "datashades::nfs"
 include_attribute "datashades::nginx"
-include_attribute "datashades::redis"
 include_attribute "datashades::solr"
 include_attribute "datashades::icinga"
 
