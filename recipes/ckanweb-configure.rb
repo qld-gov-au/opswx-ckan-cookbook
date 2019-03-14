@@ -79,3 +79,7 @@ bash "Detect public domain name" do
 		fi
 	EOS
 end
+
+service 'httpd' do
+	action :reload
+end
