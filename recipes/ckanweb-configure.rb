@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: nfs-configure
+# Recipe:: ckanweb-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #

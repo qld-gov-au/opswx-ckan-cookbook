@@ -186,7 +186,7 @@ end
 # Build the Solr search index in case we have pre-existing data.
 execute "Build search index" do
 	user "root"
-	command "#{paster} search-index rebuild -r -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/solr-index-build.log'"
+	command "#{paster} search-index rebuild -r -o -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
 end
 
 # Restart Web services to enable new configurations
