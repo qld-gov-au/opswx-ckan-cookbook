@@ -28,8 +28,8 @@ bash "Delete #{service_name} DNS record" do
 	user "root"
 	code <<-EOS
 	zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
-	pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
+	instance_hostname=$(wget -q -O - http://169.254.169.254/latest/meta-data/hostname)
 	dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
-	route53 del_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
+	route53 del_record ${zone_id} ${dns_name} CNAME ${instance_hostname} 60
 	EOS
 end
