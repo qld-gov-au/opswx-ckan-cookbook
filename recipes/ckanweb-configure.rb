@@ -81,5 +81,5 @@ bash "Detect public domain name" do
 end
 
 service 'httpd' do
-	action :reload
+	action :restart
 end
