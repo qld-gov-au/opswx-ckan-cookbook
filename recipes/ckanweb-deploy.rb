@@ -90,14 +90,10 @@ execute "Install CKAN #{version}" do
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-bash "Install Python dependencies" do
+execute "Install Python dependencies" do
 	user "ckan"
 	group "ckan"
-	code <<-EOS
-		#{activate}
-		pip install --cache-dir=/tmp/ -r '#{install_dir}/requirements.txt'
-		pip install --cache-dir=/tmp/ --upgrade setuptools bleach
-	EOS
+	command "#{pip} install --cache-dir=/tmp/ -r '#{install_dir}/requirements.txt'"
 end
 
 template "#{config_file}" do
