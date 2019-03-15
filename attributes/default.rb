@@ -21,7 +21,7 @@
 # limitations under the License.
 #
 
-default['datashades']['timezone'] = 'Australia/Canberra'
+default['datashades']['timezone'] = 'Australia/Brisbane'
 default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
