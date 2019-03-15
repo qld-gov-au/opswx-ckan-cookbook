@@ -21,12 +21,13 @@
 # limitations under the License.
 #
 
-default['datashades']['timezone'] = 'Australia/Canberra'
+default['datashades']['timezone'] = 'Australia/Brisbane'
 default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
+default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk']
+default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
 default['datashades']['jumpbox']['usergroup'] = ''
 default['datashades']['jumpbox']['bucket'] = ''
@@ -38,7 +39,6 @@ include_attribute "datashades::drupal"
 include_attribute "datashades::mysql"
 include_attribute "datashades::nfs"
 include_attribute "datashades::nginx"
-include_attribute "datashades::redis"
 include_attribute "datashades::solr"
 include_attribute "datashades::icinga"
 

@@ -35,3 +35,11 @@ template '/etc/audit/rules.d/link.rules' do
 	source 'auditd.rules.erb'
 	owner 'root'
 end
+
+service 'sendmail' do
+	action [:stop, :disable]
+end
+
+service 'aws-smtp-relay' do
+	action [:enable, :restart]
+end

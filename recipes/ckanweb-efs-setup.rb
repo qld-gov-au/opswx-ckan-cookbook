@@ -24,12 +24,12 @@
 #
 include_recipe "datashades::efs-setup"
 
-data_paths = 
+data_paths =
 {
-	"/data/shared_content" => 'apache', 
-	"/data/sites" => 'apache', 
-	"/data/logs/nginx" => 'nginx', 
-	"/data/logs/apache" => 'apache', 
+	"/data/shared_content" => 'apache',
+	"/data/sites" => 'apache',
+	"/data/logs/nginx/#{node['datashades']['instid']}" => 'nginx',
+	"/data/logs/apache/#{node['datashades']['instid']}" => 'apache',
 }
 
 data_paths.each do |data_path, dir_owner|
@@ -42,12 +42,12 @@ data_paths.each do |data_path, dir_owner|
 	end
 end
 
-link_paths = 
+link_paths =
 {
-	"/var/shared_content" => '/data/shared_content', 
-	"/var/www/sites" => '/data/sites', 
-	"/var/log/nginx/#{node['datashades']['sitename']}" => '/data/logs/nginx', 
-	"/var/log/httpd/#{node['datashades']['sitename']}" => '/data/logs/apache'
+	"/var/shared_content" => '/data/shared_content',
+	"/var/www/sites" => '/data/sites',
+	"/var/log/nginx/#{node['datashades']['sitename']}" => "/data/logs/nginx/#{node['datashades']['instid']}",
+	"/var/log/httpd/#{node['datashades']['sitename']}" => "/data/logs/apache/#{node['datashades']['instid']}"
 }
 
 link_paths.each do |link_path, source_path|
@@ -56,8 +56,3 @@ link_paths.each do |link_path, source_path|
 		link_type :symbolic
 	end
 end
-
-
-
-
-

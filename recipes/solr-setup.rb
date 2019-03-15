@@ -46,9 +46,9 @@ bash "Add #{service_name} DNS entry" do
 		hostcount=`expr $reccount - $aliascount + 1`
 		echo ${hostcount} > /etc/#{service_name}id
 		if [ ${hostcount} -eq 1 ]; then
-			echo "#{service_name}_master=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
+			echo "#{service_name}_master=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		else
-			echo "#{service_name}_slave=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames	
+			echo "#{service_name}_slave=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		fi
 	EOS
 	not_if "grep -q '#{service_name}_' /etc/hostnames"

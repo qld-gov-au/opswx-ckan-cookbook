@@ -32,7 +32,7 @@ app = search("aws_opsworks_app", "shortname:*drupal*").first
 if app['app_source']['type'] == 'git'
 
 	pub_key = app['app_source']['ssh_key']
-	
+
 	repo = "#{app['app_source']['url']}"
 	repouser = (repourl.split"@")[0]
 	repohost = (repourl.split"@")[1].split("/")[0]
@@ -45,42 +45,42 @@ if app['app_source']['type'] == 'git'
 	  mode '0775'
 	  action :create
 	end
-	
+
 	file "/var/www/.ssh/#{node['datashades']['sitename']}-#{app['shortname']}.pem" do
 		content "#{pub_key}"
 		owner 'apache'
 		group 'apache'
 		mode '0600'
 		action :create
-		only_if { ! ::File.exists? "/var/www/.ssh/#{node['datashades']['sitename']}-#{app['shortname']}.pem" }
+		only_if { ! ::File.exist? "/var/www/.ssh/#{node['datashades']['sitename']}-#{app['shortname']}.pem" }
 	end
-	
+
 	bash "Add GHE to known_hosts" do
 		code <<-EOS
 		ssh-keyscan -f /var/www/.ssh/known_hosts -H repohost >> /var/www/.ssh/known_hosts
 		EOS
 		user 'apache'
 		group 'apache'
-		only_if { ! ::File.exists? "/var/www/.ssh/known_hosts" }
+		only_if { ! ::File.exist? "/var/www/.ssh/known_hosts" }
 	end
-	
+
 	bash "Create #{node['datashades']['sitename']}-#{app['shortname']} Config entry" do
 		code <<-EOS
 		echo -e "Host #{node['datashades']['sitename']}-#{app['shortname']}\r\n\tUser\t#{repouser}\r\n\tHostname\t#{repohost}\r\n\tIdentityFile\t/var/www/.ssh/#{node['datashades']['sitename']}-#{app['shortname']}.pem" >> /var/www/.ssh/config
 		EOS
 		not_if "grep -q 'Host #{node['datashades']['sitename']}-#{app['shortname']}' /var/www/.ssh/config"
 	end
-	
+
 	repo.sub! "#{repouser}@#{repohost}", "#{node['datashades']['sitename']}-#{app['shortname']}"
-		
+
 	bash "Make target writable" do
 		code <<-EOS
 		chmod 755 -R /var/www/sites/"#{node['datashades']['sitename']}"
 		EOS
 		user 'root'
-		only_if { ::File.exists? "/var/www/sites/#{node['datashades']['sitename']}/.git/config" }
+		only_if { ::File.exist? "/var/www/sites/#{node['datashades']['sitename']}/.git/config" }
 	end
-	
+
 	git app['shortname'] do
 		revision	app['app_source']['revision']
 		destination "/var/www/sites/#{node['datashades']['sitename']}"
@@ -89,9 +89,9 @@ if app['app_source']['type'] == 'git'
 		repository repo
 		user 'apache'
 		group 'apache'
-	  	action :sync	
+	  	action :sync
 	end
-	
+
 	bash "Make target unwritable by apache" do
 		code <<-EOS
 		chmod 575 -R /var/www/sites/"#{node['datashades']['sitename']}"
@@ -103,7 +103,7 @@ if app['app_source']['type'] == 'git'
 	#
 	bash "Move repo files directory" do
 		code <<-EOS
-		mv /var/www/sites/"#{node['datashades']['sitename']}"/sites/default/files /var/www/sites/"#{node['datashades']['sitename']}"/sites/default/files_repo 
+		mv /var/www/sites/"#{node['datashades']['sitename']}"/sites/default/files /var/www/sites/"#{node['datashades']['sitename']}"/sites/default/files_repo
 		EOS
 		user 'root'
 		only_if { ::File.directory? "/var/www/sites/#{node['datashades']['sitename']}/sites/default/files" }
@@ -111,16 +111,16 @@ if app['app_source']['type'] == 'git'
 end
 
 
-if "#{app['app_source']['type']}" == 'archive' 
-						
+if "#{app['app_source']['type']}" == 'archive'
+
 	# Download and Latest Drupal if it doesn't exist in the site directory (due to repo download)
 	#
-	unless (::File.exists?"/var/www/sites/#{node['datashades']['sitename']}/robots.txt")
-		
+	unless (::File.exist?"/var/www/sites/#{node['datashades']['sitename']}/robots.txt")
+
 		remote_file "#{Chef::Config[:file_cache_path]}/drupal.zip" do
 			source app['app_source']['url']
 		end
-		
+
 		# Create Drupal core web directory
 		#
 		directory "/var/www/sites/#{node['datashades']['sitename']}" do
@@ -129,7 +129,7 @@ if "#{app['app_source']['type']}" == 'archive'
 		  mode '0765'
 		  action :create
 		end
-		
+
 		# Unzip Drupal
 		#
 		bash "unzip drupal" do
@@ -138,7 +138,7 @@ if "#{app['app_source']['type']}" == 'archive'
 			EOS
 			user 'root'
 		end
-		
+
 		bash "install drupal files" do
 			code <<-EOS
 			d7v=$(ls /var/www/sites/#{node['datashades']['sitename']}/ | grep 'drupal-' | tr -d 'drupal-')
@@ -158,7 +158,7 @@ if "#{app['app_source']['type']}" == 'archive'
 		mv /var/www/sites/#{node['datashades']['sitename']}/robots.txm /var/www/sites/#{node['datashades']['sitename']}/robots.txt
 		EOS
 		user 'root'
-		only_if { ::File.exists? "/var/www/sites/#{node['datashades']['sitename']}/INSTALL.txt" }
+		only_if { ::File.exist? "/var/www/sites/#{node['datashades']['sitename']}/INSTALL.txt" }
 	end
 end
 
@@ -185,10 +185,10 @@ paths.each do |nfs_path, dir_owner|
 		group 'apache'
 		mode '0775'
 		action :create
-		recursive true		
+		recursive true
 	end
 end
-	
+
 # Link drupal default/files to shared_content folder on NFS
 #
 link "/var/www/sites/#{node['datashades']['sitename']}/sites/default/files" do
@@ -217,7 +217,7 @@ template "/var/www/sites/#{node['datashades']['sitename']}/sites/default/setting
     	:app_name =>  app['shortname'],
 		:app_url => app['domains'][0],
 		:app_db => "#{node['datashades']['sitename']}"
-    		
+
   		})
   only_if "grep -q 'Drupal' /var/www/sites/#{node['datashades']['sitename']}/index.php"
 end
@@ -242,7 +242,7 @@ bash "Install drush" do
 	chmod +x /usr/local/bin/drush
 	EOS
 	user 'root'
-	not_if { ::File.exists? "/usr/local/bin/drush" }
+	not_if { ::File.exist? "/usr/local/bin/drush" }
 end
 
 # Do site setup if required
@@ -254,6 +254,6 @@ bash "Drush site install" do
 	echo "y" | /usr/local/bin/drush site-install standard --site-name="#{node['datashades']['sitename']}" --account-name=admin --account-pass="#{node['datashades']['drupal_web']['adminpw']}" --db-url="mysql://drupal_dba:#{node['datashades']['mysql']['userpw']}@#{node['datashades']['version']}mysql.#{node['datashades']['tld']}/#{node['datashades']['sitename']}"
 	touch "/var/www/sites/#{node['datashades']['sitename']}/sites/default/siteinstalled"
 	EOS
-	not_if { ::File.exists? "/var/www/sites/#{node['datashades']['sitename']}/sites/default/siteinstalled" }
+	not_if { ::File.exist? "/var/www/sites/#{node['datashades']['sitename']}/sites/default/siteinstalled" }
 end
 

@@ -31,11 +31,12 @@ full_stack = true
 
 cache_dir = /tmp/%(ckan.site_id)s/
 beaker.session.key = ckan
+ckan.tracking_enabled = true
 
 # This is the secret token that the beaker library uses to hash the cookie sent
 # to the client. `paster make-config` generates a unique value for this each
 # time it generates a config file.
-beaker.session.secret = PhUdJnmRHPhbh7WPbaVVcGXtN
+beaker.session.secret = <%= node['datashades']['ckan_web']['beaker_secret'] %>
 
 # `paster make-config` generates a unique value for this each time it generates
 # a config file.
@@ -50,32 +51,39 @@ who.log_file = %(cache_dir)s/who_log.ini
 ## Database Settings
 sqlalchemy.url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
-ckan.datastore.write_url = postgresql://<%= node['datashades']['ckan_web']['dsuser'] %>_rw:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
-ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuser'] %>_ro:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
+ckan.datastore.write_url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
+ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
 
 
 ## Site Settings
 
-ckan.site_url = http://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+
+## QGOV Settings
+
+extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public
+extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/templates
+feedback_form_recipients = <%= node['datashades']['ckan_web']['feedback_recipients'] %>
+feedback_redirection = <%= node['datashades']['ckan_web']['feedback_redirection'] %>
 
 ## Authorization Settings
 
-ckan.auth.anon_create_dataset = false
-ckan.auth.create_unowned_dataset = true
-ckan.auth.create_dataset_if_not_in_organization = true
-ckan.auth.user_create_groups = true
-ckan.auth.user_create_organizations = true
-ckan.auth.user_delete_groups = true
-ckan.auth.user_delete_organizations = true
-ckan.auth.create_user_via_api = false
-ckan.auth.create_user_via_web = true
-ckan.auth.roles_that_cascade_to_sub_groups = admin
+ckan.auth.anon_create_dataset = <%= node['datashades']['ckan_web']['auth']['anon_create_dataset'] %>
+ckan.auth.create_unowned_dataset = <%= node['datashades']['ckan_web']['auth']['create_unowned_dataset'] %>
+ckan.auth.create_dataset_if_not_in_organization = <%= node['datashades']['ckan_web']['auth']['create_dataset_if_not_in_organization'] %>
+ckan.auth.user_create_groups = <%= node['datashades']['ckan_web']['auth']['user_create_groups'] %>
+ckan.auth.user_create_organizations = <%= node['datashades']['ckan_web']['auth']['user_create_organizations'] %>
+ckan.auth.user_delete_groups = <%= node['datashades']['ckan_web']['auth']['user_delete_groups'] %>
+ckan.auth.user_delete_organizations = <%= node['datashades']['ckan_web']['auth']['user_delete_organizations'] %>
+ckan.auth.create_user_via_api = <%= node['datashades']['ckan_web']['auth']['create_user_via_api'] %>
+ckan.auth.create_user_via_web = <%= node['datashades']['ckan_web']['auth']['create_user_via_web'] %>
+ckan.auth.roles_that_cascade_to_sub_groups = <%= node['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] %>
 
 
 ## Search Settings
 
-ckan.site_id = default
-solr_url = http://<%= node['datashades']['version'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
+ckan.site_id = <%= @app_name %>
+solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
 
 #ckan.simple_search = 1
 
@@ -91,21 +99,34 @@ ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpa
 ckan.views.default_views = image_view text_view recline_view webpage_view recline_grid_view recline_graph_view recline_map_view
 ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
+trak.display_pageviews = true
+
 disqus.name = <%= node['datashades']['ckan_web']['disqus'] %>
 ckan.harvest.mq.type = redis
-ckan.harvest.mq.hostname = <%= node['datashades']['version'] %>redis.<%= node['datashades']['tld'] %>
+ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
+ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
 ## Google Analytics
-googleanalytics.id =
+googleanalytics.id = UA-7276966-13
+googleanalytics.track_frontend_events = false
+googleanalytics.track_backend_events = true
+googleanalytics.collection_url = https://www.google-analytics.com/collect
+googleanalytics_resource_prefix = /downloads/
+googleanalytics.domain = auto
 
 ## Front-End Settings
-ckan.site_title = CKAN
+ckan.site_title = <%= node['datashades']['ckan_web']['title'] %>
 ckan.site_logo = /base/images/ckan-logo.png
 ckan.site_description =
 ckan.favicon = /images/icons/ckan.ico
 ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
+
+ckan.views.default_views = text_view image_view recline_view
+ckan.preview.json_formats = json
+ckan.preview.xml_formats = xml rdf rdf+xml owl+xml atom rss
+ckan.preview.text_formats = text plain text/plain
 
 # package_hide_extras = for_search_index_only
 #package_edit_return_url = http://another.frontend/dataset/<NAME>
@@ -117,10 +138,11 @@ ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain a
 
 
 ## Internationalisation Settings
-ckan.locale_default = en_AU
-ckan.locale_order = 
-ckan.locales_offered = en_AU
-ckan.locales_filtered_out = 
+
+ckan.locale_default = en_GB
+ckan.locale_order = en pt_BR ja it cs_CZ ca es fr el sv sr sr@latin no sk fi ru de pl nl bg ko_KR hu sa sl lv
+ckan.locales_offered =
+ckan.locales_filtered_out =
 
 ## Feeds Settings
 
@@ -131,7 +153,7 @@ ckan.feeds.author_link =
 
 ## Storage Settings
 
-ckan.max_resource_size = 100
+ckan.max_resource_size = 200
 ckan.max_image_size = 10
 ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 
@@ -140,32 +162,38 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 # Make sure you have set up the DataStore
 
 #ckan.datapusher.formats =
-#ckan.datapusher.url = http://127.0.0.1:8800/
+ckan.datapusher.url = http://<%= node['datashades']['app_id'] %>datapusher.<%= node['datashades']['tld'] %>:8800/
+
+ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node['datashades']['redis']['port'] %>/0
 
 ## Activity Streams Settings
 
-#ckan.activity_streams_enabled = true
+ckan.activity_streams_enabled = true
 #ckan.activity_list_limit = 31
 #ckan.activity_streams_email_notifications = true
 # ckan.email_notifications_since = 2 days
 
 
 ## Email settings
+ckan.activity_streams_email_notifications = True
+ckan.email_notifications_since = 2 days
 
 <% if node['datashades']['ckan_web']['sentryurl'].length > 0 -%>
 #email_to = admin@<%= node['datashades']['tld'] %>
 #error_email_from = ckan@<%= @app_url %>
 <% else -%>
-email_to = admin@<%= node['datashades']['tld'] %>
-error_email_from = ckan@<%= @app_url %>
+#email_to = admin@<%= node['datashades']['public_tld'] %>
+error_email_from = no-reply@<%= node['datashades']['public_tld'] %>
 <% end -%>
 
 smtp.server = localhost
 smtp.starttls = False
 #smtp.user = your_username@gmail.com
 #smtp.password = your_password
-#smtp.mail_from =
+smtp.mail_from = no-reply@<%= node['datashades']['public_tld'] %>
 
+# CORS Settings
+ckan.cors.origin_allow_all = True
 
 ## Logging configuration
 [loggers]

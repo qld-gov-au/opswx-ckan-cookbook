@@ -62,9 +62,12 @@ end
 
 # Get app details so we can version the app setup
 #
-app = search("aws_opsworks_app", 'shortname:*ckan_*').first
+app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
+if not app
+	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
+end
 apprelease = app['app_source']['url']
-apprelease.sub! 'ckan/archive/', "ckan.git@" 			
+apprelease.sub! 'ckan/archive/', "ckan.git@"
 apprelease.sub! '.zip', ""
 version = apprelease[/@(.*)/].sub! '@', ''
 
@@ -72,7 +75,7 @@ version = apprelease[/@(.*)/].sub! '@', ''
 #
 group "ckan" do
 	action :create
-	gid '1000'	
+	gid '1000'
 end
 
 # Create CKAN User
@@ -83,7 +86,7 @@ user "ckan" do
 	shell "/sbin/nologin"
 	action :create
 	uid '1000'
-	group 'ckan'	
+	group 'ckan'
 end
 
 # Explicity set permissions on ckan directory so it's readable by Apache
@@ -96,10 +99,37 @@ directory '/home/ckan' do
 	recursive true
 end
 
+virtualenv_dir = "/usr/lib/ckan/default"
 
-# Create ckan app location
+execute "Install Python Virtual Environment" do
+	user "root"
+	command "pip install virtualenv"
+end
+
+bash "Create CKAN Default Virtual Environment" do
+	user "root"
+	code <<-EOS
+		/usr/bin/virtualenv --no-site-packages #{virtualenv_dir}
+		chown -R ckan:ckan #{virtualenv_dir}
+	EOS
+	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
+end
+
+bash "Fix VirtualEnv lib issue" do
+	user "ckan"
+	group "ckan"
+	cwd "#{virtualenv_dir}"
+	code <<-EOS
+		mv -f lib/python2.7/site-packages lib64/python2.7/
+		rm -rf lib
+		ln -sf lib64 lib
+	EOS
+	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
+end
+
+# Create CKAN default etc directory
 #
-directory "/usr/lib/ckan/default" do
+directory "#{virtualenv_dir}/etc" do
   owner 'ckan'
   group 'ckan'
   mode '0755'
@@ -107,39 +137,7 @@ directory "/usr/lib/ckan/default" do
   recursive true
 end
 
-# Install Virtual Environment
-#
-execute "Install Python Virtual Environment" do
-	user "root"
-	command "pip install virtualenv"
-	not_if "pip list | grep virtualenv"
-end
-
-# Create VirtualEnv for CKAN
-#
-if !::File.directory?("/usr/lib/ckan/default/bin")
-	execute "Create CKAN Default Virtual Environment" do
-		cwd "/usr/lib/ckan"
-		user "root"
-		command "/usr/bin/virtualenv --no-site-packages /usr/lib/ckan/default"
-	end
-	
-	bash "Fix VirtualEnv lib issue" do
-		user "root"
-		cwd "/usr/lib/ckan/default"
-		code <<-EOS
-		mv -f lib/python2.7/site-packages lib64/python2.7/
-		rm -rf lib
-		ln -sf lib64 lib 
-		EOS
-	end
-	
-	
-end
-
-# Create CKAN default etc directory
-#
-directory "/usr/lib/ckan/default/etc" do
+directory "/etc/ckan" do
   owner 'ckan'
   group 'ckan'
   mode '0755'
@@ -149,8 +147,8 @@ end
 
 # Link /etc/ckan to actual CKAN location
 #
-link "/etc/ckan" do
-	to "/usr/lib/ckan/default/etc"
+link "/etc/ckan/default" do
+	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
 end
 

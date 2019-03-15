@@ -42,10 +42,16 @@ execute "Enable EPEL" do
 	command "sed -i 's/enabled=0/enabled=1/g'  /etc/yum.repos.d/epel.repo"
 end
 
-# Install core packages
+# Install/remove core packages
 #
 node['datashades']['core']['packages'].each do |p|
 	package p
+end
+
+node['datashades']['core']['unwanted-packages'].each do |p|
+	package p do
+		action :remove
+	end
 end
 
 # real basic stuff needs to go in first so jq available for new stack params that uses jq early on
@@ -85,14 +91,14 @@ end
 bash "Adding AWS ZoneID" do
 	user "root"
 	code <<-EOS
-	if [ ! -e /etc/awszoneid ]; then 
+	if [ ! -e /etc/awszoneid ]; then
 		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
 		echo "zoneid=${zoneid}" > /etc/awszoneid
 	fi
 	EOS
 end
 
-# Install cli53 for Failover recordset creation 
+# Install cli53 for Failover recordset creation
 #
 remote_file "/sbin/cli53" do
 	source "https://github.com/barnybug/cli53/releases/download/0.8.5/cli53-linux-amd64"
@@ -123,4 +129,18 @@ end
 execute 'Create Admin users' do
 	command '/etc/cron.daily/manageadmins'
 	user 'root'
+end
+
+# Replace default mail relay with Nuxeo AWS SMTP Relay
+directory "/usr/share/aws-smtp-relay" do
+	action :create
+end
+
+cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependencies.jar" do
+	source "aws-smtp-relay-1.0.0-jar-with-dependencies.jar"
+end
+
+template "/etc/init.d/aws-smtp-relay" do
+	source "aws-smtp-relay.erb"
+	mode "0755"
 end
