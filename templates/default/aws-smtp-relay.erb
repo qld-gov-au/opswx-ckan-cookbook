@@ -17,7 +17,7 @@ function start {
     ps -p $PID > /dev/null && echo "Relay process already found with PID $PID" && return 1
   fi
 
-  java -jar /usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependencies.jar -p 25 -r us-east-1 &
+  java -jar /usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependencies.jar -p 25 -ssm -ssmP /config/CKAN/<%= node['datashades']['version'] %>/smtpRelay &
   echo $! > $PIDFILE
 }
 

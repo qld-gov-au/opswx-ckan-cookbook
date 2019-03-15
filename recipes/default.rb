@@ -134,7 +134,7 @@ cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependenc
 	source "aws-smtp-relay-1.0.0-jar-with-dependencies.jar"
 end
 
-cookbook_file "/etc/init.d/aws-smtp-relay" do
-	source "aws-smtp-relay"
+template "/etc/init.d/aws-smtp-relay" do
+	source "aws-smtp-relay.erb"
 	mode "0755"
 end
