@@ -26,7 +26,8 @@ default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq']
+default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk']
+default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
 default['datashades']['jumpbox']['usergroup'] = ''
 default['datashades']['jumpbox']['bucket'] = ''
