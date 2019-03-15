@@ -54,6 +54,16 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
 	action :create
 end
 
+# Enable rotation of Nginx logs in subdirectories
+#
+execute "Extend Nginx log rotation" do
+	user "root"
+	cwd "/etc/logrotate.d"
+	# this replacement needs to be idempotent; the result must not match the original pattern
+	# use single quotes so we don't have to double our backslashes
+	command 'sed -i "s|\(/var/log/nginx/\*log\) {|\1\n/var/log/nginx/*/*log {|" nginx'
+end
+
 # Setup Site directories
 #
 paths = {"#{shared_fs_dir}" => 'ckan', "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
@@ -143,6 +153,16 @@ template '/etc/httpd/conf.d/ckan.conf' do
 		:app_url => app['domains'][0]
 	})
 	action :create
+end
+
+# Enable rotation of Apache logs in subdirectories
+#
+execute "Extend Apache log rotation" do
+	user "root"
+	cwd "/etc/logrotate.d"
+	# this replacement needs to be idempotent; the result must not match the original pattern
+	# use single quotes so we don't have to double our backslashes
+	command 'sed -i "s|\(/var/log/httpd/\*log\) {|\1\n/var/log/httpd/*/*log {|;s|delaycompress|compress|g" httpd'
 end
 
 # Install Raven for Sentry
