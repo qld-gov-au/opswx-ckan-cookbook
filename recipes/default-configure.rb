@@ -41,5 +41,5 @@ service 'sendmail' do
 end
 
 service 'aws-smtp-relay' do
-	action [:enable, :start]
+	action [:enable, :restart]
 end
