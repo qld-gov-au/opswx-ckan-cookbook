@@ -23,17 +23,17 @@
 # Set timezone to default value
 #
 link "/etc/localtime" do
-  to "/usr/share/zoneinfo/#{node['datashades']['timezone']}"
-  link_type :symbolic
+	to "/usr/share/zoneinfo/#{node['datashades']['timezone']}"
+	link_type :symbolic
 end
 
 # Store timezone config so yum updates don't reset the timezone
 #
 template '/etc/sysconfig/clock' do
-  source 'clock.erb'
-  owner 'root'
-  group 'root'
-  mode '0755'
+	source 'clock.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
 end
 
 # Enable RedHat EPEL
@@ -113,22 +113,6 @@ cookbook_file "/sbin/checkdns" do
 	owner 'root'
 	group 'root'
 	mode '0755'
-end
-
-# Add Jumpbox Admin Management cron
-#
-template '/etc/cron.daily/manageadmins' do
-	source 'manageadmins.erb'
-	owner 'root'
-	group 'root'
-	mode '0755'
-end
-
-# Add local admins
-#
-execute 'Create Admin users' do
-	command '/etc/cron.daily/manageadmins'
-	user 'root'
 end
 
 # Replace default mail relay with Nuxeo AWS SMTP Relay
