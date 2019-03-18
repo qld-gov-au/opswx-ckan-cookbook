@@ -36,6 +36,12 @@ template '/etc/audit/rules.d/link.rules' do
 	owner 'root'
 end
 
+# Remove unwanted cron job from previous script versions
+#
+file '/etc/cron.daily/manageadmins' do
+	action :delete
+end
+
 service 'sendmail' do
 	action [:stop, :disable]
 end
