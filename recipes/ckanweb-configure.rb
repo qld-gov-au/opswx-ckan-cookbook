@@ -37,15 +37,22 @@ end
 paster = "/usr/lib/ckan/default/bin/paster --plugin=ckan"
 config_file = "/etc/ckan/default/production.ini"
 
+template "/usr/local/sbin/pick-job-server.sh" do
+	source "pick-job-server.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 file "/etc/cron.daily/ckan-tracking-update" do
-	content "#{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
+	content "/usr/local/sbin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
 end
 
 file "/etc/cron.hourly/ckan-email-notifications" do
-	content "echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
+	content "/usr/local/sbin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
@@ -82,4 +89,10 @@ end
 
 service 'httpd' do
 	action :restart
+end
+
+# Make any other instances aware of us
+#
+file "/data/#{node['datashades']['hostname']}" do
+	content "#{node['datashades']['instid']}"
 end
