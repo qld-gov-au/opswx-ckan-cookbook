@@ -89,7 +89,7 @@ user "ckan" do
 	group 'ckan'
 end
 
-# Explicity set permissions on ckan directory so it's readable by Apache
+# Explicitly set permissions on ckan directory so it's readable by Apache
 #
 directory '/home/ckan' do
 	owner 'ckan'
@@ -151,5 +151,3 @@ link "/etc/ckan/default" do
 	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
 end
-
-

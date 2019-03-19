@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Identify whether the current server is the one that should run cron jobs.
+# This is simply intended to ensure that jobs are run exactly once.
+
+opsworks_hostname="<%= node['datashades']['hostname'] %>"
+layer_prefix=$(echo "$opsworks_hostname" | tr -d '[0-9]')
+for i in {1..9}; do
+  if [ -e "/data/$layer_prefix$i" ]; then
+    JOB_SERVER="$layer_prefix$i"
+  fi
+done
+exit $([ "$JOB_SERVER" = "$opsworks_hostname" ])

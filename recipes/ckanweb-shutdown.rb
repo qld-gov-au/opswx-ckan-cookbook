@@ -1,11 +1,11 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
+# Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: default-configure
+# Recipe:: datapusher-shutdown
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright 2019, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,32 +22,8 @@
 
 include_recipe "datashades::stackparams"
 
-# Run updateDNS script
+# Hide this instance from others
 #
-execute 'update dns' do
-	command	'/sbin/updatedns'
-	user 'root'
-	group 'root'
-	not_if { ! ::File.directory? "/sbin/updatedns" }
-end
-
-# Update custom auditd rules
-#
-template '/etc/audit/rules.d/link.rules' do
-	source 'auditd.rules.erb'
-	owner 'root'
-end
-
-# Remove unwanted cron job from previous script versions
-#
-file '/etc/cron.daily/manageadmins' do
+file "/data/#{node['datashades']['hostname']}" do
 	action :delete
-end
-
-service 'sendmail' do
-	action [:stop, :disable]
-end
-
-service 'aws-smtp-relay' do
-	action [:enable, :restart]
 end
