@@ -32,6 +32,8 @@ default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 default['datashades']['jumpbox']['usergroup'] = ''
 default['datashades']['jumpbox']['bucket'] = ''
 
+default['datashades']['log_bucket'] = 'osssio-ckan-web-logs'
+
 default['datashades']['auditd']['rules'] = []
 
 include_attribute "datashades::ckan"

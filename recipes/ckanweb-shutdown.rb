@@ -27,3 +27,18 @@ include_recipe "datashades::stackparams"
 file "/data/#{node['datashades']['hostname']}" do
 	action :delete
 end
+
+bash "Archive remaining logs" do
+	user "root"
+	cwd "/"
+	code <<-EOS
+		/etc/cron.daily/logrotate
+		TIMESTAMP=`date +'%s'`
+		for logfile in `ls -d /var/log/httpd/*log /var/log/httpd/*/*log /var/log/nginx/*log /var/log/nginx/*/*log`; do
+			mv "$logfile" "$logfile.$TIMESTAMP"
+			gzip "$logfile.$TIMESTAMP"
+		done
+		/usr/local/sbin/archive-logs.sh httpd
+		/usr/local/sbin/archive-logs.sh nginx
+	EOS
+end

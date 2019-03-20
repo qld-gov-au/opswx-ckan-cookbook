@@ -1,0 +1,8 @@
+#!/bin/sh
+
+APPLICATION="<%= node['datashades']['sitename'] %>"
+BUCKET="<%= node['datashades']['log_bucket'] %>"
+INSTANCE="<%= node['datashades']['instid'] %>"
+SERVICE="$1"
+
+aws s3 mv "/var/log/$SERVICE/" "s3://$BUCKET/$APPLICATION/$SERVICE/$INSTANCE/" --recursive --exclude "*" --include "*.gz"
