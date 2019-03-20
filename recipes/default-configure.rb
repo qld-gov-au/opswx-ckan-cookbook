@@ -44,10 +44,11 @@ file '/etc/cron.daily/manageadmins' do
 	action :delete
 end
 
-service 'sendmail' do
-	action [:stop, :disable]
-end
-
 service 'aws-smtp-relay' do
 	action [:enable, :restart]
+end
+
+# Re-enable and start in case it was stopped by previous recipe versions
+service 'sendmail' do
+	action [:enable, :start]
 end
