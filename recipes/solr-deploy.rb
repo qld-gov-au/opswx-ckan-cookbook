@@ -31,7 +31,7 @@ unless (::File.directory?("/data/solr"))
 	#
 	group "solr" do
 		action :create
-		gid '1001'
+		gid 1001
 	end
 
 	# Create Solr User
@@ -41,8 +41,8 @@ unless (::File.directory?("/data/solr"))
 		home "/home/solr"
 		shell "/bin/bash"
 		action :create
-		uid '1001'
-		gid '1001'
+		uid 1001
+		gid 1001
 	end
 
 	bash "install solr" do
