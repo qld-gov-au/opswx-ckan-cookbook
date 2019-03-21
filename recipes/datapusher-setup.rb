@@ -47,9 +47,9 @@ end
 bash "Add #{service_name} DNS entry" do
 	user "root"
 	code <<-EOS
+		sed -i "/#{service_name}_/d" /etc/hostnames
 		echo "#{service_name}_name=#{node['datashades']['app_id']}#{service_name}.#{node['datashades']['tld']}" >> /etc/hostnames
 	EOS
-	not_if "grep -q '#{service_name}_name' /etc/hostnames"
 end
 
 # Create script to update DNS on configure events
