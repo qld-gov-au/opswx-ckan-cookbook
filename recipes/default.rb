@@ -91,10 +91,8 @@ end
 bash "Adding AWS ZoneID" do
 	user "root"
 	code <<-EOS
-	if [ ! -e /etc/awszoneid ]; then
-		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-		echo "zoneid=${zoneid}" > /etc/awszoneid
-	fi
+	zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
+	echo "zoneid=${zoneid}" > /etc/awszoneid
 	EOS
 end
 
