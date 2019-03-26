@@ -76,6 +76,12 @@ execute "Install Python dependencies" do
 	command "#{virtualenv_dir}/bin/pip install --cache-dir=/tmp/ -r '#{install_dir}/requirements.txt'"
 end
 
+# The dateparser library defaults to month-first but is configurable
+execute "Patch date parser format" do
+	user "#{service_name}"
+	command "sed -i 's/parser[.]parse(value)/parser.parse(value, dayfirst=True)/' #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
+end
+
 # Serve via Apache mod_wsgi
 cookbook_file "/etc/httpd/conf.d/#{service_name}.conf" do
 	source "#{service_name}.conf"
