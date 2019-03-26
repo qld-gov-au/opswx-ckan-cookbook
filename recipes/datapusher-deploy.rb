@@ -104,8 +104,17 @@ link "/etc/ckan/#{service_name}.wsgi" do
 	to "#{install_dir}/deployment/#{service_name}.wsgi"
 end
 
-link "/etc/ckan/#{service_name}_settings.py" do
-	to "#{install_dir}/deployment/#{service_name}_settings.py"
+# Clean up any symlink from prior cookbook versions
+file "/etc/ckan/#{service_name}_settings.py" do
+	action :delete
+	only_if { ::File.symlink? "/etc/ckan/#{service_name}_settings.py" }
+end
+
+cookbook_file "/etc/ckan/#{service_name}_settings.py" do
+	source "#{service_name}_settings.py"
+	owner "#{service_name}"
+	group "#{service_name}"
+	mode "0644"
 end
 
 service "httpd" do
