@@ -19,7 +19,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 service_name = "datapusher"
 
 # Create group and user so they're allocated a UID and GID clear of OpsWorks managed users
@@ -82,14 +81,6 @@ execute "Patch date parser format" do
 	command "sed -i 's/parser[.]parse(value)/parser.parse(value, dayfirst=True)/' #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
 end
 
-# Serve via Apache mod_wsgi
-cookbook_file "/etc/httpd/conf.d/#{service_name}.conf" do
-	source "#{service_name}.conf"
-	owner "root"
-	group "root"
-	mode "0644"
-end
-
 directory "/etc/ckan" do
   owner "#{service_name}"
   group "#{service_name}"
@@ -100,21 +91,9 @@ directory "/etc/ckan" do
   not_if { ::File.exist? "/etc/ckan" }
 end
 
+# Serve via Apache mod_wsgi
 link "/etc/ckan/#{service_name}.wsgi" do
 	to "#{install_dir}/deployment/#{service_name}.wsgi"
-end
-
-# Clean up any symlink from prior cookbook versions
-file "/etc/ckan/#{service_name}_settings.py" do
-	action :delete
-	only_if { ::File.symlink? "/etc/ckan/#{service_name}_settings.py" }
-end
-
-cookbook_file "/etc/ckan/#{service_name}_settings.py" do
-	source "#{service_name}_settings.py"
-	owner "#{service_name}"
-	group "#{service_name}"
-	mode "0644"
 end
 
 service "httpd" do

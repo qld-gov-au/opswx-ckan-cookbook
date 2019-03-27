@@ -155,16 +155,6 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	action :create
 end
 
-# Enable rotation of Apache logs in subdirectories
-#
-execute "Extend Apache log rotation" do
-	user "root"
-	cwd "/etc/logrotate.d"
-	# this replacement needs to be idempotent; the result must not match the original pattern
-	# use single quotes so we don't have to double our backslashes
-	command 'sed -i "s|\(/var/log/httpd/\*log\) {|\1\n/var/log/httpd/*/*log {|;s|delaycompress|compress|g" httpd'
-end
-
 # Install Raven for Sentry
 #
 execute "Install Raven Sentry client" do

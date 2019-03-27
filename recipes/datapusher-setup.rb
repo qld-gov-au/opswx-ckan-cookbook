@@ -25,7 +25,7 @@ include_recipe "datashades::default"
 
 # Create and mount EFS Data directory
 #
-include_recipe "datashades::efs-setup"
+include_recipe "datashades::httpd-efs-setup"
 
 service_name = "datapusher"
 

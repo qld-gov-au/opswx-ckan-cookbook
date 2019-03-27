@@ -1,7 +1,7 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: datapusher-shutdown
+# Recipe:: httpd-shutdown
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -20,13 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::httpd-shutdown"
-
-# Hide this instance from others
-#
-file "/data/#{node['datashades']['hostname']}" do
-	action :delete
-end
+include_recipe "datashades::stackparams"
 
 bash "Archive remaining logs" do
 	user "root"
@@ -34,10 +28,10 @@ bash "Archive remaining logs" do
 	code <<-EOS
 		/etc/cron.daily/logrotate
 		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/nginx/*log /var/log/nginx/*/*log`; do
+		for logfile in `ls -d /var/log/httpd/*log /var/log/httpd/*/*log`; do
 			mv "$logfile" "$logfile.$TIMESTAMP"
 			gzip "$logfile.$TIMESTAMP"
 		done
-		/usr/local/sbin/archive-logs.sh nginx
+		/usr/local/sbin/archive-logs.sh httpd
 	EOS
 end

@@ -37,26 +37,7 @@ end
 paster = "/usr/lib/ckan/default/bin/paster --plugin=ckan"
 config_file = "/etc/ckan/default/production.ini"
 
-template "/usr/local/sbin/pick-job-server.sh" do
-	source "pick-job-server.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-template "/usr/local/sbin/archive-logs.sh" do
-	source "archive-logs.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-file "/etc/cron.daily/ckan-tracking-update" do
-	content "/usr/local/sbin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end
+include_recipe "datashades::httpd-configure"
 
 file "/etc/cron.daily/archive-nginx-logs-to-s3" do
 	content "/usr/local/sbin/archive-logs.sh nginx 2>&1 >/dev/null\n"
@@ -65,8 +46,15 @@ file "/etc/cron.daily/archive-nginx-logs-to-s3" do
 	mode "0755"
 end
 
-file "/etc/cron.daily/archive-apache-logs-to-s3" do
-	content "/usr/local/sbin/archive-logs.sh httpd 2>&1 >/dev/null\n"
+template "/usr/local/sbin/pick-job-server.sh" do
+	source "pick-job-server.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+file "/etc/cron.daily/ckan-tracking-update" do
+	content "/usr/local/sbin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"

@@ -22,6 +22,6 @@ PORT = 8800
 #FROM_EMAIL = 'server-error@example.com'
 #ADMINS = ['yourname@example.com']  # where to send emails
 
-#LOG_FILE = '/tmp/ckan_service.log'
+LOG_FILE = '/var/log/httpd/ckan_service.log'
 STDERR = True
 MAX_CONTENT_LENGTH=200000000

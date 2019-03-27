@@ -1,12 +1,11 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: datapusher-shutdown
+# Recipe:: httpd-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2019, Queensland Government
-#
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,24 +19,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::httpd-shutdown"
-
-# Hide this instance from others
+# Enable rotation of Apache logs in subdirectories
 #
-file "/data/#{node['datashades']['hostname']}" do
-	action :delete
+execute "Extend Apache log rotation" do
+	user "root"
+	cwd "/etc/logrotate.d"
+	# this replacement needs to be idempotent; the result must not match the original pattern
+	# use single quotes so we don't have to double our backslashes
+	command 'sed -i "s|\(/var/log/httpd/\*log\) {|\1\n/var/log/httpd/*/*log {|;s|delaycompress|compress|g" httpd'
 end
 
-bash "Archive remaining logs" do
-	user "root"
-	cwd "/"
-	code <<-EOS
-		/etc/cron.daily/logrotate
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/nginx/*log /var/log/nginx/*/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/sbin/archive-logs.sh nginx
-	EOS
+template "/usr/local/sbin/archive-logs.sh" do
+	source "archive-logs.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+file "/etc/cron.daily/archive-apache-logs-to-s3" do
+	content "/usr/local/sbin/archive-logs.sh httpd 2>&1 >/dev/null\n"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+service 'httpd' do
+	action [:restart]
 end
