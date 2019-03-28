@@ -23,10 +23,6 @@
 
 include_recipe "datashades::default"
 
-# Create and mount EFS Data directory
-#
-include_recipe "datashades::httpd-efs-setup"
-
 service_name = "datapusher"
 
 # Install necessary packages
@@ -34,6 +30,11 @@ service_name = "datapusher"
 node['datashades'][service_name]['packages'].each do |p|
 	package p
 end
+
+# Create and mount EFS Data directory
+# Needs to come after package installation so the 'apache' user exists
+#
+include_recipe "datashades::httpd-efs-setup"
 
 # Install Virtual Environment
 #
