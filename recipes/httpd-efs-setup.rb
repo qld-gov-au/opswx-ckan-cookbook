@@ -26,7 +26,8 @@ include_recipe "datashades::efs-setup"
 
 data_paths =
 {
-	"/data/logs/apache/#{node['datashades']['instid']}" => 'apache'
+	"/data/logs/apache/#{node['datashades']['instid']}" => 'apache',
+	"/var/log/httpd" => 'apache'
 }
 
 data_paths.each do |data_path, dir_owner|
