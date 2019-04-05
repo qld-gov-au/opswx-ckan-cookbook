@@ -132,6 +132,18 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			end
 		end
 
+		apprevision = app['app_source']['revision']
+		if ! apprevision
+			apprevision = "master"
+		end
+
+		execute "Check out selected revision" do
+			user "ckan"
+			group "ckan"
+			cwd "#{virtualenv_dir}/src/#{app['shortname']}"
+			command "git fetch -a; git checkout '#{apprevision}'"
+		end
+
 		# Add the extension to production.ini
 		bash "Enable #{app['shortname']} plugin" do
 			user "ckan"
