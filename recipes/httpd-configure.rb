@@ -19,6 +19,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
+
 # Enable rotation of Apache logs in subdirectories
 #
 execute "Extend Apache log rotation" do
