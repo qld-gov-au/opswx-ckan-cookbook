@@ -1,10 +1,4 @@
 #!/bin/sh
 
-APPLICATION="<%= node['datashades']['sitename'] %>"
-BUCKET="<%= node['datashades']['log_bucket'] %>"
-INSTANCE="<%= node['datashades']['instid'] %>"
 SERVICE="solr"
-
-TIMESTAMP=`date +'%s'`
-gzip /data/$SERVICE/logs/*log.* /data/$SERVICE/logs/*log_*
-aws s3 mv "/var/$SERVICE/logs/" "s3://$BUCKET/$APPLICATION/$SERVICE/$INSTANCE/$TIMESTAMP/" --recursive --exclude "*" --include "*.gz"
+LOG_DIR="/var/$SERVICE/logs/" ./archive-logs.sh $SERVICE

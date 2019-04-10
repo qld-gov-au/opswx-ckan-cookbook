@@ -19,19 +19,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::default-configure"
+
 execute "Extend Nginx log rotation" do
 	user "root"
 	cwd "/etc/logrotate.d"
 	# this replacement needs to be idempotent; the result must not match the original pattern
 	# use single quotes so we don't have to double our backslashes
 	command 'sed -i "s|\(/var/log/nginx/\*log\) {|\1\n/var/log/nginx/*/*log {|" nginx'
-end
-
-template "/usr/local/sbin/archive-logs.sh" do
-	source "archive-logs.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
 end
 
 file "/etc/cron.daily/archive-nginx-logs-to-s3" do
