@@ -29,6 +29,7 @@ data_paths =
 	"/data/shared_content" => 'apache',
 	"/data/sites" => 'apache',
 	"/data/logs/nginx/#{node['datashades']['instid']}" => 'nginx',
+	"/var/log/nginx" => 'nginx'
 }
 
 data_paths.each do |data_path, dir_owner|

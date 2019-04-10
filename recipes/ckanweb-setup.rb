@@ -60,17 +60,6 @@ service 'httpd' do
 	action [:enable]
 end
 
-# Get app details so we can version the app setup
-#
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
-end
-apprelease = app['app_source']['url']
-apprelease.sub! 'ckan/archive/', "ckan.git@"
-apprelease.sub! '.zip', ""
-version = apprelease[/@(.*)/].sub! '@', ''
-
 # Create CKAN Group
 #
 group "ckan" do
@@ -98,6 +87,10 @@ directory '/home/ckan' do
 	action :create
 	recursive true
 end
+
+#
+# Set up Python virtual environment
+#
 
 virtualenv_dir = "/usr/lib/ckan/default"
 
@@ -127,8 +120,10 @@ bash "Fix VirtualEnv lib issue" do
 	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
 end
 
-# Create CKAN default etc directory
 #
+# Create CKAN configuration directory
+#
+
 directory "#{virtualenv_dir}/etc" do
   owner 'ckan'
   group 'ckan'
@@ -145,8 +140,6 @@ directory "/etc/ckan" do
   recursive true
 end
 
-# Link /etc/ckan to actual CKAN location
-#
 link "/etc/ckan/default" do
 	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
