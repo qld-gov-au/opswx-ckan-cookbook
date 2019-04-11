@@ -2,7 +2,12 @@
 
 APPLICATION="<%= node['datashades']['sitename'] %>"
 BUCKET="<%= node['datashades']['log_bucket'] %>"
-INSTANCE="<%= node['datashades']['instid'] %>"
+INSTANCE="<%= node['datashades']['hostname'] %>-<%= node['datashades']['instid'] %>"
 SERVICE="$1"
 
-aws s3 mv "/var/log/$SERVICE/" "s3://$BUCKET/$APPLICATION/$SERVICE/$INSTANCE/" --recursive --exclude "*" --include "*.gz"
+TIMESTAMP=`date +'%Y-%m-%dT%H:%M:%S_%s'`
+if [ -z "$LOG_DIR" ]; then
+    LOG_DIR="/var/log/$SERVICE/"
+fi
+ls -d $LOG_DIR/* |grep -E 'log[._-]|-[0-9]+$' |xargs gzip /var/log/
+aws s3 mv "$LOG_DIR/" "s3://$BUCKET/$APPLICATION/$SERVICE/$INSTANCE/$TIMESTAMP/" --recursive --exclude "*" --include "*.gz"

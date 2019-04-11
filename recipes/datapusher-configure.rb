@@ -19,26 +19,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::stackparams"
-
-template "/etc/httpd/conf.d/datapusher.conf" do
-	source "datapusher.conf"
-	owner "root"
-	group "root"
-	mode "0644"
-end
-
-# Clean up any symlink from prior cookbook versions
-file "/etc/ckan/datapusher_settings.py" do
-	action :delete
-	only_if { ::File.symlink? "/etc/ckan/datapusher_settings.py" }
-end
-
-cookbook_file "/etc/ckan/datapusher_settings.py" do
-	source "datapusher_settings.py"
-	owner "datapusher"
-	group "datapusher"
-	mode "0644"
-end
-
 include_recipe "datashades::httpd-configure"

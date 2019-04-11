@@ -141,7 +141,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "ckan"
 			group "ckan"
 			cwd "#{virtualenv_dir}/src/#{app['shortname']}"
-			command "git fetch -a; git checkout '#{apprevision}'"
+			command "git fetch; git checkout '#{apprevision}'; git pull"
 		end
 
 		# Add the extension to production.ini

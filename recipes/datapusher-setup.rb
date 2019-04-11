@@ -24,6 +24,22 @@
 include_recipe "datashades::default"
 
 service_name = "datapusher"
+virtualenv_dir = "/usr/lib/ckan/#{service_name}"
+
+# Create group and user so they're allocated a UID and GID clear of OpsWorks managed users
+#
+group "#{service_name}" do
+	action :create
+	gid 1005
+end
+
+user "#{service_name}" do
+	comment "DataPusher User"
+	home "/home/#{service_name}"
+	action :create
+	uid 1005
+	gid 1005
+end
 
 # Install necessary packages
 #
@@ -36,15 +52,54 @@ end
 #
 include_recipe "datashades::httpd-efs-setup"
 
-# Install Virtual Environment
 #
+# Set up Python virtual environment
+#
+
 execute "Install Python Virtual Environment" do
 	user "root"
 	command "pip install virtualenv"
 end
 
-# Add DNS entry for service host
+bash "Create Virtual Environment" do
+	user "root"
+	code <<-EOS
+		/usr/bin/virtualenv --no-site-packages "#{virtualenv_dir}"
+		chown -R #{service_name}:#{service_name} "#{virtualenv_dir}"
+	EOS
+	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
+end
+
+bash "Fix VirtualEnv lib issue" do
+	user "#{service_name}"
+	group "#{service_name}"
+	cwd "#{virtualenv_dir}"
+	code <<-EOS
+	mv -f lib/python2.7/site-packages lib64/python2.7/
+	rm -rf lib
+	ln -sf lib64 lib
+	EOS
+	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
+end
+
 #
+# Create CKAN configuration directory
+#
+
+directory "/etc/ckan" do
+  owner "#{service_name}"
+  group "#{service_name}"
+  mode '0755'
+  action :create
+  recursive true
+  # If we happen to be sharing the box with another CKAN virtualenv, don't steal ownership
+  not_if { ::File.exist? "/etc/ckan" }
+end
+
+#
+# Add DataPusher to DNS
+#
+
 bash "Add #{service_name} DNS entry" do
 	user "root"
 	code <<-EOS
@@ -53,8 +108,6 @@ bash "Add #{service_name} DNS entry" do
 	EOS
 end
 
-# Create script to update DNS on configure events
-#
 cookbook_file '/sbin/updatedns' do
 	source 'updatedns'
 	owner 'root'
@@ -62,8 +115,6 @@ cookbook_file '/sbin/updatedns' do
 	mode '0755'
 end
 
-# Run updateDNS script
-#
 execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
 	command	'/sbin/updatedns'
 	user 'root'
