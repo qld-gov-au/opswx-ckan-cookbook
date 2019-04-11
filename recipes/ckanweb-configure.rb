@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: nfs-configure
+# Recipe:: ckanweb-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -32,4 +32,39 @@ bash "Fix Python Install Layout" do
 	unset PYTHON_INSTALL_LAYOUT
 	EOS
 	not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
+end
+
+include_recipe "datashades::httpd-configure"
+include_recipe "datashades::nginx-configure"
+service 'php-fpm-5.5' do
+	action [:restart]
+end
+
+app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
+if not app
+	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
+end
+
+paster = "/usr/lib/ckan/default/bin/paster --plugin=ckan"
+config_file = "/etc/ckan/default/production.ini"
+shared_fs_dir = "/var/shared_content/#{app['shortname']}"
+
+# Update tracking data
+#
+execute "Tracking update" do
+	user "root"
+	command "#{paster} tracking update -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
+	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
+end
+
+# Update the Solr search index if needed
+execute "Build search index" do
+	user "root"
+	command "#{paster} search-index rebuild -r -o -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
+end
+
+# Make any other instances aware of us
+#
+file "/data/#{node['datashades']['hostname']}" do
+	content "#{node['datashades']['instid']}"
 end

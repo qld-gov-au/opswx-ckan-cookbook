@@ -45,13 +45,13 @@ bash "Add #{service_name} DNS entry" do
 		aliascount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}.')].Name" | jq '. | length')
 		hostcount=`expr $reccount - $aliascount + 1`
 		echo ${hostcount} > /etc/#{service_name}id
+		sed -i "/#{service_name}_/d" /etc/hostnames
 		if [ ${hostcount} -eq 1 ]; then
-			echo "#{service_name}_master=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
+			echo "#{service_name}_master=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		else
-			echo "#{service_name}_slave=#{node['datashades']['version']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames	
+			echo "#{service_name}_slave=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
 		fi
 	EOS
-	not_if "grep -q '#{service_name}_' /etc/hostnames"
 end
 
 # Create script to update DNS on configure events

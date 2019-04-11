@@ -22,6 +22,20 @@
 
 include_recipe "datashades::default-configure"
 
+template "/usr/local/sbin/archive-solr-logs.sh" do
+	source "archive-solr-logs.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+file "/etc/cron.daily/archive-solr-logs-to-s3" do
+	content "/usr/local/sbin/archive-solr-logs.sh 2>&1 >/dev/null\n"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 service "solr" do
 	action [:start]
 end

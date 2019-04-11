@@ -32,29 +32,29 @@ end
 
 # Run through initial setup if root password never set
 #
-unless (::File.exists?("/data/mysql"))
+unless (::File.exist?("/data/mysql"))
 
 	# Stop MySQL to move directory
 	#
 	service "mysqld" do
 		action :stop
 	end
-	
+
 	# Move mysql data directory to data location
 	#
 	bash 'mv_mysql' do
 	  code <<-EOH
 		mv /var/lib/mysql /data/
-		ln -sf /data/mysql/ /var/lib/mysql	
+		ln -sf /data/mysql/ /var/lib/mysql
 	    EOH
-	  not_if { ::File.exists?("/data/mysql") }
+	  not_if { ::File.exist?("/data/mysql") }
 	end
-	
+
 	service "mysqld" do
 		action :start
-	end	
+	end
 end
-	
+
 cookbook_file "/etc/my.cnf" do
 	source "my.cnf"
 	owner 'root'
@@ -62,11 +62,11 @@ cookbook_file "/etc/my.cnf" do
 	mode '0755'
 	action :create_if_missing
 end
-				
+
 # Do mysqladmin init
 #
 bash 'mysqladmin' do
-  code <<-EOH	
+  code <<-EOH
 	mysqladmin -uroot password "#{node['datashades']['mysql']['rootpw']}"
 	mysql -uroot -p"#{node['datashades']['mysql']['rootpw']}" -e 'DROP DATABASE test;'
     EOH
