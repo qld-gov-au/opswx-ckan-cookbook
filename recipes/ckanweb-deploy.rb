@@ -159,6 +159,11 @@ execute "Init CKAN DB" do
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
 end
 
+execute "Update DB schema" do
+	user "#{service_name}"
+	command "#{paster} db upgrade -c #{config_file}"
+end
+
 bash "Create CKAN Admin user" do
 	user "root"
 	code <<-EOS
@@ -173,6 +178,7 @@ end
 #
 
 include_recipe "datashades::ckanweb-deploy-exts"
+include_recipe "datashades::ckanweb-deploy-theme"
 
 #
 # Clean up
