@@ -173,6 +173,7 @@ end
 #
 
 include_recipe "datashades::ckanweb-deploy-exts"
+include_recipe "datashades::ckanweb-deploy-theme"
 
 #
 # Clean up
