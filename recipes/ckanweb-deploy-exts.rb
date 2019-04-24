@@ -40,6 +40,9 @@ batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 extnames =
 {
 	'qgov' => 'qgovext',
+	'data-qld-theme' => 'data_qld_theme',
+	'odi-certificates' => 'odi_certificates',
+	'data-qld' => 'data_qld',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
