@@ -22,6 +22,8 @@
 
 include_recipe "datashades::default-configure"
 
+service_name = 'solr'
+
 template "/usr/local/sbin/archive-solr-logs.sh" do
 	source "archive-solr-logs.sh.erb"
 	owner "root"
