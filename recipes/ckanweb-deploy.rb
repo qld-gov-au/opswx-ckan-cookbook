@@ -39,11 +39,12 @@ install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
 # Setup Site directories
 #
-paths = {"#{shared_fs_dir}" => 'ckan', "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache'}
+paths = {"#{shared_fs_dir}" => "#{service_name}", "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache'}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
 	  owner dir_owner
+	  group "#{service_name}"
 	  recursive true
 	  mode '0775'
 	  action :create
