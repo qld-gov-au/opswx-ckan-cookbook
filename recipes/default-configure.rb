@@ -22,6 +22,24 @@
 
 include_recipe "datashades::stackparams"
 
+template "/usr/local/sbin/archive-logs.sh" do
+	source "archive-logs.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+# Archive regular system logs to S3.
+# This will automatically compress anything at /var/log, but not recursively;
+# however, if logs in subdirectories are already compressed by logrotate,
+# then they will be archived too.
+file "/etc/cron.daily/archive-system-logs-to-s3" do
+	content "LOG_DIR=/var/log /usr/local/sbin/archive-logs.sh system 2>&1 >/dev/null\n"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 # Run updateDNS script
 #
 execute 'update dns' do
@@ -44,10 +62,11 @@ file '/etc/cron.daily/manageadmins' do
 	action :delete
 end
 
-service 'sendmail' do
-	action [:stop, :disable]
-end
-
 service 'aws-smtp-relay' do
 	action [:enable, :restart]
+end
+
+# Re-enable and start in case it was stopped by previous recipe versions
+service 'sendmail' do
+	action [:enable, :start]
 end

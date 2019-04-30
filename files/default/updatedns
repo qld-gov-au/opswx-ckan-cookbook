@@ -67,7 +67,7 @@ i=0
 while read line; do
 	if [[ "$line" =~ ^[^#]*= ]]; then
 		name[i]=`echo $line | cut -d'=' -f 1`
-		value[i]=`echo $line | cut -d'=' -f 2`
+		value[i]=`echo $line | cut -d'=' -f 2 | tr '[A-Z]' '[a-z]'` # ensure that hostnames are lowercase or the lookup can fail
 		((i++))
 	fi
 done < ${config_file}

@@ -91,10 +91,8 @@ end
 bash "Adding AWS ZoneID" do
 	user "root"
 	code <<-EOS
-	if [ ! -e /etc/awszoneid ]; then
-		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-		echo "zoneid=${zoneid}" > /etc/awszoneid
-	fi
+	zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
+	echo "zoneid=${zoneid}" > /etc/awszoneid
 	EOS
 end
 
@@ -113,6 +111,23 @@ cookbook_file "/sbin/checkdns" do
 	owner 'root'
 	group 'root'
 	mode '0755'
+end
+
+# Push stats to enable Cloudwatch monitoring
+#
+cwmon_artifact = "CloudWatchMonitoringScripts-1.2.2.zip"
+remote_file "/opt/aws/#{cwmon_artifact}" do
+	source "https://aws-cloudwatch.s3.amazonaws.com/downloads/#{cwmon_artifact}"
+	mode '0644'
+end
+
+execute 'Unzip CloudWatch monitoring scripts' do
+	command "unzip -u -q /opt/aws/#{cwmon_artifact} -d /opt/aws/"
+end
+
+file "/etc/cron.d/cwpump" do
+	content "*/5 * * * * root perl /opt/aws/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --swap-util --disk-space-util --disk-space-avail --disk-path=/ --auto-scaling --from-cron"
+	mode '0644'
 end
 
 # Replace default mail relay with Nuxeo AWS SMTP Relay

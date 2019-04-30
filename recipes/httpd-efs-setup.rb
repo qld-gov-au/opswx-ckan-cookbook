@@ -1,11 +1,11 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
+# Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: ckanweb-efs-setup
+# Recipe:: httpd-efs-setup
 #
 # Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright 2019, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,16 +20,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update EFS Data directory for CKAN
+# Update EFS Data directory for Apache logging
 #
-include_recipe "datashades::httpd-efs-setup"
+include_recipe "datashades::efs-setup"
 
 data_paths =
 {
-	"/data/shared_content" => 'apache',
-	"/data/sites" => 'apache',
-	"/data/logs/nginx/#{node['datashades']['instid']}" => 'nginx',
-	"/var/log/nginx" => 'nginx'
+	"/data/logs/apache/#{node['datashades']['instid']}" => 'apache',
+	"/var/log/httpd" => 'apache'
 }
 
 data_paths.each do |data_path, dir_owner|
@@ -44,9 +42,7 @@ end
 
 link_paths =
 {
-	"/var/shared_content" => '/data/shared_content',
-	"/var/www/sites" => '/data/sites',
-	"/var/log/nginx/#{node['datashades']['sitename']}" => "/data/logs/nginx/#{node['datashades']['instid']}",
+	"/var/log/httpd/#{node['datashades']['sitename']}" => "/data/logs/apache/#{node['datashades']['instid']}"
 }
 
 link_paths.each do |link_path, source_path|

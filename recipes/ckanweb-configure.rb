@@ -34,61 +34,10 @@ bash "Fix Python Install Layout" do
 	not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
 end
 
-paster = "/usr/lib/ckan/default/bin/paster --plugin=ckan"
-config_file = "/etc/ckan/default/production.ini"
-
-template "/usr/local/sbin/pick-job-server.sh" do
-	source "pick-job-server.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-file "/etc/cron.daily/ckan-tracking-update" do
-	content "/usr/local/sbin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-file "/etc/cron.hourly/ckan-email-notifications" do
-	content "/usr/local/sbin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-# Update the CKAN site_url with the best public domain name we can find.
-# Best is a public DNS alias pointing to CloudFront.
-# Next best is the CloudFront distribution domain.
-# Use the load balancer address if there's no CloudFront.
-#
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
-end
-app_url = app['domains'][0]
-bash "Detect public domain name" do
-	user "ckan"
-	code <<-EOS
-		cloudfront_domain=$(aws cloudfront list-distributions --query "DistributionList.Items[].{DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '#{app_url}')] | [0].DomainName" --output json | tr -d '"')
-		if [ "$cloudfront_domain" != "null" ]; then
-			public_name="$cloudfront_domain"
-			zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['public_tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-			record_name=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?AliasTarget].{Name: Name, Target: AliasTarget.DNSName}[?contains(Target, '$cloudfront_domain')] | [0].Name" --output json |tr -d '"' |sed 's/[.]$//')
-			if [ "$record_name" != "null" ]; then
-				public_name="$record_name"
-				sed -i "s|^smtp[.]mail_from\s*=\([^@]*\)@.*$|smtp.mail_from=\1@$public_name|" /etc/ckan/default/production.ini
-			fi
-		fi
-		if [ ! -z "$public_name" ]; then
-			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" /etc/ckan/default/production.ini
-		fi
-	EOS
-end
-
-service 'httpd' do
-	action :restart
+include_recipe "datashades::httpd-configure"
+include_recipe "datashades::nginx-configure"
+service 'php-fpm-5.5' do
+	action [:restart]
 end
 
 # Make any other instances aware of us

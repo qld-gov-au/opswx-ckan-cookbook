@@ -22,55 +22,29 @@
 
 include_recipe "datashades::stackparams"
 
+service_name = "ckan"
+
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
 if not app
-	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
+	app = search("aws_opsworks_app", "shortname:#{service_name}-#{node['datashades']['version']}*").first
 end
+
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
-
-# Define CKAN endpoint NGINX location directive
-#
-node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
-
-node.default['datashades']['auditd']['rules'].push("#{config_file}")
-node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
-
-
-# Create NGINX Config file
-#
-template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
-  source 'nginx.conf.erb'
-  owner 'root'
-  group 'root'
-  mode '0755'
-  variables({
-   		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0]
-
-		})
-	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
-	action :create
-end
-
-# Enable rotation of Nginx logs in subdirectories
-#
-execute "Extend Nginx log rotation" do
-	user "root"
-	cwd "/etc/logrotate.d"
-	# this replacement needs to be idempotent; the result must not match the original pattern
-	# use single quotes so we don't have to double our backslashes
-	command 'sed -i "s|\(/var/log/nginx/\*log\) {|\1\n/var/log/nginx/*/*log {|" nginx'
-end
+virtualenv_dir = "/usr/lib/ckan/default"
+pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+paster = "#{virtualenv_dir}/bin/paster --plugin=#{service_name}"
+install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
 # Setup Site directories
 #
-paths = {"#{shared_fs_dir}" => 'ckan', "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache', "/var/log/nginx/#{app['shortname']}" => 'nginx', "/var/log/apache/#{app['shortname']}" => 'apache'}
+paths = {"#{shared_fs_dir}" => "#{service_name}", "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache'}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
 	  owner dir_owner
+	  group "#{service_name}"
 	  recursive true
 	  mode '0775'
 	  action :create
@@ -84,33 +58,52 @@ directory "#{shared_fs_dir}/private" do
 end
 
 apprelease = app['app_source']['url']
-apprelease.sub! 'ckan/archive/', "ckan.git@"
+apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
 apprelease.sub! '.zip', ""
 version = apprelease[/@(.*)/].sub! '@', ''
 
-virtualenv_dir = "/usr/lib/ckan/default"
-activate = ". #{virtualenv_dir}/bin/activate"
-pip = "#{virtualenv_dir}/bin/pip"
-paster = "#{virtualenv_dir}/bin/paster --plugin=ckan"
-install_dir = "#{virtualenv_dir}/src/ckan"
+#
+# Install selected revision of CKAN core
+#
+
 execute "Install CKAN #{version}" do
-	user "ckan"
-	group "ckan"
-	command "#{pip} install -e 'git+#{apprelease}#egg=ckan'"
+	user "#{service_name}"
+	group "#{service_name}"
+	command "#{pip} install -e 'git+#{apprelease}#egg=#{service_name}'"
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-execute "Install Python dependencies" do
-	user "ckan"
-	group "ckan"
-	command "#{pip} install --cache-dir=/tmp/ -r '#{install_dir}/requirements.txt'"
+apprevision = app['app_source']['revision']
+execute "Check out selected revision" do
+	user "#{service_name}"
+	group "#{service_name}"
+	cwd "#{install_dir}"
+	# pull if we're checking out a branch, otherwise it doesn't matter
+	command "git fetch; git checkout '#{apprevision}'; git pull || true"
+	only_if apprevision
 end
+
+execute "Install Python dependencies" do
+	user "#{service_name}"
+	group "#{service_name}"
+	command "#{pip} install -r '#{install_dir}/requirements.txt'"
+end
+
+execute "Install Raven Sentry client" do
+	user "#{service_name}"
+	group "#{service_name}"
+	command "#{pip} install --upgrade raven"
+end
+
+#
+# Set up CKAN configuration files
+#
 
 template "#{config_file}" do
 	source 'ckan_properties.ini.erb'
-	owner 'ckan'
-	group 'ckan'
-	mode '0755'
+	owner "#{service_name}"
+	group "#{service_name}"
+	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
@@ -118,23 +111,98 @@ template "#{config_file}" do
 	action :create
 end
 
-execute "Init CKAN DB" do
-	user "root"
-	command "#{paster} db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
-	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
+# Update the CKAN site_url with the best public domain name we can find.
+# Best is a public DNS alias pointing to CloudFront.
+# Next best is the CloudFront distribution domain.
+# Use the load balancer address if there's no CloudFront.
+#
+app_url = app['domains'][0]
+bash "Detect public domain name" do
+	user "#{service_name}"
+	code <<-EOS
+		cloudfront_domain=$(aws cloudfront list-distributions --query "DistributionList.Items[].{DomainName: DomainName, OriginDomainName: Origins.Items[0].DomainName}[?contains(OriginDomainName, '#{app_url}')] | [0].DomainName" --output json | tr -d '"')
+		if [ "$cloudfront_domain" != "null" ]; then
+			public_name="$cloudfront_domain"
+			zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['public_tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
+			record_name=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?AliasTarget].{Name: Name, Target: AliasTarget.DNSName}[?contains(Target, '$cloudfront_domain')] | [0].Name" --output json |tr -d '"' |sed 's/[.]$//')
+			if [ "$record_name" != "null" ]; then
+				public_name="$record_name"
+				sed -i "s|^smtp[.]mail_from\s*=\([^@]*\)@.*$|smtp.mail_from=\1@$public_name|" #{config_file}
+			fi
+		fi
+		if [ ! -z "$public_name" ]; then
+			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" #{config_file}
+		fi
+	EOS
 end
+
+node.default['datashades']['auditd']['rules'].push("#{config_file}")
 
 cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
 	source 'activate_this.py'
-	owner 'ckan'
-	group 'ckan'
-	mode '0755'
+	owner "#{service_name}"
+	group "#{service_name}"
+	mode "0755"
 end
 
 link "#{config_dir}/who.ini" do
 	to "#{install_dir}/who.ini"
 	link_type :symbolic
 end
+
+#
+# Initialise data
+#
+
+execute "Init CKAN DB" do
+	user "root"
+	command "#{paster} db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
+	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
+end
+
+execute "Update DB schema" do
+	user "#{service_name}"
+	command "#{paster} db upgrade -c #{config_file}"
+end
+
+bash "Create CKAN Admin user" do
+	user "root"
+	code <<-EOS
+		#{paster} --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
+		#{paster} --plugin=ckan sysadmin add sysadmin -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
+	EOS
+	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_admin.log"}
+end
+
+#
+# Install CKAN extensions
+#
+
+include_recipe "datashades::ckanweb-deploy-exts"
+include_recipe "datashades::ckanweb-deploy-theme"
+
+#
+# Clean up
+#
+
+# Just in case something created files as root
+execute "Refresh virtualenv ownership" do
+	user "root"
+	group "root"
+	command "chown -R ckan:ckan #{virtualenv_dir}"
+end
+
+# Prepare front-end CSS and JavaScript
+# This needs to be after any extensions since they may affect the result.
+execute "Create front-end resources" do
+	user "ckan"
+	group "ckan"
+	command "#{paster} front-end-build -c #{config_file}"
+end
+
+#
+# Create Apache config files
+#
 
 template "#{config_dir}/apache.wsgi" do
 	source 'apache.wsgi.erb'
@@ -155,74 +223,46 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	action :create
 end
 
-# Enable rotation of Apache logs in subdirectories
 #
-execute "Extend Apache log rotation" do
-	user "root"
-	cwd "/etc/logrotate.d"
-	# this replacement needs to be idempotent; the result must not match the original pattern
-	# use single quotes so we don't have to double our backslashes
-	command 'sed -i "s|\(/var/log/httpd/\*log\) {|\1\n/var/log/httpd/*/*log {|;s|delaycompress|compress|g" httpd'
+# Create NGINX Config files
+#
+
+node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
+
+template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
+  source 'nginx.conf.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
+  variables({
+   		:app_name =>  app['shortname'],
+		:app_url => app['domains'][0]
+		})
+	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
+	action :create
 end
 
-# Install Raven for Sentry
-#
-execute "Install Raven Sentry client" do
-	user "ckan"
-	command "#{pip} install --cache-dir=/tmp/ --upgrade raven"
-end
+node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
 
-# Install CKAN extensions
-#
-include_recipe "datashades::ckanweb-deploy-exts"
+# Set up maintenance cron jobs
 
-# Just in case something created files as root
-execute "Refresh virtualenv ownership" do
-	user "root"
+template "/usr/local/sbin/pick-job-server.sh" do
+	source "pick-job-server.sh.erb"
+	owner "root"
 	group "root"
-	command "chown -R ckan:ckan #{virtualenv_dir}"
+	mode "0755"
 end
 
-# Prepare front-end CSS and JavaScript
-# This needs to be after any extensions since they may affect the result.
-execute "Create front-end resources" do
-	user "ckan"
-	group "ckan"
-	command "#{paster} front-end-build -c #{config_file}"
+file "/etc/cron.daily/ckan-tracking-update" do
+	content "/usr/local/sbin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
+	owner "root"
+	group "root"
+	mode "0755"
 end
 
-# Update tracking data
-#
-execute "Tracking update" do
-	user "root"
-	command "#{paster} tracking update -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
-	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
-end
-
-# Build the Solr search index in case we have pre-existing data.
-execute "Build search index" do
-	user "root"
-	command "#{paster} search-index rebuild -r -o -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
-end
-
-# Restart Web services to enable new configurations
-#
-services = [ 'php-fpm-5.5', 'nginx', 'httpd' ]
-
-services.each do |servicename|
-	service servicename do
-		action [:restart]
-	end
-end
-
-# Create admin user
-#
-bash "Create CKAN Admin user" do
-	user "root"
-	code <<-EOS
-		#{activate}
-		paster --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
-		paster --plugin=ckan sysadmin add sysadmin -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
-	EOS
-	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_admin.log"}
+file "/etc/cron.hourly/ckan-email-notifications" do
+	content "/usr/local/sbin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
+	owner "root"
+	group "root"
+	mode "0755"
 end

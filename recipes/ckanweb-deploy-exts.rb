@@ -40,6 +40,9 @@ batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 extnames =
 {
 	'qgov' => 'qgovext',
+	'data-qld-theme' => 'data_qld_theme',
+	'odi-certificates' => 'odi_certificates',
+	'data-qld' => 'data_qld',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
@@ -130,6 +133,18 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					fi
 				EOS
 			end
+		end
+
+		apprevision = app['app_source']['revision']
+		if ! apprevision
+			apprevision = "master"
+		end
+
+		execute "Check out selected revision" do
+			user "ckan"
+			group "ckan"
+			cwd "#{virtualenv_dir}/src/#{app['shortname']}"
+			command "git fetch; git checkout '#{apprevision}'; git pull"
 		end
 
 		# Add the extension to production.ini
