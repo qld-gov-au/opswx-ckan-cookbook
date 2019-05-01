@@ -74,8 +74,21 @@ extextras =
 	'datajson' => 'jsonschema',
 	'harvest' => 'jsonschema pika',
 	'spatial' => 'geoalchemy2 lxml'
-
 }
+
+# Ordering constraints for plugins.
+# This affects template overrides.
+#
+extordering =
+{
+	'data_qld_theme' => 10,
+	'odi_certificates' => 20,
+	'dcat structured_data' => 30,
+	'data_qld' => 40,
+	'scheming_datasets' => 50
+}
+
+installed_ordered_exts = Set[]
 
 # Install any packages required by extensions
 #
@@ -150,14 +163,41 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		# Add the extension to production.ini
-		bash "Enable #{app['shortname']} plugin" do
-			user "ckan"
-			cwd "/etc/ckan/default"
-			code <<-EOS
-				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-					sed -i "/^ckan.plugins/ s/$/ #{extname}/" production.ini
-				fi
-			EOS
+		# Go as close to the end as possible while respecting the ordering constraints if any
+		insert_before = nil
+		if extordering.has_key? extname
+			min_ordering = extordering[extname]
+			max_ordering = 9999
+			installed_ordered_exts.each do |prefix|
+				installed_ordering = extordering[prefix]
+				if installed_ordering > min_ordering and installed_ordering < max_ordering
+					insert_before = prefix
+					max_ordering = installed_ordering
+				end
+			end
+			installed_ordered_exts.add extname
+		end
+
+		if insert_before
+			bash "Enable #{app['shortname']} plugin before #{insert_before}" do
+				user "ckan"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+						sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
+					fi
+				EOS
+			end
+		else
+			bash "Enable #{app['shortname']} plugin" do
+				user "ckan"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+						sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
+					fi
+				EOS
+			end
 		end
 
 		# Add the extension to the default_views line if required
