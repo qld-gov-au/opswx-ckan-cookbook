@@ -136,6 +136,15 @@ ckan.preview.text_formats = text plain text/plain
 #licenses_group_url = http://licenses.opendefinition.org/licenses/groups/ckan.json
 # ckan.template_footer_end =
 
+ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
+ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
+ckan.odi_certificates.certificate_link_query_parameters = {"datasetUrl":""}
+ckan.odi_certificates.dataset_base_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+
+scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json
+scheming.presets = ckanext.scheming:presets.json
+scheming.dataset_fallback = false
+
 
 ## Internationalisation Settings
 
