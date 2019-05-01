@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: nfs-configure
+# Recipe:: ckanweb-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
@@ -32,4 +32,16 @@ bash "Fix Python Install Layout" do
 	unset PYTHON_INSTALL_LAYOUT
 	EOS
 	not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
+end
+
+include_recipe "datashades::httpd-configure"
+include_recipe "datashades::nginx-configure"
+service 'php-fpm-5.5' do
+	action [:restart]
+end
+
+# Make any other instances aware of us
+#
+file "/data/#{node['datashades']['hostname']}" do
+	content "#{node['datashades']['instid']}"
 end

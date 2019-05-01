@@ -22,7 +22,10 @@
 
 # Obtain some stack attributes for the recipes to use
 #
-stack = search("aws_opsworks_stack", "name:#{node['datashades']['version']}_*").first
+stack = search("aws_opsworks_stack", "name:#{node['datashades']['app_id']}_#{node['datashades']['version']}*").first
+if not stack
+	stack = search("aws_opsworks_stack", "name:*_#{node['datashades']['version']}*").first
+end
 node.default['datashades']['sitename'] = stack['name']
 node.default['datashades']['region'] = stack['region']
 vpc_id = stack['vpc_id']

@@ -37,7 +37,7 @@ bash 'config_php' do
 		sed -i 's~memory_limit = 128M~memory_limit = #{node['datashades']['nginx']['mem_limit']}~g' /etc/php-5.5.ini
 		sed -i "s~post_max_size = 8M~post_max_size = #{node['datashades']['nginx']['maxdl']}~g" /etc/php-5.5.ini
 		sed -i "s~upload_max_filesize = 2M~upload_max_filesize = #{node['datashades']['nginx']['maxdl']}~g" /etc/php-5.5.ini
-		echo -e "listen.owner = nginx\nlisten.group = nginx" >> /etc/php-fpm-5.5.d/www.conf	
+		echo -e "listen.owner = nginx\nlisten.group = nginx" >> /etc/php-fpm-5.5.d/www.conf
 		sed -i 's:default_server::g'  /etc/nginx/nginx.conf
 	EOH
 end
@@ -49,7 +49,7 @@ bash 'install ssl certs' do
 	code <<-EOH
 		openssl req -x509 -newkey rsa:2048 -nodes -keyout /etc/ssl/certs/wild."#{node['datashades']['tld']}".key -out /etc/ssl/certs/wild."#{node['datashades']['tld']}".crt -days 365 -subj "/C=AU/ST=ACT/L=Canberra/O=Datashades/CN=*.#{node['datashades']['tld']}"
 	EOH
-	not_if { ::File.exists?("/etc/ssl/certs/wild.#{node['datashades']['tld']}.crt") } 	
+	not_if { ::File.exist?("/etc/ssl/certs/wild.#{node['datashades']['tld']}.crt") }
 end
 
 # Startup services
