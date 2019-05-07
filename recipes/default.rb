@@ -86,6 +86,15 @@ cookbook_file "/etc/profile.d/datashades.sh" do
 	mode '0755'
 end
 
+# Tag the root EBS volume so we can manage it in AWS Backup etc.
+#
+bash "Tag root EBS volume" do
+	code <<-EOS
+		ROOT_DISK_ID=$(aws ec2 describe-volumes --region=#{node['datashades']['region']} --filters Name=attachment.instance-id,Values=#{node['datashades']['instid']} Name=attachment.device,Values=/dev/xvda --query 'Volumes[*].[VolumeId]' --out text | cut -f 1)
+		aws ec2 create-tags --region #{node['datashades']['region']} --resources $ROOT_DISK_ID --tags Key=Name,Value=#{node['datashades']['hostname']}-root-volume Key=Environment,Value=#{node['datashades']['version']} Key=Service,Value=#{node['datashades']['sitename']} Key=Division,Value="Qld Online" Key=Owner,Value="Development and Delivery" Key=Version,Value="1.0"
+	EOS
+end
+
 # Make sure all instances have an /etc/zoneid
 #
 bash "Adding AWS ZoneID" do
