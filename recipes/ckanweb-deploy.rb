@@ -73,14 +73,13 @@ execute "Install CKAN #{version}" do
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-apprevision = app['app_source']['revision']
 execute "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
 	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout '#{apprevision}'; git pull || true"
-	only_if apprevision
+	command "git fetch; git checkout '#{version}'; git pull || true"
+	only_if version
 end
 
 execute "Install Python dependencies" do
