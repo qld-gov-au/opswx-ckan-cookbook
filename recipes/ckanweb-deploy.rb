@@ -78,7 +78,7 @@ execute "Check out selected revision" do
 	group "#{service_name}"
 	cwd "#{install_dir}"
 	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout '#{version}'; git pull || true"
+	command "git fetch; git checkout -- .; git checkout '#{version}'; git pull || true"
 	only_if version
 end
 
