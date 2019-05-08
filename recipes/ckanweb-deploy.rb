@@ -73,14 +73,12 @@ execute "Install CKAN #{version}" do
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-apprevision = app['app_source']['revision']
 execute "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
 	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout '#{apprevision}'; git pull || true"
-	only_if apprevision
+	command "git fetch; git checkout -- .; git checkout '#{version}'; git pull || true"
 end
 
 execute "Install Python dependencies" do
@@ -131,7 +129,7 @@ bash "Detect public domain name" do
 			fi
 		fi
 		if [ ! -z "$public_name" ]; then
-			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" #{config_file}
+			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|;s|^ckan[.]odi_certificates[.]dataset_base_url\s*=.*$|ckan.odi_certificates.dataset_base_url=https://$public_name/|" #{config_file}
 		fi
 	EOS
 end
