@@ -117,6 +117,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		# Install Extension
 		#
 		virtualenv_dir = "/usr/lib/ckan/default"
+		pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
 
 		# Many extensions use a different name on the plugins line so these need to be managed
 		#
@@ -125,28 +127,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			extname = extnames[pluginname]
 		end
 
-		unless (::File.directory?("#{virtualenv_dir}/src/#{app['shortname']}"))
+		unless (::File.directory?("#{install_dir}"))
 
 			log 'debug' do
-	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{virtualenv_dir}/src/#{app['shortname']}"
+	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{install_dir}"
 				level :info
 			end
 
 			# Install the extension and its requirements
 			#
-			bash "Pip Install #{app['shortname']}" do
+			execute "Pip Install #{app['shortname']}" do
 				user "ckan"
 				group "ckan"
-				code <<-EOS
-					. #{virtualenv_dir}/bin/activate
-					pip install -e "#{apprelease}"
-					if [ -f "requirements.txt" ]; then
-						pip install --cache-dir=/tmp/ -r requirements.txt
-					fi
-					if [ -f "pip-requirements.txt" ]; then
-						pip install --cache-dir=/tmp/ -r "pip-requirements.txt"
-					fi
-				EOS
+				command "#{pip} install -e '#{apprelease}'"
 			end
 		end
 
@@ -158,8 +151,59 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		execute "Check out selected revision" do
 			user "ckan"
 			group "ckan"
-			cwd "#{virtualenv_dir}/src/#{app['shortname']}"
+			cwd "#{install_dir}"
 			command "git fetch; git checkout '#{apprevision}'; git pull"
+		end
+
+		bash "Install #{app['shortname']} requirements" do
+			user "ckan"
+			group "ckan"
+			cwd "#{install_dir}"
+			code <<-EOS
+				if [ -f "requirements.txt" ]; then
+					#{pip} install -r requirements.txt
+				fi
+				if [ -f "pip-requirements.txt" ]; then
+					#{pip} install -r "pip-requirements.txt"
+				fi
+			EOS
+
+		# Add the extension to production.ini
+		# Go as close to the end as possible while respecting the ordering constraints if any
+		insert_before = nil
+		if extordering.has_key? extname
+			min_ordering = extordering[extname]
+			max_ordering = 9999
+			installed_ordered_exts.each do |prefix|
+				installed_ordering = extordering[prefix]
+				if installed_ordering > min_ordering and installed_ordering < max_ordering
+					insert_before = prefix
+					max_ordering = installed_ordering
+				end
+			end
+			installed_ordered_exts.add extname
+		end
+
+		if insert_before
+			bash "Enable #{app['shortname']} plugin before #{insert_before}" do
+				user "ckan"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+						sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
+					fi
+				EOS
+			end
+		else
+			bash "Enable #{app['shortname']} plugin" do
+				user "ckan"
+				cwd "/etc/ckan/default"
+				code <<-EOS
+					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+						sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
+					fi
+				EOS
+			end
 		end
 
 		# Add the extension to production.ini
@@ -237,11 +281,10 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			bash "Install extra PIP packages for #{pluginname}" do
 				user "ckan"
 				code <<-EOS
-					. #{virtualenv_dir}/bin/activate
 					read -r -a packages <<< "#{pip_packages}"
 					for package in "${packages[@]}"
 					do
-						pip install --cache-dir=/tmp/ ${package}
+						#{pip} install ${package}
 					done
 				EOS
 			end
