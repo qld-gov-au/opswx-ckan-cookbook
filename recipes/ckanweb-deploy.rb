@@ -193,8 +193,8 @@ end
 # Prepare front-end CSS and JavaScript
 # This needs to be after any extensions since they may affect the result.
 execute "Create front-end resources" do
-	user "ckan"
-	group "ckan"
+	user "#{service_name}"
+	group "#{service_name}"
 	command "#{paster} front-end-build -c #{config_file}"
 end
 
