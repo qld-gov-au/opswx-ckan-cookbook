@@ -114,6 +114,9 @@ googleanalytics.collection_url = https://www.google-analytics.com/collect
 googleanalytics_resource_prefix = /downloads/
 googleanalytics.domain = auto
 
+## Google Tag Manager
+ckan.google_tag_manager.gtm_container_id = <%= node['datashades']['ckan_web']['google']['gtm_container_id'] %>
+
 ## Front-End Settings
 ckan.site_title = <%= node['datashades']['ckan_web']['title'] %>
 ckan.site_logo = /base/images/ckan-logo.png
@@ -136,10 +139,15 @@ ckan.preview.text_formats = text plain text/plain
 #licenses_group_url = http://licenses.opendefinition.org/licenses/groups/ckan.json
 # ckan.template_footer_end =
 
+ckan.datarequests.comments = true
+ckan.datarequests.show_datarequests_badge = true
+ckan.datarequests.description_required = true
+ckan.datarequests.default_organisation = open-data-administration-data-requests
+
 ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
 ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
 ckan.odi_certificates.certificate_link_query_parameters = {"datasetUrl":""}
-ckan.odi_certificates.dataset_base_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+ckan.odi_certificates.dataset_base_url = https://<%= node['datashades']['public_tld'] %>
 
 scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json
 scheming.presets = ckanext.scheming:presets.json
