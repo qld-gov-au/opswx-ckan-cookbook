@@ -129,7 +129,7 @@ bash "Detect public domain name" do
 			fi
 		fi
 		if [ ! -z "$public_name" ]; then
-			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|;s|^ckan[.]odi_certificates[.]dataset_base_url\s*=.*$|ckan.odi_certificates.dataset_base_url=https://$public_name/|" #{config_file}
+			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" #{config_file}
 		fi
 	EOS
 end
