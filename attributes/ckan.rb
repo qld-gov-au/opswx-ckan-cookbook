@@ -50,6 +50,9 @@ default['datashades']['ckan_web']['auth']['create_user_via_api'] = false
 default['datashades']['ckan_web']['auth']['create_user_via_web'] = true
 default['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] = 'admin'
 
+default['datashades']['ckan_web']['google']['gtm_container_id'] = ''
+default['datashades']['ckan_web']['google']['analytics_id'] = 'UA-7276966-12'
+
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 
 default['datashades']['postgres']['password'] = ""
