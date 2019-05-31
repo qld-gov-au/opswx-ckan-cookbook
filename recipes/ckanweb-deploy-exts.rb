@@ -117,6 +117,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		# Install Extension
 		#
 		virtualenv_dir = "/usr/lib/ckan/default"
+		python = "#{virtualenv_dir}/bin/python"
 		pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
 		config_dir = "/etc/ckan/default"
@@ -153,7 +154,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "ckan"
 			group "ckan"
 			cwd "#{install_dir}"
-			command "git fetch; git checkout '#{apprevision}'; git pull"
+			command "git fetch; git checkout '#{apprevision}'; git pull; #{python} setup.py develop"
 		end
 
 		bash "Install #{app['shortname']} requirements" do
@@ -225,7 +226,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		execute "Validation CKAN ext database init" do
 			user "ckan"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'validation' }
 		end
 
