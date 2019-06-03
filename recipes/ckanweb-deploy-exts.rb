@@ -40,8 +40,6 @@ batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 extnames =
 {
 	'qgov' => 'qgovext',
-	'data-qld-theme' => 'data_qld_theme',
-	'odi-certificates' => 'odi_certificates',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
 	'data-qld' => 'data_qld data_qld_google_analytics',
@@ -100,7 +98,6 @@ end
 #
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
-	app['shortname'].gsub! '_', '-'
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
 
 	# Don't install extensions not required by the batch node
@@ -124,7 +121,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		# Many extensions use a different name on the plugins line so these need to be managed
 		#
-		extname = pluginname
+		extname = pluginname.gsub '-', '_'
 		if extnames.has_key? pluginname
 			extname = extnames[pluginname]
 		end
