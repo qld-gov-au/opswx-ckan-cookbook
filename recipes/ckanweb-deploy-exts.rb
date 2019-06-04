@@ -147,11 +147,18 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			apprevision = "master"
 		end
 
-		execute "Check out selected revision" do
+		bash "Check out selected revision" do
 			user "ckan"
 			group "ckan"
 			cwd "#{install_dir}"
-			command "git fetch; git checkout '#{apprevision}'; git pull; #{python} setup.py develop"
+			code <<-EOS
+				git fetch
+				git reset --hard
+				git checkout '#{apprevision}'
+				git pull
+				find . -name '*.pyc' -delete
+				#{python} setup.py develop
+			EOS
 		end
 
 		bash "Install #{app['shortname']} requirements" do
