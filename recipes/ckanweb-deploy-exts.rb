@@ -40,8 +40,6 @@ batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
 extnames =
 {
 	'qgov' => 'qgovext',
-	'data-qld-theme' => 'data_qld_theme',
-	'odi-certificates' => 'odi_certificates',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
 	'data-qld' => 'data_qld data_qld_google_analytics',
@@ -100,7 +98,6 @@ end
 #
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
-	app['shortname'].gsub! '_', '-'
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
 
 	# Don't install extensions not required by the batch node
@@ -117,13 +114,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		# Install Extension
 		#
 		virtualenv_dir = "/usr/lib/ckan/default"
+		python = "#{virtualenv_dir}/bin/python"
 		pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
 		config_dir = "/etc/ckan/default"
 
 		# Many extensions use a different name on the plugins line so these need to be managed
 		#
-		extname = pluginname
+		extname = pluginname.gsub '-', '_'
 		if extnames.has_key? pluginname
 			extname = extnames[pluginname]
 		end
@@ -149,11 +147,17 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			apprevision = "master"
 		end
 
-		execute "Check out selected revision" do
+		bash "Check out selected revision" do
 			user "ckan"
 			group "ckan"
 			cwd "#{install_dir}"
-			command "git fetch; git checkout '#{apprevision}'; git pull"
+			code <<-EOS
+				git fetch
+				git reset --hard
+				git checkout '#{apprevision}'
+				git pull
+				find . -name '*.pyc' -delete
+			EOS
 		end
 
 		bash "Install #{app['shortname']} requirements" do
@@ -161,6 +165,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			group "ckan"
 			cwd "#{install_dir}"
 			code <<-EOS
+				#{python} setup.py develop
 				if [ -f "requirements.txt" ]; then
 					#{pip} install -r requirements.txt
 				fi
@@ -225,8 +230,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		execute "Validation CKAN ext database init" do
 			user "ckan"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'validation' }
+		end
+
+		execute "YTP CKAN ext database init" do
+			user "ckan"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
+			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
 		# Viewhelpers is a special case because stats needs to be loaded before it
