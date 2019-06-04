@@ -157,7 +157,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				git checkout '#{apprevision}'
 				git pull
 				find . -name '*.pyc' -delete
-				#{python} setup.py develop
 			EOS
 		end
 
@@ -166,6 +165,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			group "ckan"
 			cwd "#{install_dir}"
 			code <<-EOS
+				#{python} setup.py develop
 				if [ -f "requirements.txt" ]; then
 					#{pip} install -r requirements.txt
 				fi
@@ -232,6 +232,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "ckan"
 			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'validation' }
+		end
+
+		execute "YTP CKAN ext database init" do
+			user "ckan"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
+			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
 		# Viewhelpers is a special case because stats needs to be loaded before it
