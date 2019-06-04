@@ -44,7 +44,7 @@ extnames =
 	'odi-certificates' => 'odi_certificates',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
-	'data-qld' => 'data_qld',
+	'data-qld' => 'data_qld data_qld_google_analytics',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
@@ -119,6 +119,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		virtualenv_dir = "/usr/lib/ckan/default"
 		pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
+		config_dir = "/etc/ckan/default"
 
 		# Many extensions use a different name on the plugins line so these need to be managed
 		#
@@ -188,7 +189,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if insert_before
 			bash "Enable #{app['shortname']} plugin before #{insert_before}" do
 				user "ckan"
-				cwd "/etc/ckan/default"
+				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
 						sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
@@ -198,7 +199,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		else
 			bash "Enable #{app['shortname']} plugin" do
 				user "ckan"
-				cwd "/etc/ckan/default"
+				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
 						sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
@@ -213,13 +214,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			viewname = extviews[pluginname]
 			bash "#{app['shortname']} ext config" do
 				user "ckan"
-				cwd "/etc/ckan/default"
+				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
 						sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
 					fi
 				EOS
 			end
+		end
+
+		execute "Validation CKAN ext database init" do
+			user "ckan"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini"
+			only_if { "#{pluginname}".eql? 'validation' }
 		end
 
 		# Viewhelpers is a special case because stats needs to be loaded before it
