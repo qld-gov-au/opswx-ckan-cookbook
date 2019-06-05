@@ -222,6 +222,32 @@ template '/etc/httpd/conf.d/ckan.conf' do
 end
 
 #
+# Create job worker config files
+#
+
+bash "Enable Supervisor file inclusions" do
+	user "root"
+	code <<-EOS
+		SUPERVISOR_CONFIG=/etc/supervisord.conf
+		grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
+		mkdir -p /etc/supervisor/conf.d
+		echo '[include]' >> $SUPERVISOR_CONFIG
+		echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+	EOS
+end
+
+cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+	source "supervisor-ckan-worker.conf"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+service "supervisord" do
+	action [:enable, :restart]
+end
+
+#
 # Create NGINX Config files
 #
 

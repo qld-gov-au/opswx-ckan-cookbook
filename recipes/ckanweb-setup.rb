@@ -38,9 +38,13 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
+# Installing via yum gives initd integration, but has import problems.
+# Installing via pip fixes the import problems, but doesn't provide the integration.
+# So we do both.
+execute "pip install supervisor"
+
 include_recipe "datashades::nginx-setup"
 include_recipe "datashades::ckanweb-efs-setup"
-
 
 # Change Apache default port to 8000 and fix access to /
 #
