@@ -61,6 +61,8 @@ ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoi
 
 ## QGOV Settings
 
+ckan.base_public_folder = public-bs2
+ckan.base_templates_folder = templates-bs2
 extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public
 extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/templates
 feedback_form_recipients = <%= node['datashades']['ckan_web']['feedback_recipients'] %>
