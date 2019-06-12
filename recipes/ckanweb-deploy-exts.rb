@@ -82,7 +82,7 @@ extordering =
 	'data_qld_theme' => 10,
 	'odi_certificates' => 20,
 	'dcat structured_data' => 30,
-	'data_qld' => 40,
+	'data_qld data_qld_google_analytics' => 40,
 	'scheming_datasets' => 50
 }
 
