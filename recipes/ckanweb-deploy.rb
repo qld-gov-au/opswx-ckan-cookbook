@@ -73,12 +73,18 @@ execute "Install CKAN #{version}" do
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-execute "Check out selected revision" do
+bash "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
 	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout -- .; git checkout '#{version}'; git pull || true"
+	code <<-EOS
+		git fetch
+		git reset --hard
+		git checkout '#{version}'
+		git pull
+		find . -name '*.pyc' -delete
+	EOS
 end
 
 execute "Install Python dependencies" do
@@ -229,10 +235,12 @@ bash "Enable Supervisor file inclusions" do
 	user "root"
 	code <<-EOS
 		SUPERVISOR_CONFIG=/etc/supervisord.conf
-		grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
-		mkdir -p /etc/supervisor/conf.d
-		echo '[include]' >> $SUPERVISOR_CONFIG
-		echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+		if [ -f "$SUPERVISOR_CONFIG" ]; then
+			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
+			mkdir -p /etc/supervisor/conf.d
+			echo '[include]' >> $SUPERVISOR_CONFIG
+			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+		fi
 	EOS
 end
 
