@@ -73,12 +73,18 @@ execute "Install CKAN #{version}" do
 	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
 end
 
-execute "Check out selected revision" do
+bash "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
 	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout -- .; git checkout '#{version}'; git pull || true"
+	code <<-EOS
+		git fetch
+		git reset --hard
+		git checkout '#{version}'
+		git pull
+		find . -name '*.pyc' -delete
+	EOS
 end
 
 execute "Install Python dependencies" do
@@ -160,6 +166,7 @@ end
 
 execute "Update DB schema" do
 	user "#{service_name}"
+	group "#{service_name}"
 	command "#{paster} db upgrade -c #{config_file}"
 end
 
@@ -219,6 +226,34 @@ template '/etc/httpd/conf.d/ckan.conf' do
 		:app_url => app['domains'][0]
 	})
 	action :create
+end
+
+#
+# Create job worker config files
+#
+
+bash "Enable Supervisor file inclusions" do
+	user "root"
+	code <<-EOS
+		SUPERVISOR_CONFIG=/etc/supervisord.conf
+		if [ -f "$SUPERVISOR_CONFIG" ]; then
+			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
+			mkdir -p /etc/supervisor/conf.d
+			echo '[include]' >> $SUPERVISOR_CONFIG
+			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+		fi
+	EOS
+end
+
+cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+	source "supervisor-ckan-worker.conf"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+service "supervisord" do
+	action [:enable, :restart]
 end
 
 #
