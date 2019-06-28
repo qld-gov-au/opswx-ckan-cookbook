@@ -29,6 +29,7 @@ end
 
 if app
 	site_dir = "/var/www/sites/#{node['datashades']['app_id']}-#{node['datashades']['version']}/"
+	config_dir = "/etc/ckan/default"
 
 	directory "#{site_dir}" do
 		owner "ec2-user"
@@ -56,6 +57,17 @@ if app
 			mv staging/* .
 		EOS
 	end
+
+	bash "Configure legacy Bootstrap" do
+		user "ckan"
+		group "ckan"
+		cwd "#{config_dir}"
+		code <<-EOS
+			sed -i "/^ckan.base_public_folder\s*=\s*public$/ s/$/-bs2/" production.ini
+			sed -i "/^ckan.base_templates_folder\s*=\s*templates$/ s/$/-bs2/" production.ini
+		EOS
+	end
+
 
 	#
 	# Clean up
