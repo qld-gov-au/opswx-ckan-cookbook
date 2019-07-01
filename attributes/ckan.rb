@@ -22,7 +22,7 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'java-1.8.0-openjdk-devel', 'java-1.8.0-openjdk', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'java-1.8.0-openjdk-devel', 'java-1.8.0-openjdk', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27', 'supervisor']
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
 default['datashades']['ckan_web']['dbname'] = 'ckan_default'
@@ -49,6 +49,9 @@ default['datashades']['ckan_web']['auth']['user_delete_organizations'] = false
 default['datashades']['ckan_web']['auth']['create_user_via_api'] = false
 default['datashades']['ckan_web']['auth']['create_user_via_web'] = true
 default['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] = 'admin'
+
+default['datashades']['ckan_web']['google']['gtm_container_id'] = ''
+default['datashades']['ckan_web']['google']['analytics_id'] = 'UA-7276966-12'
 
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 
