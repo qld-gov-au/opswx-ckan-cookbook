@@ -166,6 +166,7 @@ end
 
 execute "Update DB schema" do
 	user "#{service_name}"
+	group "#{service_name}"
 	command "#{paster} db upgrade -c #{config_file}"
 end
 

@@ -61,6 +61,8 @@ ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoi
 
 ## QGOV Settings
 
+ckan.base_public_folder = public
+ckan.base_templates_folder = templates
 extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public
 extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/templates
 feedback_form_recipients = <%= node['datashades']['ckan_web']['feedback_recipients'] %>
@@ -124,7 +126,7 @@ ckan.google_tag_manager.gtm_container_id = <%= node['datashades']['ckan_web']['g
 ckan.site_title = <%= node['datashades']['ckan_web']['title'] %>
 ckan.site_logo = /base/images/ckan-logo.png
 ckan.site_description =
-ckan.favicon = /images/icons/ckan.ico
+ckan.favicon = https://www.qld.gov.au/favicon.ico
 ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
