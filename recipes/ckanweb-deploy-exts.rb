@@ -240,6 +240,31 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
+		bash "Provide custom Bootstrap version" do
+			user "ckan"
+			group "ckan"
+			cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"
+			code <<-EOS
+				BOOTSTRAP_VERSION_PATTERN="\\bv[0-9]+\\.[0-9]\\.[0-9]\\b"
+				CORE_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" bootstrap.min.js)
+				CUSTOM_BOOTSTRAP=#{virtualenv_dir}/src/ckanext-data-qld-theme/ckanext/data_qld_theme/bootstrap/
+				CUSTOM_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" $CUSTOM_BOOTSTRAP/bootstrap.min.js)
+				if [ "$CUSTOM_BOOTSTRAP_VERSION" != "" ]; then
+					cp $CUSTOM_BOOTSTRAP/bootstrap.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js
+					cp $CUSTOM_BOOTSTRAP/bootstrap.min.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js
+					if [ -L bootstrap.js ]; then
+						rm bootstrap.js bootstrap.min.js
+					else
+						mv bootstrap.js bootstrap-$CORE_BOOTSTRAP_VERSION.js
+						mv bootstrap.min.js bootstrap-$CORE_BOOTSTRAP_VERSION.min.js
+					fi
+					ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js bootstrap.js
+					ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js bootstrap.min.js
+				fi
+			EOS
+			only_if { "#{pluginname}".eql? 'data_qld_theme' }
+		end
+
 		# Viewhelpers is a special case because stats needs to be loaded before it
 		#
 		if "#{pluginname}".eql? 'viewhelpers' then
