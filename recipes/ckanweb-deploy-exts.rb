@@ -262,7 +262,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 					ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js bootstrap.min.js
 				fi
 			EOS
-			only_if { "#{pluginname}".eql? 'data_qld_theme' }
+			only_if { "#{pluginname}".eql? 'data-qld-theme' }
 		end
 
 		# Viewhelpers is a special case because stats needs to be loaded before it
