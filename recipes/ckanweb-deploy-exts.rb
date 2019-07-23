@@ -1,11 +1,11 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
+# Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
 # Cookbook Name:: datashades
 # Recipe:: ckanweb-deploy-exts
 #
 # Deploys CKAN Extensions to web layer
 #
-# Copyright 2016, Link Digital
+# Copyright 2019, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,12 @@ unless batchlayer.nil?
 	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
 end
 batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
+
+account_name = "ckan"
+virtualenv_dir = "/usr/lib/ckan/default"
+python = "#{virtualenv_dir}/bin/python"
+pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+config_dir = "/etc/ckan/default"
 
 # Hash to map extname to pluginname
 #
@@ -113,11 +119,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		# Install Extension
 		#
-		virtualenv_dir = "/usr/lib/ckan/default"
-		python = "#{virtualenv_dir}/bin/python"
-		pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
-		config_dir = "/etc/ckan/default"
 
 		# Many extensions use a different name on the plugins line so these need to be managed
 		#
@@ -136,8 +138,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			# Install the extension and its requirements
 			#
 			execute "Pip Install #{app['shortname']}" do
-				user "ckan"
-				group "ckan"
+				user "#{account_name}"
+				group "#{account_name}"
 				command "#{pip} install -e '#{apprelease}'"
 			end
 		end
@@ -148,8 +150,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		bash "Check out selected revision" do
-			user "ckan"
-			group "ckan"
+			user "#{account_name}"
+			group "#{account_name}"
 			cwd "#{install_dir}"
 			code <<-EOS
 				git fetch
@@ -161,8 +163,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		bash "Install #{app['shortname']} requirements" do
-			user "ckan"
-			group "ckan"
+			user "#{account_name}"
+			group "#{account_name}"
 			cwd "#{install_dir}"
 			code <<-EOS
 				#{python} setup.py develop
@@ -193,7 +195,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		if insert_before
 			bash "Enable #{app['shortname']} plugin before #{insert_before}" do
-				user "ckan"
+				user "#{account_name}"
 				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
@@ -203,7 +205,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			end
 		else
 			bash "Enable #{app['shortname']} plugin" do
-				user "ckan"
+				user "#{account_name}"
 				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
@@ -218,7 +220,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if extviews.has_key? pluginname
 			viewname = extviews[pluginname]
 			bash "#{app['shortname']} ext config" do
-				user "ckan"
+				user "#{account_name}"
 				cwd "#{config_dir}"
 				code <<-EOS
 					if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
@@ -229,20 +231,20 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		execute "Validation CKAN ext database init" do
-			user "ckan"
+			user "#{account_name}"
 			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'validation' }
 		end
 
 		execute "YTP CKAN ext database init" do
-			user "ckan"
+			user "#{account_name}"
 			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
 		bash "Provide custom Bootstrap version" do
-			user "ckan"
-			group "ckan"
+			user "#{account_name}"
+			group "#{account_name}"
 			cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"
 			code <<-EOS
 				BOOTSTRAP_VERSION_PATTERN="\\bv[0-9]+\\.[0-9]\\.[0-9]\\b"
@@ -269,8 +271,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		#
 		if "#{pluginname}".eql? 'viewhelpers' then
 			bash "View Helpers CKAN ext config" do
-				user "ckan"
-				cwd "/etc/ckan/default"
+				user "#{account_name}"
+				cwd "#{config_dir}"
 				code <<-EOS
 					if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
 						sed -i "s/viewhelpers/ /g" production.ini;
@@ -285,7 +287,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if extextras.has_key? pluginname
 			pip_packages = extextras[pluginname]
 			bash "Install extra PIP packages for #{pluginname}" do
-				user "ckan"
+				user "#{account_name}"
 				code <<-EOS
 					read -r -a packages <<< "#{pip_packages}"
 					for package in "${packages[@]}"
@@ -311,7 +313,7 @@ end
 # No installation necessary in CKAN 2.2+
 bash "Enable DataStore-related extensions" do
 	user "ckan"
-	cwd "/etc/ckan/default"
+	cwd "#{config_dir}"
 	code <<-EOS
 		if [ -z  "$(grep 'ckan.plugins.*datastore' production.ini)" ]; then
 			sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
