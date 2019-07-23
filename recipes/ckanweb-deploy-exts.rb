@@ -324,3 +324,15 @@ bash "Enable DataStore-related extensions" do
 	EOS
 	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable']}
 end
+
+# There is a race condition when uploading a resource; the page tries
+# to display it, while the DataPusher tries to delete and recreate it.
+# Thus, the resource may not exist when the page loads.
+# See https://github.com/ckan/ckan/issues/3980
+execute "Patch upload race condition" do
+	user "#{account_name}"
+	command <<-'SED'.strip + " #{virtualenv_dir}/src/ckan/ckan/lib/helpers.py"
+		sed -i "s/^\(\s\{4\}\)\(result = logic.get_action('datastore_search')({}, data)\)/\1import ckan.plugins as p\n\1try:\n\1\1\2\n\1except p.toolkit.ObjectNotFound:\n\1\1return []/"
+	SED
+	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable']}
+end
