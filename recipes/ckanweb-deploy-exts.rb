@@ -236,9 +236,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			only_if { "#{pluginname}".eql? 'validation' }
 		end
 
-		execute "YTP CKAN ext database init" do
+		bash "YTP CKAN ext database init" do
 			user "#{account_name}"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
+			code <<-EOS
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments init_notifications_db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
+			EOS
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
