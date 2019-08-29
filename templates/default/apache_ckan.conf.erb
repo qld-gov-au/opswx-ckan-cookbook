@@ -1,12 +1,6 @@
 <VirtualHost 127.0.0.1:8000>
     ServerName <%= @app_url %>
     ServerAlias www.<%= @app_url %>
-
-    # Use canonical domain
-    RewriteEngine on
-    RewriteCond %{HTTP:X-Forwarded-Host} www\.([-_.a-z]*\.qld\.gov\.au)
-    RewriteRule ^/(.*)$ https://%1/$1 [R=301,L]
-
     WSGIScriptAlias <%= node['datashades']['ckan_web']['endpoint'] %> /etc/ckan/default/apache.wsgi
 
     # Pass authorization info on (needed for rest api).
