@@ -152,7 +152,7 @@ ckan.datarequests.default_organisation = open-data-administration-data-requests
 ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
 ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
 ckan.odi_certificates.certificate_link_query_parameters = {"datasetUrl":""}
-ckan.odi_certificates.dataset_base_url = https://<%= node['datashades']['public_tld'] %>
+ckan.odi_certificates.dataset_base_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
 
 scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json
 scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json
@@ -224,15 +224,15 @@ ckan.email_notifications_since = 2 days
 #email_to = admin@<%= node['datashades']['tld'] %>
 #error_email_from = ckan@<%= @app_url %>
 <% else -%>
-#email_to = admin@<%= node['datashades']['public_tld'] %>
-error_email_from = no-reply@<%= node['datashades']['public_tld'] %>
+#email_to = admin@<%= @email_domain %>
+error_email_from = no-reply@<%= @email_domain %>
 <% end -%>
 
 smtp.server = 127.0.1.1
 smtp.starttls = False
 #smtp.user = your_username@gmail.com
 #smtp.password = your_password
-smtp.mail_from = no-reply@<%= node['datashades']['public_tld'] %>
+smtp.mail_from = no-reply@<%= @email_domain %>
 
 # CORS Settings
 ckan.cors.origin_allow_all = True
