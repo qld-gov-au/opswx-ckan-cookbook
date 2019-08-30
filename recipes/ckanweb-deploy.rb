@@ -110,35 +110,37 @@ template "#{config_file}" do
 	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0]
+		:app_url => app['domains'][0],
+		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
 	action :create
 end
 
-# Update the CKAN site_url with the best public domain name we can find.
-# Best is a public DNS alias pointing to CloudFront.
-# Next best is the CloudFront distribution domain.
-# Use the load balancer address if there's no CloudFront.
-#
-app_url = app['domains'][0]
-bash "Detect public domain name" do
-	user "#{service_name}"
-	code <<-EOS
-		cloudfront_domain=$(aws cloudfront list-distributions --query "DistributionList.Items[].{DomainName: DomainName, OriginDomainName: Origins.Items[].DomainName}[?contains(OriginDomainName, '#{app_url}')] | [0].DomainName" --output json | tr -d '"')
-		if [ "$cloudfront_domain" != "null" ]; then
-			public_name="$cloudfront_domain"
-			zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['public_tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-			record_name=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?AliasTarget].{Name: Name, Target: AliasTarget.DNSName}[?contains(Target, '$cloudfront_domain')] | [0].Name" --output json |tr -d '"' |sed 's/[.]$//')
-			if [ "$record_name" != "null" ]; then
-				public_name="$record_name"
-				sed -i "s|^smtp[.]mail_from\s*=\([^@]*\)@.*$|smtp.mail_from=\1@$public_name|" #{config_file}
-			fi
-		fi
-		if [ ! -z "$public_name" ]; then
-			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" #{config_file}
-		fi
-	EOS
-end
+# app_url == Domains[0] is used for site_url, email domain defaults to public_tld if email_domain is not injected via attributes/ckan.rb
+# # Update the CKAN site_url with the best public domain name we can find.
+# # Best is a public DNS alias pointing to CloudFront.
+# # Next best is the CloudFront distribution domain.
+# # Use the load balancer address if there's no CloudFront.
+# #
+# app_url = app['domains'][0]
+# bash "Detect public domain name" do
+# 	user "#{service_name}"
+# 	code <<-EOS
+# 		cloudfront_domain=$(aws cloudfront list-distributions --query "DistributionList.Items[].{DomainName: DomainName, OriginDomainName: Origins.Items[].DomainName}[?contains(OriginDomainName, '#{app_url}')] | [0].DomainName" --output json | tr -d '"')
+# 		if [ "$cloudfront_domain" != "null" ]; then
+# 			public_name="$cloudfront_domain"
+# 			zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['public_tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
+# 			record_name=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?AliasTarget].{Name: Name, Target: AliasTarget.DNSName}[?contains(Target, '$cloudfront_domain')] | [0].Name" --output json |tr -d '"' |sed 's/[.]$//')
+# 			if [ "$record_name" != "null" ]; then
+# 				public_name="$record_name"
+# 				sed -i "s|^smtp[.]mail_from\s*=\([^@]*\)@.*$|smtp.mail_from=\1@$public_name|" #{config_file}
+# 			fi
+# 		fi
+# 		if [ ! -z "$public_name" ]; then
+# 			sed -i "s|^ckan[.]site_url\s*=.*$|ckan.site_url=https://$public_name/|" #{config_file}
+# 		fi
+# 	EOS
+# end
 
 node.default['datashades']['auditd']['rules'].push("#{config_file}")
 
@@ -223,7 +225,8 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	mode '0755'
 	variables({
 		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0]
+		:app_url => app['domains'][0],
+		:domains => app['domains']
 	})
 	action :create
 end

@@ -18,3 +18,14 @@ If you would like to become the maintainer of this repository, please contact in
 * AWS RDS for Postgres
 
 See the [wiki](https://github.com/DataShades/opswx-ckan-cookbook/wiki) for detailed documentation
+
+
+Commands after cookbook update:
+* update_custom_cookbooks (all)
+* deploy (per app)
+* configure (per app)
+
+or (if outage is ok)
+* update_custom_cookbooks 
+* setup
+
