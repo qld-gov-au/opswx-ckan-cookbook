@@ -226,7 +226,7 @@ template '/etc/httpd/conf.d/ckan.conf' do
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0],
 		:domains => app['domains'],
-		:email_domain => node['datashades']['email_domain']
+		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
 	action :create
 end
