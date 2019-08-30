@@ -110,7 +110,8 @@ template "#{config_file}" do
 	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0]
+		:app_url => app['domains'][0],
+		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
 	action :create
 end
@@ -225,8 +226,7 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	variables({
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0],
-		:domains => app['domains'],
-		:email_domain => node['datashades']['ckan_web']['email_domain']
+		:domains => app['domains']
 	})
 	action :create
 end
