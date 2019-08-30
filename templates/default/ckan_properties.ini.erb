@@ -152,7 +152,7 @@ ckan.datarequests.default_organisation = open-data-administration-data-requests
 ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
 ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
 ckan.odi_certificates.certificate_link_query_parameters = {"datasetUrl":""}
-ckan.odi_certificates.dataset_base_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
+ckan.odi_certificates.dataset_base_url = https://<%= node['datashades']['public_tld'] %>
 
 scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json
 scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json
