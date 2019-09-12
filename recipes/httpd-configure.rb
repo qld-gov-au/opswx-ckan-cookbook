@@ -37,5 +37,5 @@ file "/etc/cron.daily/archive-apache-logs-to-s3" do
 end
 
 service 'httpd' do
-	action [:restart]
+	action [:reload]
 end
