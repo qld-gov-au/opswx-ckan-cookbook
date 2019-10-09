@@ -37,5 +37,6 @@ file "/etc/cron.daily/archive-apache-logs-to-s3" do
 end
 
 service 'httpd' do
+	supports :restart => true, :reload => true, :status => true
 	action [:reload]
 end
