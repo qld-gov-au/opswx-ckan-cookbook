@@ -22,7 +22,7 @@
     {
         listen       <% if node['datashades']['nginx']['ssl'] -%> 443 ssl <% else %> 80 <%= node['datashades']['nginx']['default_server'] %><% end -%>;
         server_name  <%= @app_url %> www.<%= @app_url %>;
-        root /var/www/sites/<%= node['datashades']['sitename'] %>; ## <-- Your only path reference.
+        root /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public; ## <-- Your only path reference.
         if ($http_x_forwarded_proto = 'http') {
             return 301 https://$host$request_uri;
         }
@@ -55,15 +55,8 @@
                 access_log off;
         }
 
-        location = /robots.txt
-        {
-                allow all;
-                log_not_found off;
-                access_log off;
-        }
-
         # Very rarely should these ever be accessed outside of your lan
-        location ~* \.(txt|log)$
+        location ~* \.log$
         {
                 allow <%= node['datashades']['nfs']['cidr'] %>;
                 deny all;
