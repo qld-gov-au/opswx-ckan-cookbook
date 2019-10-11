@@ -22,6 +22,10 @@
 
 service_name = 'solr'
 
+file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
+	action :delete
+end
+
 # Remove DNS records to stop requests to this host
 #
 bash "Delete #{service_name} DNS record" do
