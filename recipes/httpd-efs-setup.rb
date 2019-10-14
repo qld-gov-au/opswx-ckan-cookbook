@@ -24,10 +24,32 @@
 #
 include_recipe "datashades::efs-setup"
 
+httpd_log_dir = "/var/log/httpd/#{node['datashades']['sitename']}"
+
+# Clean up any symlink from prior cookbook versions
+
+bash "Archive remaining logs" do
+	user "root"
+	cwd "/"
+	code <<-EOS
+		TIMESTAMP=`date +'%s'`
+		for logfile in `ls #{httpd_log_dir}/*log`; do
+			mv "$logfile" "$logfile.$TIMESTAMP"
+			gzip "$logfile.$TIMESTAMP"
+		done
+		/usr/local/sbin/archive-logs.sh httpd
+	EOS
+	only_if { ::File.symlink? "#{httpd_log_dir}" }
+end
+file "#{httpd_log_dir}" do
+	action :delete
+	only_if { ::File.symlink? "#{httpd_log_dir}" }
+end
+
 data_paths =
 {
-	"/data/logs/apache/#{node['datashades']['instid']}" => 'apache',
-	"/var/log/httpd" => 'apache'
+	"/var/log/httpd" => 'apache',
+	"/var/log/httpd/#{node['datashades']['sitename']}" => 'apache'
 }
 
 data_paths.each do |data_path, dir_owner|
@@ -37,17 +59,5 @@ data_paths.each do |data_path, dir_owner|
 	  mode '0775'
 	  recursive true
 	  action :create
-	end
-end
-
-link_paths =
-{
-	"/var/log/httpd/#{node['datashades']['sitename']}" => "/data/logs/apache/#{node['datashades']['instid']}"
-}
-
-link_paths.each do |link_path, source_path|
-	link link_path do
-		to source_path
-		link_type :symbolic
 	end
 end
