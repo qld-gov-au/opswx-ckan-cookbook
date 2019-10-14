@@ -37,5 +37,5 @@ end
 execute "Archive remaining logs" do
 	user "solr"
 	cwd "/"
-	command "gzip /var/solr/logs/*log; /usr/local/sbin/archive-solr-logs.sh"
+	command "gzip /var/solr/logs/*log; /usr/local/bin/archive-solr-logs.sh"
 end
