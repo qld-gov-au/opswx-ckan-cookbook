@@ -22,7 +22,7 @@
 
 include_recipe "datashades::stackparams"
 
-template "/usr/local/sbin/archive-logs.sh" do
+template "/usr/local/bin/archive-logs.sh" do
 	source "archive-logs.sh.erb"
 	owner "root"
 	group "root"
@@ -34,7 +34,7 @@ end
 # however, if logs in subdirectories are already compressed by logrotate,
 # then they will be archived too.
 file "/etc/cron.daily/archive-system-logs-to-s3" do
-	content "LOG_DIR=/var/log /usr/local/sbin/archive-logs.sh system 2>&1 >/dev/null\n"
+	content "LOG_DIR=/var/log /usr/local/bin/archive-logs.sh system 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
