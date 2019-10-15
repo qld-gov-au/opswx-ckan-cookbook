@@ -86,6 +86,18 @@ unless (::File.directory?("/data/solr"))
 	end
 end
 
+efs_log_dir = "/data/solr/logs"
+ebs_log_dir = "/var/log/solr"
+
+bash "Move logs to EBS" do
+	user "root"
+	code <<-EOS
+		mv #{efs_log_dir} #{ebs_log_dir}
+		ln -s #{ebs_log_dir} #{efs_log_dir}
+	EOS
+	not_if { ::File.symlink?("#{efs_log_dir}") }
+end
+
 # Create Monit config file to restart Solr when port 8983 not available
 # Solves instance start issue after Solr install when /data doesn't mount fast enough
 #
