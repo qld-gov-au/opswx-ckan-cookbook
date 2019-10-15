@@ -24,11 +24,26 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
+template "/usr/local/bin/solr-healthcheck.sh" do
+	source "solr-healthcheck.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 file "/etc/cron.daily/archive-solr-logs-to-s3" do
 	content "/usr/local/bin/archive-logs.sh #{service_name} 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
+end
+
+file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
+	action :touch
+end
+
+cron "Solr health check" do
+	command "/usr/local/bin/solr-healthcheck.sh > /dev/null"
 end
 
 # Add DNS entry for service host
