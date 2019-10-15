@@ -37,7 +37,7 @@ bash "Archive remaining logs" do
 			mv "$logfile" "$logfile.$TIMESTAMP"
 			gzip "$logfile.$TIMESTAMP"
 		done
-		/usr/local/bin/archive-logs.sh httpd
+		/usr/local/sbin/archive-logs.sh httpd
 	EOS
 	only_if { ::File.symlink? "#{httpd_log_dir}" }
 end
