@@ -37,7 +37,7 @@ bash "Archive remaining logs" do
 			mv "$logfile" "$logfile.$TIMESTAMP"
 			gzip "$logfile.$TIMESTAMP"
 		done
-		/usr/local/bin/archive-logs.sh nginx
+		/usr/local/sbin/archive-logs.sh nginx
 	EOS
 	only_if { ::File.symlink? "#{nginx_log_dir}" }
 end
