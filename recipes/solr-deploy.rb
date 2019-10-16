@@ -89,22 +89,23 @@ end
 efs_log_dir = "/data/solr/logs"
 ebs_log_dir = "/var/log/solr"
 
+# Just in case the symlink was broken eg when creating a new instance with existing EFS data
+directory "#{ebs_log_dir}" do
+	owner "solr"
+	group "ec2-user"
+	mode "0775"
+	recursive true
+	action :create
+end
+
 bash "Move logs to EBS" do
 	user "root"
 	code <<-EOS
-		mv #{efs_log_dir} #{ebs_log_dir}
+		cp -rf #{efs_log_dir}/* #{ebs_log_dir}/.
+    rm -rf #{efs_log_dir}
 		ln -s #{ebs_log_dir} #{efs_log_dir}
 	EOS
 	not_if { ::File.symlink?("#{efs_log_dir}") }
-end
-
-# Just in case the symlink was broken eg when creating a new instance with existing EFS data
-directory "#{ebs_log_dir}" do
-  owner "solr"
-  group "ec2-user"
-  mode "0775"
-  recursive true
-  action :create
 end
 
 # Create Monit config file to restart Solr when port 8983 not available
