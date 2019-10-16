@@ -98,6 +98,15 @@ bash "Move logs to EBS" do
 	not_if { ::File.symlink?("#{efs_log_dir}") }
 end
 
+# Just in case the symlink was broken eg when creating a new instance with existing EFS data
+directory "#{ebs_log_dir}" do
+  owner "solr"
+  group "ec2-user"
+  mode "0775"
+  recursive true
+  action :create
+end
+
 # Create Monit config file to restart Solr when port 8983 not available
 # Solves instance start issue after Solr install when /data doesn't mount fast enough
 #
