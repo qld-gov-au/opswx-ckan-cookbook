@@ -24,13 +24,6 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
-template "/usr/local/bin/archive-solr-logs.sh" do
-	source "archive-solr-logs.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
 template "/usr/local/bin/solr-healthcheck.sh" do
 	source "solr-healthcheck.sh.erb"
 	owner "root"
@@ -39,7 +32,7 @@ template "/usr/local/bin/solr-healthcheck.sh" do
 end
 
 file "/etc/cron.daily/archive-solr-logs-to-s3" do
-	content "/usr/local/bin/archive-solr-logs.sh 2>&1 >/dev/null\n"
+	content "/usr/local/bin/archive-logs.sh #{service_name} 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
