@@ -97,8 +97,7 @@ solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']
 #       Add ``pdf_preview`` to enable the resource preview for PDFs
 #		Add ``resource_proxy`` to enable resorce proxying and get around the
 #		same origin policy
-ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view image_view recline_view
-ckan.views.default_views = image_view text_view recline_view webpage_view recline_grid_view recline_graph_view recline_map_view
+ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view pdf_preview pdf_view image_view
 ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
 trak.display_pageviews = true
@@ -135,6 +134,11 @@ ckan.views.default_views = text_view image_view recline_view
 ckan.preview.json_formats = json
 ckan.preview.xml_formats = xml rdf rdf+xml owl+xml atom rss
 ckan.preview.text_formats = text plain text/plain
+
+## resource_proxy
+##10mb max to proxy
+ckan.resource_proxy.max_file_size = 10485760
+ckan.resource_proxy.chunk_size = 8192
 
 # package_hide_extras = for_search_index_only
 #package_edit_return_url = http://another.frontend/dataset/<NAME>
