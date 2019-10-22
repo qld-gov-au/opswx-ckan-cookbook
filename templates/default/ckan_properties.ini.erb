@@ -31,6 +31,7 @@ full_stack = true
 
 cache_dir = /tmp/%(ckan.site_id)s/
 beaker.session.key = ckan
+## tracking https://docs.ckan.org/en/2.8/maintaining/tracking.html#tracking, does popular sorting and hot icon
 ckan.tracking_enabled = true
 
 # This is the secret token that the beaker library uses to hash the cookie sent
@@ -97,7 +98,7 @@ solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']
 #       Add ``pdf_preview`` to enable the resource preview for PDFs
 #		Add ``resource_proxy`` to enable resorce proxying and get around the
 #		same origin policy
-ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view pdf_preview pdf_view image_view
+ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view pdf_view image_view
 ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
 trak.display_pageviews = true
@@ -202,6 +203,19 @@ ckan.feeds.author_link =
 ckan.max_resource_size = 200
 ckan.max_image_size = 10
 ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
+
+## Cache
+#ckan.cache_enabled = True
+#ckan.static_max_age = 1800
+#ckan.cache_expires = 1800
+#ckanext.stats.cache_enabled = True
+
+## efficiencies
+#ckan.use_pylons_response_cleanup_middleware = true
+##ckan-search-solr-commit
+## Make ckan commit changes solr after every dataset update change.
+##Turn this to False if on solr 4.0 and you have automatic (soft)commits enabled
+##ckan.search.solr_commit = True
 
 ## Datapusher settings
 
