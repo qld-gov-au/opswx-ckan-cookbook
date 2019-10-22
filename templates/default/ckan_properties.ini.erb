@@ -39,6 +39,21 @@ ckan.tracking_enabled = true
 # time it generates a config file.
 beaker.session.secret = <%= node['datashades']['ckan_web']['beaker_secret'] %>
 
+# may need to look into https://github.com/data-govt-nz/ckanext-security
+
+#stop javascript access
+#beaker.session.httponly = true
+#ssl only
+beaker.session.secure = true
+#60 min session
+beaker.session.timeout = 3600
+beaker.session.save_accessed_time = true
+beaker.session.type = redis
+beaker.session.url = <%= node['datashades']['redis']['hostname'] %>:<%= node['datashades']['redis']['port'] %>
+beaker.session.cookie_expires = true
+# Your domain should show here.
+beaker.session.cookie_domain = <%= @app_url %>
+
 # `paster make-config` generates a unique value for this each time it generates
 # a config file.
 app_instance_uuid = {92aeda63-ac98-4f56-8b42-2613071039f8}
