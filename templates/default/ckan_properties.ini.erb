@@ -48,8 +48,8 @@ beaker.session.secure = true
 #60 min session
 beaker.session.timeout = 3600
 beaker.session.save_accessed_time = true
-beaker.session.type = redis
-beaker.session.url = <%= node['datashades']['redis']['hostname'] %>:<%= node['datashades']['redis']['port'] %>
+#beaker.session.type = redis
+#beaker.session.url = <%= node['datashades']['redis']['hostname'] %>:<%= node['datashades']['redis']['port'] %>
 beaker.session.cookie_expires = true
 # Your domain should show here.
 beaker.session.cookie_domain = <%= @app_url %>
