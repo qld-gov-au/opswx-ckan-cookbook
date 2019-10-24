@@ -36,7 +36,8 @@ file "/etc/cron.daily/archive-apache-logs-to-s3" do
 	mode "0755"
 end
 
+# Re-enable and start in case it was stopped by previous recipe versions and reload if already started
 service 'httpd' do
 	supports :restart => true, :reload => true, :status => true
-	action [:reload]
+	action [:enable, :start, :reload]
 end
