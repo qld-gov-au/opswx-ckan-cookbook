@@ -79,5 +79,5 @@ execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
 end
 
 service "solr" do
-	action [:start]
+	action [:enable, :start]
 end
