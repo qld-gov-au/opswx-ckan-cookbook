@@ -24,12 +24,34 @@
 #
 include_recipe "datashades::httpd-efs-setup"
 
+nginx_log_dir = "/var/log/nginx/#{node['datashades']['sitename']}"
+
+# Clean up any symlink from prior cookbook versions
+
+bash "Archive remaining logs" do
+	user "root"
+	cwd "/"
+	code <<-EOS
+		TIMESTAMP=`date +'%s'`
+		for logfile in `ls #{nginx_log_dir}/*log`; do
+			mv "$logfile" "$logfile.$TIMESTAMP"
+			gzip "$logfile.$TIMESTAMP"
+		done
+		/usr/local/sbin/archive-logs.sh nginx
+	EOS
+	only_if { ::File.symlink? "#{nginx_log_dir}" }
+end
+file "#{nginx_log_dir}" do
+	action :delete
+	only_if { ::File.symlink? "#{nginx_log_dir}" }
+end
+
 data_paths =
 {
 	"/data/shared_content" => 'apache',
 	"/data/sites" => 'apache',
-	"/data/logs/nginx/#{node['datashades']['instid']}" => 'nginx',
-	"/var/log/nginx" => 'nginx'
+	"/var/log/nginx" => 'nginx',
+	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx'
 }
 
 data_paths.each do |data_path, dir_owner|
@@ -45,8 +67,7 @@ end
 link_paths =
 {
 	"/var/shared_content" => '/data/shared_content',
-	"/var/www/sites" => '/data/sites',
-	"/var/log/nginx/#{node['datashades']['sitename']}" => "/data/logs/nginx/#{node['datashades']['instid']}",
+	"/var/www/sites" => '/data/sites'
 }
 
 link_paths.each do |link_path, source_path|

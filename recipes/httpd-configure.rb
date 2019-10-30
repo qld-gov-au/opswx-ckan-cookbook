@@ -30,13 +30,14 @@ execute "Extend Apache log rotation" do
 end
 
 file "/etc/cron.daily/archive-apache-logs-to-s3" do
-	content "/usr/local/sbin/archive-logs.sh httpd 2>&1 >/dev/null\n"
+	content "/usr/local/bin/archive-logs.sh httpd 2>&1 >/dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
 end
 
+# Re-enable and start in case it was stopped by previous recipe versions and reload if already started
 service 'httpd' do
 	supports :restart => true, :reload => true, :status => true
-	action [:reload]
+	action [:enable, :start, :reload]
 end

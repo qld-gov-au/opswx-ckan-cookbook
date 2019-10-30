@@ -23,7 +23,7 @@
     RewriteRule / "/%2" [R]
 
     # API should not respect auth_tkt cookies, it should require the API key.
-    <Location ~ /api/(?!storage|action/(package_resource_reorder|[-_a-zA-Z0-9]*follow)) >
+    <Location ~ /api/(?!storage|action/(package_resource_reorder|resource_view_reorder|[-_a-zA-Z0-9]*follow)) >
         RequestHeader unset Cookie
     </Location>
 

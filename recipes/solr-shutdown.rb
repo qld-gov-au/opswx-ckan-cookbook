@@ -22,6 +22,10 @@
 
 service_name = 'solr'
 
+file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
+	action :delete
+end
+
 # Remove DNS records to stop requests to this host
 #
 bash "Delete #{service_name} DNS record" do
@@ -34,8 +38,15 @@ bash "Delete #{service_name} DNS record" do
 	EOS
 end
 
-execute "Archive remaining logs" do
+bash "Archive remaining logs" do
 	user "solr"
 	cwd "/"
-	command "gzip /var/solr/logs/*log; /usr/local/sbin/archive-solr-logs.sh"
+	code <<-EOS
+		TIMESTAMP=`date +'%s'`
+		for logfile in `ls -d /var/log/solr/*log`; do
+			mv "$logfile" "$logfile.$TIMESTAMP"
+			gzip "$logfile.$TIMESTAMP"
+		done
+		/usr/local/bin/archive-logs.sh solr
+	EOS
 end
