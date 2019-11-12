@@ -309,6 +309,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				command "npm install --save geojson-extent"
 			end
 		end
+
+		# Work around https://github.com/numpy/numpy/issues/14012
+		if "#{pluginname}".eql? 'xloader' then
+			execute "Lock numpy version until issue 14012 is fixed" do
+				user "#{account_name}"
+				command "#{pip} install numpy==1.15.4"
+			end
+		end
 	end
 end
 
@@ -320,9 +328,6 @@ bash "Enable DataStore-related extensions" do
 	code <<-EOS
 		if [ -z  "$(grep 'ckan.plugins.*datastore' production.ini)" ]; then
 			sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
-		fi
-		if [ -z  "$(grep 'ckan.plugins.*datapusher' production.ini)" ]; then
-			sed -i "/^ckan.plugins/ s/$/ datapusher/" production.ini
 		fi
 	EOS
 	only_if { "yes".eql? node['datashades']['ckan_web']['dsenable']}
