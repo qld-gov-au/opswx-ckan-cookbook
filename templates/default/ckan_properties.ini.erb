@@ -69,7 +69,9 @@ sqlalchemy.url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%
 
 ckan.datastore.write_url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
 ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
-
+# XLoader can share the main database, but NOT the datastore
+# See https://github.com/ckan/ckanext-xloader/issues/17 and https://github.com/ckan/ckanext-xloader/issues/83
+ckanext.xloader.jobs_db.uri = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
 ## Site Settings
 
