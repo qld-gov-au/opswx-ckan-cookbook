@@ -41,16 +41,15 @@ end
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
 download_url = app['app_source']['url']
 solr_version = download_url[/\/solr-([^\/]+)[.]zip$/, 1]
-Chef::Log.info("Solr version is #{solr_version}")
+
 unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt/solr") and ::File.readlink("/opt/solr").eql? "/opt/solr-#{solr_version}")
 	remote_file "#{Chef::Config[:file_cache_path]}/solr.zip" do
 		source app['app_source']['url']
 	end
 
-	bash "install solr" do
+	bash "install solr #{solr_version}" do
 		user "root"
 		code <<-EOS
-		mkdir -p /home/solr
 		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
 		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip
 		cd /tmp/solr/solr-#{solr_version}
@@ -64,7 +63,6 @@ unless (::File.directory?("/data/solr"))
 	bash 'initialize solr data' do
 		user "root"
 		code "mv /var/solr /data/"
-		not_if { ::File.directory? "/data/solr" }
 	end
 
 	# if we have pre-existing config, just wipe the extra copy
