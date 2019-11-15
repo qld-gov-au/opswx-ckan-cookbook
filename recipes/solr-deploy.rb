@@ -100,8 +100,8 @@ bash "Move logs to EBS" do
 	user "root"
 	code <<-EOS
 		cp -rf #{efs_log_dir}/* #{ebs_log_dir}/.
-    rm -rf #{efs_log_dir}
-		ln -s #{ebs_log_dir} #{efs_log_dir}
+		rm -rf #{efs_log_dir}
+		ln -sn #{ebs_log_dir} #{efs_log_dir}
 	EOS
 	not_if { ::File.symlink?("#{efs_log_dir}") }
 end
