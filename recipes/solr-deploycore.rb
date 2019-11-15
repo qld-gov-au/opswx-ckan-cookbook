@@ -24,46 +24,40 @@ ckan = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{n
 
 solr_core_dir="/data/solr/data/#{ckan['shortname']}"
 
-# Install Solr conf if it doesn't exist
+# Create Solr core directory
 #
-unless (::File.directory?("#{solr_core_dir}/conf"))
+directory "#{solr_core_dir}/data" do
+	owner 'solr'
+	group 'solr'
+	recursive true
+	mode '0775'
+	action :create
+end
 
-	# Create Solr core directory
-	#
-	directory "#{solr_core_dir}/data" do
-		owner 'solr'
-		group 'solr'
-		recursive true
-		mode '0775'
-		action :create
-	end
+# Create Solr core properties file
+#
+template "#{solr_core_dir}/core.properties" do
+	source 'solr-ckan-core.erb'
+	owner 'solr'
+	group 'solr'
+	mode '0755'
+	variables({
+		:app_name =>  ckan['shortname']
+	})
+end
 
-	# Create Solr core properties file
-	#
-	template "#{solr_core_dir}/core.properties" do
-		source 'solr-ckan-core.erb'
-		owner 'solr'
-		group 'solr'
-		mode '0755'
-		variables({
-			:app_name =>  ckan['shortname']
-		})
-	end
+# Copy and install Solr core conf
+#
+cookbook_file "#{Chef::Config[:file_cache_path]}/solr_core_config.zip" do
+	source "ckan_solr_conf.zip"
+end
 
-	# Copy and install Solr core conf
-	#
-	cookbook_file "#{Chef::Config[:file_cache_path]}/solr_core_config.zip" do
-		source "ckan_solr_conf.zip"
-	end
+execute 'Unzip Core Config' do
+	user 'root'
+	command "unzip -u -q -f -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
+end
 
-	execute 'Unzip Core Config' do
-		user 'root'
-		command "unzip -u -q #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
-		not_if { ::File.directory? "#{solr_core_dir}/conf" }
-	end
-
-	service "solr" do
-		action [:restart]
-	end
+service "solr" do
+	action [:restart]
 end
 

@@ -20,36 +20,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-unless (::File.directory?("/data/solr"))
+# Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
+#
+group "solr" do
+	action :create
+	gid 1001
+end
 
-	# Clean up any symlink from prior cookbook versions
-	file "/var/solr" do
-		action :delete
-		only_if { ::File.symlink? "/var/solr" }
-	end
+# Create Solr User
+#
+user "solr" do
+	comment "Solr User"
+	home "/home/solr"
+	shell "/bin/bash"
+	action :create
+	uid 1001
+	gid 1001
+end
 
-	app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
-
+app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
+download_url = app['app_source']['url']
+solr_version = download_url[/\/solr-([^\/]+)[.]zip$/, 1]
+Chef::Log.info("Solr version is #{solr_version}")
+unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt/solr") and ::File.readlink("/opt/solr").eql? "/opt/solr-#{solr_version}")
 	remote_file "#{Chef::Config[:file_cache_path]}/solr.zip" do
 		source app['app_source']['url']
-	end
-
-	# Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
-	#
-	group "solr" do
-		action :create
-		gid 1001
-	end
-
-	# Create Solr User
-	#
-	user "solr" do
-		comment "Solr User"
-		home "/home/solr"
-		shell "/bin/bash"
-		action :create
-		uid 1001
-		gid 1001
 	end
 
 	bash "install solr" do
@@ -57,12 +52,14 @@ unless (::File.directory?("/data/solr"))
 		code <<-EOS
 		mkdir -p /home/solr
 		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
-		solrvers=$(ls -t /tmp/solr/ | grep 'solr-' | head -1 | tr -d 'solr-')
-		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
-		cd /tmp/solr/solr-${solrvers}
-		/tmp/solr/solr-${solrvers}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-${solrvers}.zip
+		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip
+		cd /tmp/solr/solr-#{solr_version}
+		/tmp/solr/solr-#{solr_version}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f
 		EOS
 	end
+end
+
+unless (::File.directory?("/data/solr"))
 
 	bash 'initialize solr data' do
 		user "root"
@@ -81,9 +78,10 @@ unless (::File.directory?("/data/solr"))
 		link_type :symbolic
 	end
 
-	service "solr" do
-		action [:enable, :start]
-	end
+end
+
+service "solr" do
+	action [:enable, :restart]
 end
 
 efs_log_dir = "/data/solr/logs"
