@@ -1,0 +1,10 @@
+/var/log/solr/*log {
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    postrotate
+        service solr restart
+    endscript
+}
