@@ -1,10 +1,13 @@
 /var/log/solr/*log {
-    daily
-    rotate 10
+    hourly
     missingok
     notifempty
-    compress
+    copytruncate
+    rotate 10
+    dateext
+    dateformat -%Y-%m-%d-%s
+    sharedscripts
     postrotate
-        service solr restart
+        /usr/local/bin/archive-logs.sh solr
     endscript
 }
