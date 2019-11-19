@@ -42,6 +42,14 @@ file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
 	action :touch
 end
 
+cookbook_file "/data/solr/log4j.properties" do
+	source "solr-log4j.properties"
+end
+
+cookbook_file "/etc/logrotate.d/solr" do
+	source "solr-logrotate"
+end
+
 cron "Solr health check" do
 	command "/usr/local/bin/solr-healthcheck.sh > /dev/null"
 end
