@@ -1,5 +1,5 @@
 /var/log/solr/*log {
-    hourly
+    daily
     missingok
     notifempty
     copytruncate
