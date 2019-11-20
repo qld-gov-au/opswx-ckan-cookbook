@@ -39,8 +39,8 @@ execute "Tracking update" do
 	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
 end
 
-# Update the Solr search index if needed
+# Update the Solr search index
 execute "Build search index" do
 	user "root"
-	command "#{paster} search-index rebuild -r -o -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
+	command "#{paster} search-index rebuild -r -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
 end
