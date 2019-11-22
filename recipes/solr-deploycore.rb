@@ -54,7 +54,7 @@ end
 
 execute 'Unzip Core Config' do
 	user 'root'
-	command "unzip -u -q -f -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
+	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
 end
 
 service "solr" do
