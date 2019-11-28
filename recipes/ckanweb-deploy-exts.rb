@@ -110,8 +110,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	#
 	installext = !batchnode || (batchnode && batchexts.include?(pluginname))
 	unless (!installext)
-		apprelease = app['app_source']['url']
-		apprelease.sub! 'http', "git+http"
+		apprelease = app['app_source']['url'].sub 'http', "git+http"
 
 		if ! apprelease.include? '#egg' then
 			apprelease << "#egg=#{app['shortname']}"
@@ -128,8 +127,13 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			extname = extnames[pluginname]
 		end
 
-		unless (::File.directory?("#{install_dir}"))
-
+		if (::File.directory?("#{install_dir}")) then
+			execute "Ensure correct Git origin" do
+				user "#{account_name}"
+				cwd "#{install_dir}"
+				command "git remote set-url origin '#{app['app_source']['url']}'"
+			end
+		else
 			log 'debug' do
 	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{install_dir}"
 				level :info
