@@ -223,6 +223,21 @@ ckan.max_resource_size = 200
 ckan.max_image_size = 10
 ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 
+## S3 Storage Settings
+
+ckanext.s3filestore.aws_use_ami_role = true
+ckanext.s3filestore.aws_bucket_name = <%= node['datashades']['attachments_bucket'] %>
+ckanext.s3filestore.host_name = https://s3-ap-southeast-2.amazonaws.com
+ckanext.s3filestore.region_name= ap-southeast-2
+ckanext.s3filestore.signature_version = s3v4
+ckanext.s3filestore.acl = private
+ckanext.s3filestore.filesystem_download_fallback = True
+
+ckanext.cloudstorage.driver = S3_AP_SOUTHEAST2
+ckanext.cloudstorage.container_name = <%= node['datashades']['attachments_bucket'] %>
+ckanext.cloudstorage.driver_options = use_role
+ckanext.cloudstorage.use_secure_urls = 1
+
 ## Cache
 ckan.cache_enabled = True
 ckan.static_max_age = 1800
