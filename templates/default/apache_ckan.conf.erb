@@ -4,7 +4,7 @@
     <% @domains.each do |domain| %>
     ServerAlias <%= domain%>
     <% end %>
-  
+
     RewriteEngine on
     WSGIScriptAlias <%= node['datashades']['ckan_web']['endpoint'] %> /etc/ckan/default/apache.wsgi
 
@@ -19,7 +19,7 @@
     ErrorLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log
 
     # Rewrite to remove locale
-    RewriteCond %{REQUEST_URI} ^/(ar|bg|ca|cs_CZ|da_DK|de|el|en_AU|en_GB|es|es_AR|fa_IR|fi|fr|he|hr|hu|id|is|it|ja|km|ko_KR|lt|lv|mn_MN|ne|nl|no|pl|pt_BR|pt_PT|ro|ru|sk|sl|sq|sr|sr_Latn|sv|th|tr|uk_UA|vi|zh_CN|zh_TW)/(.*) [NC]
+    RewriteCond %{REQUEST_URI} ^/(ar|bg|ca|cs_CZ|da_DK|de|el|en|en_AU|en_GB|es|es_AR|fa_IR|fi|fr|he|hr|hu|id|is|it|ja|km|ko_KR|lt|lv|mn_MN|ne|nl|no|pl|pt_BR|pt_PT|ro|ru|sk|sl|sq|sr|sr_Latn|sv|th|tr|uk_UA|vi|zh_CN|zh_TW)/(.*) [NC]
     RewriteRule / "/%2" [R]
 
     # API should not respect auth_tkt cookies, it should require the API key.
