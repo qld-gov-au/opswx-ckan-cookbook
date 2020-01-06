@@ -58,19 +58,33 @@ directory "#{shared_fs_dir}/private" do
 end
 
 apprelease = app['app_source']['url']
-apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
-apprelease.sub! '.zip', ""
-version = apprelease[/@(.*)/].sub! '@', ''
+
+if app['app_source']['type'].eql? "git" then
+	version = app['app_source']['revision']
+else
+	apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
+	apprelease.sub! '.zip', ""
+	version = apprelease[/@(.*)/].sub! '@', ''
+end
 
 #
 # Install selected revision of CKAN core
 #
 
-execute "Install CKAN #{version}" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{pip} install -e 'git+#{apprelease}#egg=#{service_name}'"
-	not_if { ::File.exist? "#{install_dir}/requirements.txt" }
+if (::File.exist? "#{install_dir}/requirements.txt") then
+	if app['app_source']['type'].eql? "Git" then
+		execute "Ensure correct Git origin" do
+			user "#{service_name}"
+			cwd "#{install_dir}"
+			command "git remote set-url origin '#{app['app_source']['url']}'"
+		end
+	end
+else
+	execute "Install CKAN #{version}" do
+		user "#{service_name}"
+		group "#{service_name}"
+		command "#{pip} install -e 'git+#{apprelease}#egg=#{service_name}'"
+	end
 end
 
 bash "Check out selected revision" do
