@@ -72,7 +72,7 @@ end
 #
 
 if (::File.exist? "#{install_dir}/requirements.txt") then
-	if app['app_source']['type'].eql? "Git" then
+	if app['app_source']['type'].casecmp("git") == 0 then
 		execute "Ensure correct Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
