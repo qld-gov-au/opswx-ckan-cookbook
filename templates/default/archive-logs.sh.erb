@@ -9,5 +9,5 @@ TIMESTAMP=`date +'%Y-%m-%dT%H:%M:%S_%s'`
 if [ -z "$LOG_DIR" ]; then
     LOG_DIR="/var/log/$SERVICE/"
 fi
-ls -d $LOG_DIR/* |grep -E 'log[._-]|-[0-9]+$' |xargs gzip /var/log/
+find $LOG_DIR -name '*log*' | grep -E 'log[._-]|-[0-9]+$' |xargs gzip
 aws s3 mv "$LOG_DIR/" "s3://$BUCKET/$APPLICATION/$SERVICE/$INSTANCE/$TIMESTAMP/" --recursive --exclude "*" --include "*.gz"

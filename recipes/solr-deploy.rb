@@ -97,11 +97,10 @@ end
 bash "Move logs to EBS" do
 	user "root"
 	code <<-EOS
-		cp -rf #{efs_log_dir}/* #{ebs_log_dir}/.
-		rm -rf #{efs_log_dir}
-		ln -sn #{ebs_log_dir} #{efs_log_dir}
+		service solr stop && mv #{efs_log_dir}/* #{ebs_log_dir}/ && rm -rf #{efs_log_dir} && ln -sn #{ebs_log_dir} #{efs_log_dir}
+		service solr start
 	EOS
-	not_if { ::File.symlink?("#{efs_log_dir}") }
+	only_if { ::File.directory?("#{efs_log_dir}") and not ::File.symlink?("#{efs_log_dir}") }
 end
 
 # Create Monit config file to restart Solr when port 8983 not available
