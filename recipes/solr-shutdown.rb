@@ -38,6 +38,10 @@ bash "Delete #{service_name} DNS record" do
 	EOS
 end
 
+service "#{service_name}" do
+	action [:stop]
+end
+
 bash "Archive remaining logs" do
 	user "solr"
 	cwd "/"
