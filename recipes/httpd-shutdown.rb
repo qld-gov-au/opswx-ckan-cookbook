@@ -22,6 +22,10 @@
 
 include_recipe "datashades::stackparams"
 
+service "httpd" do
+	action [:stop]
+end
+
 bash "Archive remaining logs" do
 	user "root"
 	cwd "/"
