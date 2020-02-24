@@ -39,7 +39,13 @@ install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
 # Setup Site directories
 #
-paths = {"#{shared_fs_dir}" => "#{service_name}", "#{shared_fs_dir}/ckan_storage" => 'apache', "#{shared_fs_dir}/ckan_storage/storage" => 'apache', "#{shared_fs_dir}/ckan_storage/resources" => 'apache'}
+paths = {
+	"/var/log/#{service_name}" => "#{service_name}",
+	"#{shared_fs_dir}" => "#{service_name}",
+	"#{shared_fs_dir}/ckan_storage" => 'apache',
+	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
+	"#{shared_fs_dir}/ckan_storage/resources" => 'apache'
+}
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do

@@ -40,6 +40,10 @@ service 'php-fpm-5.5' do
 	action [:restart]
 end
 
+cookbook_file "/etc/logrotate.d/ckan" do
+	source "ckan-logrotate"
+end
+
 # Make any other instances aware of us
 #
 file "/data/#{node['datashades']['hostname']}" do
