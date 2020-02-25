@@ -40,8 +40,8 @@ service 'php-fpm-5.5' do
 	action [:restart]
 end
 
-cookbook_file "/usr/local/bin/ckan-monitor-job-queue.sh" do
-  source 'ckan-monitor-job-queue.sh'
+template "/usr/local/bin/ckan-monitor-job-queue.sh" do
+  source 'ckan-monitor-job-queue.sh.erb'
   owner 'root'
   group 'root'
   mode '0755'
