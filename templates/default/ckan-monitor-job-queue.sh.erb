@@ -1,7 +1,13 @@
 #!/bin/sh
 
 LOG_FILE=/var/log/ckan/ckan-worker-queue.log
+TEMP_FILE=/tmp/ckan-worker-queue.log
 echo "CKAN job queue at $(date):" >> $LOG_FILE
-TASK_COUNT=$(/usr/lib/ckan/default/bin/paster --plugin=ckan jobs list -c /etc/ckan/default/production.ini 2>/dev/null | tee -a $LOG_FILE | wc -l)
-echo "Total: $TASK_COUNT job(s)" >> $LOG_FILE
-aws cloudwatch put-metric-data --region <%= node['datashades']['region'] %> --namespace CKAN --dimensions Application=<%= node['datashades']['app_id'] %>,Environment=<%= node['datashades']['version'] %> --metric-name job_queue_size --value $TASK_COUNT
+JOB_COUNT=$(/usr/lib/ckan/default/bin/paster --plugin=ckan jobs list -c /etc/ckan/default/production.ini 2>/dev/null | tee -a $LOG_FILE | tee $TEMP_FILE | wc -l)
+echo "Total: $JOB_COUNT job(s)" >> $LOG_FILE
+if [ "$JOB_COUNT" -gt 0 ]; then
+    OLDEST_TIME=$(date -u --date $(head -1 $TEMP_FILE | awk '{print $1}') +'%s')
+    MAX_AGE=$(expr $(date -u +'%s') - $OLDEST_TIME)
+    echo "Oldest job is from $OLDEST_TIME ($(expr $MAX_AGE / 60) minute(s) ago)" >> $LOG_FILE
+fi
+aws cloudwatch put-metric-data --region <%= node['datashades']['region'] %> --namespace CKAN --dimensions Application=<%= node['datashades']['app_id'] %>,Environment=<%= node['datashades']['version'] %> --metric-name job_queue_size --value $JOB_COUNT
