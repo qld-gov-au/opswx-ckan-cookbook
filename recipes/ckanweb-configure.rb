@@ -48,7 +48,7 @@ cookbook_file "/usr/local/bin/ckan-monitor-job-queue.sh" do
 end
 
 file "/etc/cron.d/ckan-worker" do
-	content "*/5 * * * * ckan /usr/local/bin/ckan-monitor-job-queue.sh"
+	content "*/5 * * * * ckan /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1"
 	mode '0644'
 end
 
