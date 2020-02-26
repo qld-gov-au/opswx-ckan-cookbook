@@ -50,6 +50,7 @@ end
 file "/etc/cron.d/ckan-worker" do
 	content "*/5 * * * * ckan /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
 	mode '0644'
+end
 
 cookbook_file "/etc/logrotate.d/ckan" do
 	source "ckan-logrotate"
