@@ -1,0 +1,14 @@
+/var/log/ckan/*log {
+    daily
+    missingok
+    notifempty
+    copytruncate
+    rotate 10
+    dateext
+    dateformat -%Y-%m-%d-%s
+    sharedscripts
+    postrotate
+        /etc/init.d/supervisord reload > /dev/null 2>/dev/null || true
+        /usr/local/bin/archive-logs.sh ckan
+    endscript
+}
