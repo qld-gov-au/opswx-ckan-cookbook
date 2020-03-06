@@ -2,10 +2,11 @@
 
 echo "Refreshing DNS"
 
-placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 region=$(echo ${placement%?})
 
-myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+myid=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/instance-id)
 zone_id=$(aws ec2 describe-tags --region $region --filters "Name=resource-id,Values=${myid}" "Name=key,Values=ZoneId" | jq '.Tags[].Value' | tr -d '"')
 if [ -z $zone_id ] && [ -e /etc/awszoneid ]; then
 	zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
@@ -24,7 +25,7 @@ function update_dns
 	local dns_type=$2
 
     local currec=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '${dns_name}')].ResourceRecords[0].Value" | jq '.[0]' | tr -d '"')
-	local instance_hostname=$(wget -q -O - http://169.254.169.254/latest/meta-data/hostname)
+	local instance_hostname=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/hostname)
 
 	# Create a cluster node Alias record based on record type
 	#

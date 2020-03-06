@@ -1,8 +1,9 @@
 #!/bin/bash
 
-placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 region=$(echo ${placement%?})
-myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+myid=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/instance-id)
 
 version=$(aws ec2 describe-tags --region $region --filters "Name=resource-id,Values=${myid}" "Name=key,Values=opsworks:stack" | jq '.Tags[].Value' | tr -d '"')
 

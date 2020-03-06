@@ -48,6 +48,10 @@ node['datashades']['core']['packages'].each do |p|
 	package p
 end
 
+execute "Update AWS command-line interface" do
+	command "pip install --upgrade awscli"
+end
+
 node['datashades']['core']['unwanted-packages'].each do |p|
 	package p do
 		action :remove
