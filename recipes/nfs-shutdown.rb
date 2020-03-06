@@ -27,9 +27,10 @@ service_name = 'nfs'
 bash "Delete #{service_name} DNS record" do
 	user "root"
 	code <<-EOS
-	zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
-	pub_host=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname)
-	dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
-	route53 del_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
+		zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
+		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+		pub_host=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/public-hostname)
+		dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
+		route53 del_record ${zone_id} ${dns_name} CNAME ${pub_host} 60
 	EOS
 end

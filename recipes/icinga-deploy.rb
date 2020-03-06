@@ -38,7 +38,8 @@ bash "Deploy Icinga2" do
 		echo "Ticket ID: ${ticket}"
 
 		# force fqdn in hosts and setup node
-		pub_ip=$(wget -q -O - http://169.254.169.254/latest/meta-data/public-ipv4)
+		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+		pub_ip=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/public-ipv4)
 		echo $pub_ip $client >> /etc/hosts
 		icinga2 node setup --ticket ${ticket} --endpoint ${icingamaster} --zone ${client} --master_host ${icingamaster} --trustedcert /etc/icinga2/pki/${icingamaster}.crt --accept-commands --accept-config
 		sed -i "s/${pub_ip} ${client}//g" /etc/hosts
