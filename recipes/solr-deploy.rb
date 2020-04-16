@@ -27,6 +27,8 @@ group "solr" do
 	gid 1001
 end
 
+service_name = 'solr'
+
 # Create Solr User
 #
 user "solr" do
@@ -47,7 +49,7 @@ unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt
 		source app['app_source']['url']
 	end
 
-	bash "install solr #{solr_version}" do
+	bash "install #{service_name} #{solr_version}" do
 		user "root"
 		code <<-EOS
 		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
@@ -58,7 +60,7 @@ unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt
 	end
 end
 
-unless (::File.directory?("/data/solr"))
+unless (::File.directory?("/data/#{service_name}"))
 
 	bash 'initialize solr data' do
 		user "root"
@@ -78,14 +80,14 @@ unless (::File.directory?("/data/solr"))
 
 end
 
-service "solr" do
+service "#{service_name}" do
 	action [:enable, :restart]
 end
 
 efs_log_dir = "/data/solr/logs"
-ebs_log_dir = "/var/log/solr"
+ebs_log_dir = "/mnt/local_data/#{service_name}"
+var_log_dir = "/var/log/#{service_name}"
 
-# Just in case the symlink was broken eg when creating a new instance with existing EFS data
 directory "#{ebs_log_dir}" do
 	owner "solr"
 	group "ec2-user"
@@ -94,13 +96,37 @@ directory "#{ebs_log_dir}" do
 	action :create
 end
 
-bash "Move logs to EBS" do
-	user "root"
-	code <<-EOS
-		service solr stop && mv #{efs_log_dir}/* #{ebs_log_dir}/ && rm -rf #{efs_log_dir} && ln -sn #{ebs_log_dir} #{efs_log_dir}
-		service solr start
-	EOS
-	only_if { ::File.directory?("#{efs_log_dir}") and not ::File.symlink?("#{efs_log_dir}") }
+if ::File.directory? "#{efs_log_dir}" and not ::File.symlink? "#{efs_log_dir}" then
+    # Directory under /data/ is real; transfer files to EBS
+    service "#{service_name}" do
+        action [:stop]
+    end
+    execute "Move existing #{service_name} logs from EFS to extra EBS volume" do
+        command "mv #{efs_log_dir}/* #{ebs_log_dir}/; rmdir #{efs_log_dir}"
+    end
+end
+
+if ::File.directory? "#{var_log_dir}" and not ::File.symlink? "#{var_log_dir}" then
+    # Directory under /var/log/ is real; transfer files to EBS
+    service "#{service_name}" do
+        action [:stop]
+    end
+    execute "Move existing #{service_name} logs from /var/log/ to extra EBS volume" do
+        command "mv #{var_log_dir}/* #{ebs_log_dir}/; rmdir #{var_log_dir}"
+    end
+end
+
+link_paths =
+{
+	"#{var_log_dir}" => "#{ebs_log_dir}",
+	"#{efs_log_dir}" => "#{var_log_dir}"
+}
+
+link_paths.each do |link_path, source_path|
+	link link_path do
+		to source_path
+		link_type :symbolic
+	end
 end
 
 # Create Monit config file to restart Solr when port 8983 not available

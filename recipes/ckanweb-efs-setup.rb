@@ -1,11 +1,11 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
+# Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
 # Cookbook Name:: datashades
 # Recipe:: ckanweb-efs-setup
 #
 # Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright 2020, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,34 +24,17 @@
 #
 include_recipe "datashades::httpd-efs-setup"
 
-nginx_log_dir = "/var/log/nginx/#{node['datashades']['sitename']}"
+service_name = 'nginx'
 
-# Clean up any symlink from prior cookbook versions
-
-bash "Archive remaining logs" do
-	user "root"
-	cwd "/"
-	code <<-EOS
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls #{nginx_log_dir}/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/sbin/archive-logs.sh nginx
-	EOS
-	only_if { ::File.symlink? "#{nginx_log_dir}" }
-end
-file "#{nginx_log_dir}" do
-	action :delete
-	only_if { ::File.symlink? "#{nginx_log_dir}" }
-end
+var_log_dir = "/var/log/#{service_name}/#{node['datashades']['sitename']}"
+data_log_dir = "/mnt/local_data/#{service_name}/#{node['datashades']['sitename']}"
 
 data_paths =
 {
 	"/data/shared_content" => 'apache',
 	"/data/sites" => 'apache',
-	"/var/log/nginx" => 'nginx',
-	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx'
+	"/var/log/#{service_name}" => 'nginx',
+	"#{data_log_dir}" => 'nginx'
 }
 
 data_paths.each do |data_path, dir_owner|
@@ -64,10 +47,21 @@ data_paths.each do |data_path, dir_owner|
 	end
 end
 
+if ::File.directory? "#{var_log_dir}" and not ::File.symlink? "#{var_log_dir}" then
+    # Directory under /var/log/ is real; transfer files to EBS
+    service "#{service_name}" do
+        action [:stop]
+    end
+    execute "Move existing #{service_name} logs to extra EBS volume" do
+        command "mv #{var_log_dir}/* #{data_log_dir}/; rmdir #{var_log_dir}"
+    end
+end
+
 link_paths =
 {
 	"/var/shared_content" => '/data/shared_content',
-	"/var/www/sites" => '/data/sites'
+	"/var/www/sites" => '/data/sites',
+	"#{var_log_dir}" => "#{data_log_dir}"
 }
 
 link_paths.each do |link_path, source_path|
