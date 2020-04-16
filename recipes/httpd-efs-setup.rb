@@ -27,42 +27,42 @@ include_recipe "datashades::efs-setup"
 service_name = 'httpd'
 
 var_log_dir = "/var/log/#{service_name}/#{node['datashades']['sitename']}"
-data_log_dir = "/mnt/local_data/#{service_name}/#{node['datashades']['sitename']}"
+
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}/#{node['datashades']['sitename']}"
+else
+    real_log_dir = var_log_dir
+end
 
 data_paths =
 {
-	"/var/log/#{service_name}" => 'apache',
-	"#{data_log_dir}" => 'apache'
+    "#{var_log_dir}" => 'apache',
+    "#{real_log_dir}" => 'apache'
 }
 
 data_paths.each do |data_path, dir_owner|
-	directory data_path do
-	  owner dir_owner
-	  group 'ec2-user'
-	  mode '0775'
-	  recursive true
-	  action :create
-	end
-end
-
-if ::File.directory? "#{var_log_dir}" and not ::File.symlink? "#{var_log_dir}" then
-    # Directory under /var/log/ is real; transfer files to EBS
-    service "#{service_name}" do
-        action [:stop]
-    end
-    execute "Move existing #{service_name} logs to extra EBS volume" do
-        command "mv #{var_log_dir}/* #{data_log_dir}/; rmdir #{var_log_dir}"
+    directory data_path do
+          owner dir_owner
+          group 'ec2-user'
+          mode '0775'
+          recursive true
+          action :create
     end
 end
 
-link_paths =
-{
-	"#{var_log_dir}" => "#{data_log_dir}"
-}
-
-link_paths.each do |link_path, source_path|
-	link link_path do
-		to source_path
-		link_type :symbolic
-	end
+if real_log_dir != var_log_dir then
+    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+        # Directory under /var/log/ is not a link;
+        # transfer contents to target directory and turn it into one
+        service service_name do
+            action [:stop]
+        end
+        execute "Move existing #{service_name} logs to extra EBS volume" do
+            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+        end
+    end
+    link var_log_dir do
+        to real_log_dir
+    end
 end
+

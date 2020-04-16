@@ -84,49 +84,49 @@ service "#{service_name}" do
 	action [:enable, :restart]
 end
 
-efs_log_dir = "/data/solr/logs"
-ebs_log_dir = "/mnt/local_data/#{service_name}"
 var_log_dir = "/var/log/#{service_name}"
 
-directory "#{ebs_log_dir}" do
-	owner "solr"
-	group "ec2-user"
-	mode "0775"
-	recursive true
-	action :create
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}"
+else
+    real_log_dir = var_log_dir
 end
 
-if ::File.directory? "#{efs_log_dir}" and not ::File.symlink? "#{efs_log_dir}" then
-    # Directory under /data/ is real; transfer files to EBS
-    service "#{service_name}" do
+directory real_log_dir do
+    owner "solr"
+    group "ec2-user"
+    mode "0775"
+    action :create
+end
+
+if extra_disk_present then
+    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+        # Directory under /var/log/ is real; transfer files to EBS
+        service "#{service_name}" do
+            action [:stop]
+        end
+        execute "Move existing #{service_name} logs from /var/log/ to extra EBS volume" do
+            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+        end
+    end
+    link var_log_dir do
+        to real_log_dir
+    end
+end
+
+efs_log_dir = "/data/solr/logs"
+if ::File.directory? efs_log_dir and not ::File.symlink? efs_log_dir then
+    # Directory under /data/ is real; transfer files to /var/log/
+    service service_name do
         action [:stop]
     end
-    execute "Move existing #{service_name} logs from EFS to extra EBS volume" do
-        command "mv #{efs_log_dir}/* #{ebs_log_dir}/; rmdir #{efs_log_dir}"
+    execute "Move existing #{service_name} logs from EFS to /var/log/" do
+        command "mv #{efs_log_dir}/* #{var_log_dir}/; rmdir #{efs_log_dir}"
     end
 end
 
-if ::File.directory? "#{var_log_dir}" and not ::File.symlink? "#{var_log_dir}" then
-    # Directory under /var/log/ is real; transfer files to EBS
-    service "#{service_name}" do
-        action [:stop]
-    end
-    execute "Move existing #{service_name} logs from /var/log/ to extra EBS volume" do
-        command "mv #{var_log_dir}/* #{ebs_log_dir}/; rmdir #{var_log_dir}"
-    end
-end
-
-link_paths =
-{
-	"#{var_log_dir}" => "#{ebs_log_dir}",
-	"#{efs_log_dir}" => "#{var_log_dir}"
-}
-
-link_paths.each do |link_path, source_path|
-	link link_path do
-		to source_path
-		link_type :symbolic
-	end
+link efs_log_dir do
+    to var_log_dir
 end
 
 # Create Monit config file to restart Solr when port 8983 not available
