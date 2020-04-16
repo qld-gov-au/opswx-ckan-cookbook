@@ -99,9 +99,10 @@ directory real_log_dir do
     action :create
 end
 
-if extra_disk_present then
+if real_log_dir != var_log_dir then
     if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
-        # Directory under /var/log/ is real; transfer files to EBS
+        # Directory under /var/log/ is not a link;
+        # transfer contents to target directory and turn it into one
         service "#{service_name}" do
             action [:stop]
         end
@@ -116,7 +117,8 @@ end
 
 efs_log_dir = "/data/solr/logs"
 if ::File.directory? efs_log_dir and not ::File.symlink? efs_log_dir then
-    # Directory under /data/ is real; transfer files to /var/log/
+    # Directory under /data/ is not a link;
+    # transfer contents to target directory and turn it into one
     service service_name do
         action [:stop]
     end

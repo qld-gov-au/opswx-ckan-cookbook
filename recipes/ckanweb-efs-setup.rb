@@ -38,7 +38,6 @@ data_paths =
 {
     "/data/shared_content" => 'apache',
     "/data/sites" => 'apache',
-    "#{var_log_dir}" => 'nginx',
     "#{real_log_dir}" => 'nginx'
 }
 

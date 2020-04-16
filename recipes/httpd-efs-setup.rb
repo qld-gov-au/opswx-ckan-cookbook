@@ -34,20 +34,12 @@ else
     real_log_dir = var_log_dir
 end
 
-data_paths =
-{
-    "#{var_log_dir}" => 'apache',
-    "#{real_log_dir}" => 'apache'
-}
-
-data_paths.each do |data_path, dir_owner|
-    directory data_path do
-          owner dir_owner
-          group 'ec2-user'
-          mode '0775'
-          recursive true
-          action :create
-    end
+directory real_log_dir do
+    owner 'apache'
+    group 'ec2-user'
+    mode '0775'
+    recursive true
+    action :create
 end
 
 if real_log_dir != var_log_dir then
