@@ -27,6 +27,8 @@ include_recipe "datashades::efs-setup"
 service_name = 'httpd'
 
 var_log_dir = "/var/log/#{service_name}/#{node['datashades']['sitename']}"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
 
 if extra_disk_present then
     real_log_dir = "#{extra_disk}/#{service_name}/#{node['datashades']['sitename']}"

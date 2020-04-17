@@ -61,6 +61,3 @@ mount 'disconnect efs root' do
   mount_point '/mnt/efs'
   action :umount
 end
-
-extra_disk = "/mnt/local_data"
-extra_disk_present = ::File.exist? extra_disk
