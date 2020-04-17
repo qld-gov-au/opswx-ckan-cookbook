@@ -61,4 +61,3 @@ mount 'disconnect efs root' do
   mount_point '/mnt/efs'
   action :umount
 end
-

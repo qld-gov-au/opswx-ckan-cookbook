@@ -5,7 +5,7 @@
 #
 # Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2019, Queensland Government
+# Copyright 2020, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,40 +24,39 @@
 #
 include_recipe "datashades::efs-setup"
 
-httpd_log_dir = "/var/log/httpd/#{node['datashades']['sitename']}"
+service_name = 'httpd'
 
-# Clean up any symlink from prior cookbook versions
+var_log_dir = "/var/log/#{service_name}/#{node['datashades']['sitename']}"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
 
-bash "Archive remaining logs" do
-	user "root"
-	cwd "/"
-	code <<-EOS
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls #{httpd_log_dir}/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/sbin/archive-logs.sh httpd
-	EOS
-	only_if { ::File.symlink? "#{httpd_log_dir}" }
-end
-file "#{httpd_log_dir}" do
-	action :delete
-	only_if { ::File.symlink? "#{httpd_log_dir}" }
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}/#{node['datashades']['sitename']}"
+else
+    real_log_dir = var_log_dir
 end
 
-data_paths =
-{
-	"/var/log/httpd" => 'apache',
-	"/var/log/httpd/#{node['datashades']['sitename']}" => 'apache'
-}
-
-data_paths.each do |data_path, dir_owner|
-	directory data_path do
-	  owner dir_owner
-	  group 'ec2-user'
-	  mode '0775'
-	  recursive true
-	  action :create
-	end
+directory real_log_dir do
+    owner 'apache'
+    group 'ec2-user'
+    mode '0775'
+    recursive true
+    action :create
 end
+
+if real_log_dir != var_log_dir then
+    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+        # Directory under /var/log/ is not a link;
+        # transfer contents to target directory and turn it into one
+        service service_name do
+            action [:stop]
+        end
+        execute "Move existing #{service_name} logs to extra EBS volume" do
+            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+        end
+    end
+    link var_log_dir do
+        to real_log_dir
+    end
+end
+
