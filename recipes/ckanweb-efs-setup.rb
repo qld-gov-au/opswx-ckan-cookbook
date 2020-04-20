@@ -26,12 +26,12 @@ include_recipe "datashades::httpd-efs-setup"
 
 service_name = 'nginx'
 
-var_log_dir = "/var/log/#{service_name}/#{node['datashades']['sitename']}"
+var_log_dir = "/var/log/#{service_name}"
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 
 if extra_disk_present then
-    real_log_dir = "#{extra_disk}/#{service_name}/#{node['datashades']['sitename']}"
+    real_log_dir = "#{extra_disk}/#{service_name}"
 else
     real_log_dir = var_log_dir
 end
@@ -61,7 +61,7 @@ if real_log_dir != var_log_dir then
             action [:stop]
         end
         execute "Move existing #{service_name} logs to extra EBS volume" do
-            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+            command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
         end
     end
     link var_log_dir do
