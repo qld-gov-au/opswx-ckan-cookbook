@@ -80,10 +80,6 @@ unless (::File.directory?("/data/#{service_name}"))
 
 end
 
-service "#{service_name}" do
-	action [:enable, :restart]
-end
-
 var_log_dir = "/var/log/#{service_name}"
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk

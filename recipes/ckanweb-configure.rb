@@ -40,6 +40,10 @@ service 'php-fpm-5.5' do
 	action [:restart]
 end
 
+service "supervisord" do
+    action [:stop, :start]
+end
+
 template "/usr/local/bin/ckan-monitor-job-queue.sh" do
   source 'ckan-monitor-job-queue.sh.erb'
   owner 'root'
