@@ -38,5 +38,5 @@ end
 
 service 'nginx' do
 	supports :restart => true, :reload => true, :status => true
-	action [:reload]
+	action [:start, :reload]
 end
