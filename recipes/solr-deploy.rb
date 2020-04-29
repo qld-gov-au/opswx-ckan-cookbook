@@ -27,6 +27,8 @@ group "solr" do
 	gid 1001
 end
 
+service_name = 'solr'
+
 # Create Solr User
 #
 user "solr" do
@@ -47,7 +49,7 @@ unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt
 		source app['app_source']['url']
 	end
 
-	bash "install solr #{solr_version}" do
+	bash "install #{service_name} #{solr_version}" do
 		user "root"
 		code <<-EOS
 		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
@@ -58,7 +60,7 @@ unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt
 	end
 end
 
-unless (::File.directory?("/data/solr"))
+unless (::File.directory?("/data/#{service_name}"))
 
 	bash 'initialize solr data' do
 		user "root"
@@ -78,29 +80,53 @@ unless (::File.directory?("/data/solr"))
 
 end
 
-service "solr" do
-	action [:enable, :restart]
+var_log_dir = "/var/log/#{service_name}"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}"
+else
+    real_log_dir = var_log_dir
+end
+
+directory real_log_dir do
+    owner "solr"
+    group "ec2-user"
+    mode "0775"
+    action :create
+end
+
+if real_log_dir != var_log_dir then
+    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+        # Directory under /var/log/ is not a link;
+        # transfer contents to target directory and turn it into one
+        service "#{service_name}" do
+            action [:stop]
+        end
+        execute "Move existing #{service_name} logs from /var/log/ to extra EBS volume" do
+            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+        end
+    end
+    link var_log_dir do
+        to real_log_dir
+    end
 end
 
 efs_log_dir = "/data/solr/logs"
-ebs_log_dir = "/var/log/solr"
-
-# Just in case the symlink was broken eg when creating a new instance with existing EFS data
-directory "#{ebs_log_dir}" do
-	owner "solr"
-	group "ec2-user"
-	mode "0775"
-	recursive true
-	action :create
+if ::File.directory? efs_log_dir and not ::File.symlink? efs_log_dir then
+    # Directory under /data/ is not a link;
+    # transfer contents to target directory and turn it into one
+    service service_name do
+        action [:stop]
+    end
+    execute "Move existing #{service_name} logs from EFS to /var/log/" do
+        command "mv #{efs_log_dir}/* #{var_log_dir}/; rmdir #{efs_log_dir}"
+    end
 end
 
-bash "Move logs to EBS" do
-	user "root"
-	code <<-EOS
-		service solr stop && mv #{efs_log_dir}/* #{ebs_log_dir}/ && rm -rf #{efs_log_dir} && ln -sn #{ebs_log_dir} #{efs_log_dir}
-		service solr start
-	EOS
-	only_if { ::File.directory?("#{efs_log_dir}") and not ::File.symlink?("#{efs_log_dir}") }
+link efs_log_dir do
+    to var_log_dir
 end
 
 # Create Monit config file to restart Solr when port 8983 not available

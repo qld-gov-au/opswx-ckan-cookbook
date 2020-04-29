@@ -276,7 +276,7 @@ cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
 end
 
 service "supervisord" do
-	action [:enable, :restart]
+	action [:enable]
 end
 
 #

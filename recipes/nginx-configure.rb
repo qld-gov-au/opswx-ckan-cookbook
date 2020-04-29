@@ -37,5 +37,6 @@ file "/etc/cron.daily/archive-nginx-logs-to-s3" do
 end
 
 service 'nginx' do
-	action [:restart]
+	supports :restart => true, :reload => true, :status => true
+	action [:start, :reload]
 end

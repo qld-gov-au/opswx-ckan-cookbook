@@ -48,6 +48,10 @@ node['datashades']['core']['packages'].each do |p|
 	package p
 end
 
+execute "Update AWS command-line interface" do
+	command "pip install --upgrade awscli"
+end
+
 node['datashades']['core']['unwanted-packages'].each do |p|
 	package p do
 		action :remove
@@ -135,7 +139,7 @@ execute 'Unzip CloudWatch monitoring scripts' do
 end
 
 file "/etc/cron.d/cwpump" do
-	content "*/5 * * * * root perl /opt/aws/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --swap-util --disk-space-util --disk-space-avail --disk-path=/ --auto-scaling --from-cron"
+	content "*/5 * * * * root perl /opt/aws/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --swap-util --disk-space-util --disk-space-avail --disk-path=/ --auto-scaling --from-cron\n"
 	mode '0644'
 end
 

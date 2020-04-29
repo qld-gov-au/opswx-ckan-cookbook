@@ -8,10 +8,11 @@ days=<%= node['datashades']['backup']['retention'] %>
 
 echo -e "Automated Daily Snapshot of Data Volume\r\n"
 
-placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 region=$(echo ${placement%?})
 
-myid=$(wget -q -O - http://169.254.169.254/latest/meta-data/instance-id)
+myid=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/instance-id)
 
 volume=$(aws ec2 describe-volumes --filters Name=attachment.instance-id,Values="${myid}" Name=attachment.delete-on-termination,Values=false --region $region)
 vol_id=$(echo ${volume} | jq '.Volumes[].VolumeId' | tr -d '"')
@@ -40,4 +41,4 @@ for snapshot in "${snapshots[@]}"
 	do
 		echo "Deleting snapshot $snapshot"
 		aws ec2 delete-snapshot --snapshot-id $snapshot --region $region >> /var/log/snapshot_purge.log
-	done        
+	done

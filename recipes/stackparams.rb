@@ -35,7 +35,8 @@ vpc_id = stack['vpc_id']
 bash "Get VPC CIDR" do
 	user "root"
 	code <<-EOS
-		placement=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone)
+		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
+		placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 		region=$(echo ${placement%?})
 		aws ec2 describe-vpcs --region ${region} --vpc-ids "#{vpc_id}" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
 	EOS
