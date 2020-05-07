@@ -1,9 +1,9 @@
 #
 # Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: httpd-efs-setup
+# Recipe:: nginx-efs-setup
 #
-# Sets up EFS and EBS directories and links for Apache.
+# Sets up EFS and EBS directories and links for Nginx.
 #
 # Copyright 2020, Queensland Government
 #
@@ -20,11 +20,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update EFS Data directory for Apache logging
+# Update EFS Data directory for Nginx logging
 #
 include_recipe "datashades::efs-setup"
 
-service_name = 'httpd'
+service_name = 'nginx'
 
 var_log_dir = "/var/log/#{service_name}"
 extra_disk = "/mnt/local_data"
@@ -37,7 +37,7 @@ else
 end
 
 directory "#{real_log_dir}/#{node['datashades']['sitename']}" do
-    owner 'apache'
+    owner service_name
     group 'ec2-user'
     mode '0775'
     recursive true

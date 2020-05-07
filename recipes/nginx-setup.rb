@@ -28,6 +28,8 @@ node['datashades']['nginx']['packages'].each do |p|
   package p
 end
 
+include_recipe "datashades::nginx-efs-setup"
+
 # Update php and nginx default config files
 #
 bash 'config_php' do
