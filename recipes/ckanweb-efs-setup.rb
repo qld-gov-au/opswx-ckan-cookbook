@@ -3,7 +3,7 @@
 # Cookbook Name:: datashades
 # Recipe:: ckanweb-efs-setup
 #
-# Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
+# Sets up EFS and EBS directories and links for CKAN.
 #
 # Copyright 2020, Queensland Government
 #
@@ -23,9 +23,6 @@
 # Update EFS Data directory for CKAN
 #
 include_recipe "datashades::httpd-efs-setup"
-
-extra_disk = "/mnt/local_data"
-extra_disk_present = ::File.exist? extra_disk
 
 data_paths =
 {
@@ -56,39 +53,38 @@ link_paths.each do |link_path, source_path|
     end
 end
 
-service 'nginx' do
-    action [:stop]
+service_name = "ckan"
+
+var_log_dir = "/var/log/#{service_name}"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}"
+else
+    real_log_dir = var_log_dir
 end
-execute "Stop job worker" do
-    command "supervisorctl stop ckan-worker:ckan-worker-00"
+
+directory real_log_dir do
+    owner service_name
+    group 'ec2-user'
+    mode '0775'
+    recursive true
+    action :create
 end
-for service_name in ['nginx', 'ckan'] do
-    var_log_dir = "/var/log/#{service_name}"
 
-    if extra_disk_present then
-        real_log_dir = "#{extra_disk}/#{service_name}"
-    else
-        real_log_dir = var_log_dir
+if real_log_dir != var_log_dir then
+    service "supervisord" do
+        action [:stop]
     end
-
-    directory real_log_dir do
-          owner service_name
-          group 'ec2-user'
-          mode '0775'
-          recursive true
-          action :create
+    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+        # Directory under /var/log/ is not a link;
+        # transfer contents to target directory and turn it into one
+        execute "Move existing #{service_name} logs to extra EBS volume" do
+            command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
+        end
     end
-
-    if real_log_dir != var_log_dir then
-        if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
-            # Directory under /var/log/ is not a link;
-            # transfer contents to target directory and turn it into one
-            execute "Move existing #{service_name} logs to extra EBS volume" do
-                command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
-            end
-        end
-        link var_log_dir do
-            to real_log_dir
-        end
+    link var_log_dir do
+        to real_log_dir
     end
 end
