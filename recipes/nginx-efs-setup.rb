@@ -48,7 +48,7 @@ if real_log_dir != var_log_dir then
     service service_name do
         action [:stop]
     end
-    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
+    if ::File.directory?(var_log_dir) and ::File.symlink?(var_log_dir) == false then
         # Directory under /var/log/ is not a link;
         # transfer contents to target directory and turn it into one
         execute "Move existing #{service_name} logs to extra EBS volume" do
