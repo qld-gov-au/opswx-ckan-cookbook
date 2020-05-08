@@ -73,13 +73,12 @@ directory real_log_dir do
     action :create
 end
 
-if real_log_dir != var_log_dir then
+if not ::File.identical?(real_log_dir, var_log_dir) then
     service "supervisord" do
         action [:stop]
     end
-    if ::File.directory?(var_log_dir) and ::File.symlink?(var_log_dir) == false then
-        # Directory under /var/log/ is not a link;
-        # transfer contents to target directory and turn it into one
+    if ::File.directory?(var_log_dir) then
+        # transfer existing contents to target directory
         execute "Move existing #{service_name} logs to extra EBS volume" do
             command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
         end

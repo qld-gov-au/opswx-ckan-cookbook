@@ -97,15 +97,14 @@ directory real_log_dir do
     action :create
 end
 
-if real_log_dir != var_log_dir then
-    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
-        # Directory under /var/log/ is not a link;
-        # transfer contents to target directory and turn it into one
-        service "#{service_name}" do
-            action [:stop]
-        end
-        execute "Move existing #{service_name} logs from /var/log/ to extra EBS volume" do
-            command "mv #{var_log_dir}/* #{real_log_dir}/; rmdir #{var_log_dir}"
+if not ::File.identical?(real_log_dir, var_log_dir) then
+    service service_name do
+        action [:stop]
+    end
+    if ::File.directory?(var_log_dir) then
+        # transfer existing contents to target directory
+        execute "Move existing #{service_name} logs to extra EBS volume" do
+            command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
         end
     end
     link var_log_dir do
