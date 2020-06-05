@@ -245,6 +245,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			code <<-EOS
 				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
 				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments init_notifications_db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments updatedb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
 			EOS
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
