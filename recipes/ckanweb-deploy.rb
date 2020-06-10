@@ -338,7 +338,7 @@ file "/etc/cron.hourly/ckan-email-notifications" do
 end
 
 file "/etc/cron.hourly/ckan-harvest-run" do
-	content "/usr/local/bin/pick-job-server.sh && echo '{}' | #{paster} --plugin=ckanext-harvest harvester run -c #{config_file} 2>&1 > /dev/null\n"
+	content "#{paster} --plugin=ckanext-harvest harvester run -c #{config_file} 2>&1 > /dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
