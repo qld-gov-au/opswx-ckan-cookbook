@@ -243,11 +243,17 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		bash "YTP CKAN ext database init" do
 			user "#{account_name}"
 			code <<-EOS
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments init_notifications_db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments updatedb -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments init_notifications_db -c #{config_dir}/production.ini || echo 'Ignoring expected error'
+				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments updatedb -c #{config_dir}/production.ini || echo 'Ignoring expected error'
 			EOS
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
+		end
+
+		execute "Harvest CKAN ext database init" do
+			user "#{account_name}"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error"
+			only_if { "#{pluginname}".eql? 'harvest' }
 		end
 
 		bash "Provide custom Bootstrap version" do
