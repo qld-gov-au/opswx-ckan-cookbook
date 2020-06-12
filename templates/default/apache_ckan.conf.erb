@@ -19,7 +19,8 @@
     ErrorLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log
 
     # Rewrite to remove locale
-    RewriteCond %{REQUEST_URI} ^/(am|ar|bg|ca|cs_CZ|da_DK|de|el|en|en_AU|en_GB|es|es_AR|eu|fa_IR|fi|fr|gl|he|hr|hu|id|is|it|ja|km|ko_KR|lt|lv|mk|mn_MN|ne|nl|no|pl|pt_BR|pt_PT|ro|ru|sk|sl|sq|sr|sr_Latn|sv|th|tl|tr|uk|uk_UA|vi|zh_CN|zh_TW)/(.*) [NC]
+
+    RewriteCond %{REQUEST_URI} ^/(a[fmrsz]|ar_(AE|BH|DZ|EG|IQ|JO|KW|LB|LY|MA|OM|QA|SA|SY|TN|YE)|az_AZ|b[egnos]|c[asy]|cs_CZ|d[aev]|da_DK|de_(AT|CH|DE|LI|LU)|e[lnstu]|en_(AU|BZ|CA|CB|GB|IE|IN|JM|NZ|PH|TT|US|ZA)|es_(AR|BO|C[LOR]|DO|EC|ES|GT|HN|MX|NI|P[AERY]|SV|UY|VE)|f[aior]|fa_IR|fr_(BE|CA|CH|FR|LU)|g[dlnu]|gd_IE|h[eiruy]|i[dst]|it_CH|it_IT|ja|k[akmnos]|ko_KR|l[aotv]|m[iklnrsty]|mn_MN|ms_BN|ms_MY|n[elo]|nl_BE|nl_NL|no_NO|or|p[alt]|pt_BR|pt_PT|r[mou]|ro_MO|ru_MO|s[abdikloqrvw]|sr_Latn|sr_SP|sv_FI|sv_SE|t[aeghklnrst]|u[krz]|uk_UA|uz_UZ|vi|xh|yi|zh|zh_(CN|HK|MO|SG|TW)|zu)|/(.*) [NC]
     RewriteRule / "/%2" [R]
 
     # API calls with significant side effects should not respect auth_tkt cookies, they should require the API key.
