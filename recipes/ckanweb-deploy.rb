@@ -337,8 +337,9 @@ file "/etc/cron.hourly/ckan-email-notifications" do
 	mode "0755"
 end
 
+# only have one server trigger harvest initiation, which then worker queues havester fetch/gather works through the queues.
 file "/etc/cron.hourly/ckan-harvest-run" do
-	content "#{paster} --plugin=ckanext-harvest harvester run -c #{config_file} 2>&1 > /dev/null\n"
+	content "/usr/local/bin/pick-job-server.sh && #{paster} --plugin=ckanext-harvest harvester run -c #{config_file} 2>&1 > /dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
