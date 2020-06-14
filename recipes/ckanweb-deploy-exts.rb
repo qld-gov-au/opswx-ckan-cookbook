@@ -252,7 +252,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		execute "Harvest CKAN ext database init" do
 			user "#{account_name}"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error"
+			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
 			only_if { "#{pluginname}".eql? 'harvest' }
 		end
 
