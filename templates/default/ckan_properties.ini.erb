@@ -171,6 +171,7 @@ ckan.datarequests.comments = true
 ckan.datarequests.show_datarequests_badge = true
 ckan.datarequests.description_required = true
 ckan.datarequests.default_organisation = open-data-administration-data-requests
+ckan.datarequests.enable_closing_circumstances = True
 
 ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
 ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
@@ -189,6 +190,7 @@ ckan.comments.users_can_edit = False
 ckan.comments.check_for_profanity = True
 ckan.comments.bad_words_file = /usr/lib/ckan/default/src/ckanext-ytp-comments/ckanext/ytp/comments/bad_words.txt
 ckan.comments.follow_mute_enabled = True
+ckan.comments.show_comments_tab_page = True
 
 ##Use the following configuration options to choose the operation modes:
 
@@ -220,7 +222,7 @@ ckan.feeds.author_link =
 
 ## Storage Settings
 
-ckan.max_resource_size = 200
+ckan.max_resource_size = 250
 ckan.max_image_size = 10
 ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 

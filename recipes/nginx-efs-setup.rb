@@ -1,9 +1,9 @@
 #
 # Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: ckanweb-efs-setup
+# Recipe:: nginx-efs-setup
 #
-# Sets up EFS and EBS directories and links for CKAN.
+# Sets up EFS and EBS directories and links for Nginx.
 #
 # Copyright 2020, Queensland Government
 #
@@ -20,40 +20,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update EFS Data directory for CKAN
+# Update EFS Data directory for Nginx logging
 #
-include_recipe "datashades::httpd-efs-setup"
+include_recipe "datashades::efs-setup"
 
-data_paths =
-{
-    "/data/shared_content" => 'apache',
-    "/data/sites" => 'apache'
-}
-
-data_paths.each do |data_path, dir_owner|
-    directory data_path do
-          owner dir_owner
-          group 'ec2-user'
-          mode '0775'
-          recursive true
-          action :create
-    end
-end
-
-link_paths =
-{
-    "/var/shared_content" => '/data/shared_content',
-    "/var/www/sites" => '/data/sites'
-}
-
-link_paths.each do |link_path, source_path|
-    link link_path do
-        to source_path
-        link_type :symbolic
-    end
-end
-
-service_name = "ckan"
+service_name = 'nginx'
 
 var_log_dir = "/var/log/#{service_name}"
 extra_disk = "/mnt/local_data"
@@ -65,7 +36,7 @@ else
     real_log_dir = var_log_dir
 end
 
-directory real_log_dir do
+directory "#{real_log_dir}/#{node['datashades']['sitename']}" do
     owner service_name
     group 'ec2-user'
     mode '0775'
@@ -74,7 +45,7 @@ directory real_log_dir do
 end
 
 if not ::File.identical?(real_log_dir, var_log_dir) then
-    service "supervisord" do
+    service service_name do
         action [:stop]
     end
     if ::File.directory?(var_log_dir) then

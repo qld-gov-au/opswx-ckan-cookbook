@@ -43,27 +43,6 @@ end
 # So we do both.
 execute "pip install supervisor"
 
-include_recipe "datashades::nginx-setup"
-include_recipe "datashades::ckanweb-efs-setup"
-
-# Change Apache default port to 8000 and fix access to /
-#
-bash "Change Apache config" do
-	user 'root'
-	group 'root'
-	code <<-EOS
-	sed -i 's~Listen 80~Listen 8000~g' /etc/httpd/conf/httpd.conf
-	sed -i '/<Directory /{n;n;s/Require all denied/# Require all denied/}' /etc/httpd/conf/httpd.conf
-	EOS
-	not_if "grep 'Listen 8000' /etc/httpd/conf/httpd.conf"
-end
-
-# Enable Apache service
-#
-service 'httpd' do
-	action [:enable]
-end
-
 # Create CKAN Group
 #
 group "ckan" do
@@ -90,6 +69,27 @@ directory '/home/ckan' do
 	mode '0755'
 	action :create
 	recursive true
+end
+
+include_recipe "datashades::nginx-setup"
+include_recipe "datashades::ckanweb-efs-setup"
+
+# Change Apache default port to 8000 and fix access to /
+#
+bash "Change Apache config" do
+	user 'root'
+	group 'root'
+	code <<-EOS
+	sed -i 's~Listen 80~Listen 8000~g' /etc/httpd/conf/httpd.conf
+	sed -i '/<Directory /{n;n;s/Require all denied/# Require all denied/}' /etc/httpd/conf/httpd.conf
+	EOS
+	not_if "grep 'Listen 8000' /etc/httpd/conf/httpd.conf"
+end
+
+# Enable Apache service
+#
+service 'httpd' do
+	action [:enable]
 end
 
 #

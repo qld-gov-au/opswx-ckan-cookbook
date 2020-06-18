@@ -3,7 +3,7 @@
 # Cookbook Name:: datashades
 # Recipe:: httpd-efs-setup
 #
-# Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
+# Sets up EFS and EBS directories and links for Apache.
 #
 # Copyright 2020, Queensland Government
 #
@@ -36,7 +36,7 @@ else
     real_log_dir = var_log_dir
 end
 
-directory real_log_dir do
+directory "#{real_log_dir}/#{node['datashades']['sitename']}" do
     owner 'apache'
     group 'ec2-user'
     mode '0775'
@@ -44,13 +44,12 @@ directory real_log_dir do
     action :create
 end
 
-if real_log_dir != var_log_dir then
-    if ::File.directory? var_log_dir and not ::File.symlink? var_log_dir then
-        # Directory under /var/log/ is not a link;
-        # transfer contents to target directory and turn it into one
-        service service_name do
-            action [:stop]
-        end
+if not ::File.identical?(real_log_dir, var_log_dir) then
+    service service_name do
+        action [:stop]
+    end
+    if ::File.directory?(var_log_dir) then
+        # transfer existing contents to target directory
         execute "Move existing #{service_name} logs to extra EBS volume" do
             command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
         end
@@ -59,4 +58,3 @@ if real_log_dir != var_log_dir then
         to real_log_dir
     end
 end
-

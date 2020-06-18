@@ -19,8 +19,9 @@
     ErrorLog /var/log/httpd/<%= node['datashades']['sitename'] %>/<%= @app_name %>_error.log
 
     # Rewrite to remove locale
-    RewriteCond %{REQUEST_URI} ^/(ar|bg|ca|cs_CZ|da_DK|de|el|en|en_AU|en_GB|es|es_AR|fa_IR|fi|fr|he|hr|hu|id|is|it|ja|km|ko_KR|lt|lv|mn_MN|ne|nl|no|pl|pt_BR|pt_PT|ro|ru|sk|sl|sq|sr|sr_Latn|sv|th|tr|uk_UA|vi|zh_CN|zh_TW)/(.*) [NC]
-    RewriteRule / "/%2" [R]
+
+    RewriteCond %{REQUEST_URI} ^/(a[fmrsz]|b[egnos]|c[asy]|d[aev]|e[lnstu]|f[aior]|g[dlnu]|h[eiruy]|i[dst]|ja|k[akmnos]|l[aotv]|m[iklnrsty]|n[elo]|or|p[alt]|r[mou]|s[abdikloqrvw]|sr_Latn|t[aeghklnrst]|u[krz]|vi|xh|yi|z[hu])(_[A-Z][A-Z])?/(.*) [NC]
+    RewriteRule / "/%3" [R]
 
     # API calls with significant side effects should not respect auth_tkt cookies, they should require the API key.
     <Location ~ /api/(?!storage|action/(package_resource_reorder|resource_view_reorder|[-_a-zA-Z0-9]*follow)|([12]/)?util/[a-z]+/(format_)?autocomplete) >
