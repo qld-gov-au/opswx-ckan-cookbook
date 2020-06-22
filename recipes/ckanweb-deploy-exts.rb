@@ -100,6 +100,16 @@ node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
 
+# Strip out existing config in case it's no longer used
+#
+execute "Clean Harvest supervisor config" do
+	command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+end
+
+execute "Clean Harvest cron" do
+	command "rm -f /etc/cron.*/ckan-harvest*"
+end
+
 # Do the actual extension installation using pip
 #
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
@@ -250,10 +260,22 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
-		execute "Harvest CKAN ext database init" do
-			user "#{account_name}"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
-			only_if { "#{pluginname}".eql? 'harvest' }
+		if "#{pluginname}".eql? 'harvest'
+			execute "Harvest CKAN ext database init" do
+				user "#{account_name}"
+				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+			end
+
+			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
+				source "supervisor-ckan-harvest.conf"
+				mode "0744"
+			end
+
+			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
+			file "/etc/cron.hourly/ckan-harvest-run" do
+				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini 2>&1 > /dev/null\n"
+				mode "0755"
+			end
 		end
 
 		bash "Provide custom Bootstrap version" do
