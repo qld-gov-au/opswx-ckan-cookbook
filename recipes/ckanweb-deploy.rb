@@ -275,20 +275,6 @@ cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
 	mode "0744"
 end
 
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest-gather.conf" do
-	source "supervisor-ckan-harvest-gather.conf"
-	owner "root"
-	group "root"
-	mode "0744"
-end
-
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest-fetch.conf" do
-	source "supervisor-ckan-harvest-fetch.conf"
-	owner "root"
-	group "root"
-	mode "0744"
-end
-
 service "supervisord" do
 	action [:enable]
 end
@@ -332,14 +318,6 @@ end
 
 file "/etc/cron.hourly/ckan-email-notifications" do
 	content "/usr/local/bin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-# only have one server trigger harvest initiation, which then worker queues havester fetch/gather works through the queues.
-file "/etc/cron.hourly/ckan-harvest-run" do
-	content "/usr/local/bin/pick-job-server.sh && #{paster} --plugin=ckanext-harvest harvester run -c #{config_file} 2>&1 > /dev/null\n"
 	owner "root"
 	group "root"
 	mode "0755"
