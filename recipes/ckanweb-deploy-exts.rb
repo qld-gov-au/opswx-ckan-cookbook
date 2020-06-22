@@ -260,7 +260,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
 
-		if "#{pluginname}".eql? 'harvest' do
+		if "#{pluginname}".eql? 'harvest'
 			execute "Harvest CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
