@@ -103,11 +103,11 @@ end
 # Strip out existing config in case it's no longer used
 #
 execute "Clean Harvest supervisor config" do
-	command "rm /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+	command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
 end
 
 execute "Clean Harvest cron" do
-	command "rm /etc/cron.*/ckan-harvest*"
+	command "rm -f /etc/cron.*/ckan-harvest*"
 end
 
 # Do the actual extension installation using pip
