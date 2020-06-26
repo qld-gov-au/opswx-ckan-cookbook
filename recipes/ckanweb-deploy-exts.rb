@@ -89,7 +89,10 @@ extordering =
 	'odi_certificates' => 20,
 	'dcat structured_data' => 30,
 	'data_qld data_qld_google_analytics' => 40,
-	'scheming_datasets' => 50
+	'scheming_datasets' => 50,
+	'qa' => 60,
+	'archiver' => 70,
+	'report' => 80
 }
 
 installed_ordered_exts = Set[]
@@ -100,15 +103,16 @@ node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
 
+## TODO work out how to purge when harvester extension is not found
 # Strip out existing config in case it's no longer used
 #
-execute "Clean Harvest supervisor config" do
-	command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
-end
-
-execute "Clean Harvest cron" do
-	command "rm -f /etc/cron.*/ckan-harvest*"
-end
+#execute "Clean Harvest supervisor config" do
+#	command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+#end
+#
+#execute "Clean Harvest cron" do
+#	command "rm -f /etc/cron.*/ckan-harvest*"
+#end
 
 # Do the actual extension installation using pip
 #
@@ -275,6 +279,32 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			file "/etc/cron.hourly/ckan-harvest-run" do
 				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini 2>&1 > /dev/null\n"
 				mode "0755"
+			end
+		end
+
+		if "#{pluginname}".eql? 'archiver'
+			execute "Archiver CKAN ext database init" do
+				user "#{account_name}"
+				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-archiver archiver init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+			end
+
+			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
+				source "supervisor-ckan-harvest.conf"
+				mode "0744"
+			end
+		end
+
+		if "#{pluginname}".eql? 'qa'
+			execute "qa CKAN ext database init" do
+				user "#{account_name}"
+				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-qa qa init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+			end
+		end
+
+		if "#{pluginname}".eql? 'report'
+			execute "report CKAN ext database init" do
+				user "#{account_name}"
+				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-report report init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
 			end
 		end
 
