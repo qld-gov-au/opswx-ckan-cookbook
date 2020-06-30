@@ -289,7 +289,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			end
 
 			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
-				source "supervisor-ckan-harvest.conf"
+				source "supervisor-ckan-archiver.conf"
 				mode "0744"
 			end
 		end
