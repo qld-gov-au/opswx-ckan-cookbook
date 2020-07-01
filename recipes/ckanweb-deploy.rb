@@ -202,6 +202,32 @@ bash "Create CKAN Admin user" do
 end
 
 #
+# Create job worker config files.
+# This needs to happen before installing extensions,
+# in case they want to add their own files.
+#
+
+bash "Enable Supervisor file inclusions" do
+	user "root"
+	code <<-EOS
+		SUPERVISOR_CONFIG=/etc/supervisord.conf
+		if [ -f "$SUPERVISOR_CONFIG" ]; then
+			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
+			mkdir -p /etc/supervisor/conf.d
+			echo '[include]' >> $SUPERVISOR_CONFIG
+			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+		fi
+	EOS
+end
+
+cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+	source "supervisor-ckan-worker.conf"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+#
 # Install CKAN extensions
 #
 
@@ -249,30 +275,6 @@ template '/etc/httpd/conf.d/ckan.conf' do
 		:domains => app['domains']
 	})
 	action :create
-end
-
-#
-# Create job worker config files
-#
-
-bash "Enable Supervisor file inclusions" do
-	user "root"
-	code <<-EOS
-		SUPERVISOR_CONFIG=/etc/supervisord.conf
-		if [ -f "$SUPERVISOR_CONFIG" ]; then
-			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
-			mkdir -p /etc/supervisor/conf.d
-			echo '[include]' >> $SUPERVISOR_CONFIG
-			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
-		fi
-	EOS
-end
-
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
-	source "supervisor-ckan-worker.conf"
-	owner "root"
-	group "root"
-	mode "0744"
 end
 
 service "supervisord" do
