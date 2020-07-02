@@ -1,7 +1,7 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
 # Cookbook Name:: datashades
-# Recipe:: deploy-drupaldb
+# Recipe:: solr-deploycore
 #
 # Downloads and installs Apache Solr to Datashades OpsWorks Solr layer
 #
