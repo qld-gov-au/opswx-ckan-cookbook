@@ -26,7 +26,7 @@ default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64']
+default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64', 'git', 'telnet']
 default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
 default['datashades']['jumpbox']['usergroup'] = ''
@@ -37,8 +37,6 @@ default['datashades']['log_bucket'] = 'osssio-ckan-web-logs'
 default['datashades']['auditd']['rules'] = []
 
 include_attribute "datashades::ckan"
-include_attribute "datashades::drupal"
-include_attribute "datashades::mysql"
 include_attribute "datashades::nfs"
 include_attribute "datashades::nginx"
 include_attribute "datashades::solr"
