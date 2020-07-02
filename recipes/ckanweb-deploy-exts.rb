@@ -304,7 +304,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if "#{pluginname}".eql? 'report'
 			execute "report CKAN ext database init" do
 				user "#{account_name}"
-				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-report report init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-report report initdb  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
 			end
 		end
 
