@@ -232,6 +232,11 @@ end
 
 # Prepare front-end CSS and JavaScript
 # This needs to be after any extensions since they may affect the result.
+# It is also memory-intensive, so stop other processes first.
+service "supervisord" do
+	action :stop
+end
+
 execute "Create front-end resources" do
 	user "#{service_name}"
 	group "#{service_name}"
@@ -273,12 +278,12 @@ end
 node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
-  source 'nginx.conf.erb'
-  owner 'root'
-  group 'root'
-  mode '0755'
-  variables({
-   		:app_name =>  app['shortname'],
+	source 'nginx.conf.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
+	variables({
+		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
 		})
 	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
