@@ -202,6 +202,17 @@ bash "Create CKAN Admin user" do
 end
 
 #
+# Create job worker config files.
+#
+
+cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+	source "supervisor-ckan-worker.conf"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+#
 # Install CKAN extensions
 #
 
@@ -221,6 +232,11 @@ end
 
 # Prepare front-end CSS and JavaScript
 # This needs to be after any extensions since they may affect the result.
+# It is also memory-intensive, so stop other processes first.
+service "supervisord" do
+	action :stop
+end
+
 execute "Create front-end resources" do
 	user "#{service_name}"
 	group "#{service_name}"
@@ -251,30 +267,6 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	action :create
 end
 
-#
-# Create job worker config files
-#
-
-bash "Enable Supervisor file inclusions" do
-	user "root"
-	code <<-EOS
-		SUPERVISOR_CONFIG=/etc/supervisord.conf
-		if [ -f "$SUPERVISOR_CONFIG" ]; then
-			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
-			mkdir -p /etc/supervisor/conf.d
-			echo '[include]' >> $SUPERVISOR_CONFIG
-			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
-		fi
-	EOS
-end
-
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
-	source "supervisor-ckan-worker.conf"
-	owner "root"
-	group "root"
-	mode "0744"
-end
-
 service "supervisord" do
 	action [:enable]
 end
@@ -286,12 +278,12 @@ end
 node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
-  source 'nginx.conf.erb'
-  owner 'root'
-  group 'root'
-  mode '0755'
-  variables({
-   		:app_name =>  app['shortname'],
+	source 'nginx.conf.erb'
+	owner 'root'
+	group 'root'
+	mode '0755'
+	variables({
+		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0]
 		})
 	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }

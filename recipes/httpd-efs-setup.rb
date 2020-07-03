@@ -48,13 +48,17 @@ if not ::File.identical?(real_log_dir, var_log_dir) then
     service service_name do
         action [:stop]
     end
-    if ::File.directory?(var_log_dir) then
-        # transfer existing contents to target directory
-        execute "Move existing #{service_name} logs to extra EBS volume" do
-            command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
-        end
+    # transfer existing contents to target directory
+    execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
+        only_if { ::File.directory? var_log_dir }
     end
-    link var_log_dir do
-        to real_log_dir
+    directory "#{var_log_dir}" do
+        recursive true
+        action :delete
     end
+end
+
+link var_log_dir do
+    to real_log_dir
+    ignore_failure true
 end

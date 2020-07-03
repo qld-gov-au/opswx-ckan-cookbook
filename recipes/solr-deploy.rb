@@ -20,20 +20,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+service_name = 'solr'
+account_name = service_name
+
 # Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
 #
-group "solr" do
+group account_name do
 	action :create
 	gid 1001
 end
 
-service_name = 'solr'
-
-# Create Solr User
-#
-user "solr" do
+user account_name do
 	comment "Solr User"
-	home "/home/solr"
+	home "/home/#{account_name}"
 	shell "/bin/bash"
 	action :create
 	uid 1001
@@ -60,26 +59,29 @@ unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt
 	end
 end
 
-unless (::File.directory?("/data/#{service_name}"))
-
-	bash 'initialize solr data' do
-		user "root"
-		code "mv /var/solr /data/"
-	end
-
-	# if we have pre-existing config, just wipe the extra copy
-	directory "/var/solr" do
-		recursive true
-		action :delete
-	end
-
-	link "/var/solr" do
-		to "/data/solr"
-		link_type :symbolic
-	end
-
+# move Solr core to EFS
+efs_data_dir = "/data/#{service_name}"
+var_data_dir = "/var/solr"
+if not ::File.identical?(efs_data_dir, var_data_dir) then
+    service service_name do
+        action [:stop]
+    end
+    # transfer existing contents to target directory
+    execute "rsync -a #{var_data_dir}/ #{efs_data_dir}/" do
+        only_if { ::File.directory? var_data_dir }
+    end
+    directory "#{var_data_dir}" do
+        recursive true
+        action :delete
+    end
 end
 
+link var_data_dir do
+    to efs_data_dir
+    ignore_failure true
+end
+
+# move logs from root disk to extra EBS volume
 var_log_dir = "/var/log/#{service_name}"
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
@@ -91,7 +93,7 @@ else
 end
 
 directory real_log_dir do
-    owner "solr"
+    owner account_name
     group "ec2-user"
     mode "0775"
     action :create
@@ -101,31 +103,40 @@ if not ::File.identical?(real_log_dir, var_log_dir) then
     service service_name do
         action [:stop]
     end
-    if ::File.directory?(var_log_dir) then
-        # transfer existing contents to target directory
-        execute "Move existing #{service_name} logs to extra EBS volume" do
-            command "mv -n #{var_log_dir}/* #{real_log_dir}/; find #{var_log_dir} -maxdepth 1 -type l -delete; rmdir #{var_log_dir}"
-        end
+    # transfer existing contents to target directory
+    execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
+        only_if { ::File.directory? var_log_dir }
     end
-    link var_log_dir do
-        to real_log_dir
+    directory "#{var_log_dir}" do
+        recursive true
+        action :delete
     end
 end
 
-efs_log_dir = "/data/solr/logs"
-if ::File.directory? efs_log_dir and not ::File.symlink? efs_log_dir then
-    # Directory under /data/ is not a link;
-    # transfer contents to target directory and turn it into one
+link var_log_dir do
+    to real_log_dir
+    ignore_failure true
+end
+
+# move logs from EFS to extra EBS volume, if any
+efs_log_dir = "#{efs_data_dir}/logs"
+if not ::File.identical?(efs_log_dir, var_log_dir) then
     service service_name do
         action [:stop]
     end
-    execute "Move existing #{service_name} logs from EFS to /var/log/" do
-        command "mv #{efs_log_dir}/* #{var_log_dir}/; rmdir #{efs_log_dir}"
+    # transfer existing contents to target directory
+    execute "rsync -a #{efs_log_dir}/ #{var_log_dir}/" do
+        only_if { ::File.directory? efs_log_dir }
+    end
+    directory "#{efs_log_dir}" do
+        recursive true
+        action :delete
     end
 end
 
 link efs_log_dir do
     to var_log_dir
+    ignore_failure true
 end
 
 # Create Monit config file to restart Solr when port 8983 not available

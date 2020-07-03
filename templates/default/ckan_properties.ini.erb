@@ -241,6 +241,15 @@ ckanext.cloudstorage.container_name = <%= node['datashades']['attachments_bucket
 ckanext.cloudstorage.driver_options = use_role
 ckanext.cloudstorage.use_secure_urls = 1
 
+
+#the plan; instead of on disk, we will be using the uploader, once we work out to get files dynamically from it
+ckanext-archiver.archive_dir = /var/shared_content/<%= @app_name %>/resource_cache
+#the plan; drop this for patten /dataset/{id}/resource/{resource_id}/archive/{filename}
+ckanext-archiver.cache_url_root = /resource_cache
+ckanext-archiver.max_content_length = 250000000
+ckanext-archiver.user_agent_string = "CKAN archiver https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>"
+ckanext-archiver.verify_https = True
+
 ## Cache
 ckan.cache_enabled = True
 ckan.static_max_age = 1800
