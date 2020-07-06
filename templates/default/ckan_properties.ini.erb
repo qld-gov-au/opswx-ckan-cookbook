@@ -137,6 +137,10 @@ googleanalytics.domain = auto
 ckan.data_qld_googleanalytics.id = <%= node['datashades']['ckan_web']['google']['analytics_id'] %>
 ckan.data_qld_googleanalytics.collection_url = http://www.google-analytics.com/collect
 
+## ckanext-data-qld Reporting
+ckan.reporting.datarequest_open_max_days = 60
+ckan.reporting.comment_no_reply_max_days = 10
+
 ## Google Tag Manager
 ckan.google_tag_manager.gtm_container_id = <%= node['datashades']['ckan_web']['google']['gtm_container_id'] %>
 
