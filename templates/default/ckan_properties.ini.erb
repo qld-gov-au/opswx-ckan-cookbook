@@ -127,7 +127,7 @@ ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
 ## QA
-qa.resource_format_openness_scores_json = /usr/lib/ckan/default/src/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
+qa.resource_format_openness_scores_json = <%= @src_dir %>/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
 
 ## Google Analytics
 googleanalytics.id = UA-7276966-13
@@ -195,7 +195,7 @@ ckan.comments.moderation.first_only = False
 ckan.comments.threaded_comments = True
 ckan.comments.users_can_edit = False
 ckan.comments.check_for_profanity = True
-ckan.comments.bad_words_file = /usr/lib/ckan/default/src/ckanext-ytp-comments/ckanext/ytp/comments/bad_words.txt
+ckan.comments.bad_words_file = <%= @src_dir %>/ckanext-ytp-comments/ckanext/ytp/comments/bad_words.txt
 ckan.comments.follow_mute_enabled = True
 ckan.comments.show_comments_tab_page = True
 
