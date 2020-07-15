@@ -12,7 +12,7 @@
     WSGIPassAuthorization On
 
     # Deploy as a daemon (avoids conflicts between CKAN instances).
-    WSGIDaemonProcess ckan_default display-name=ckan_default processes=1 threads=15
+    WSGIDaemonProcess ckan_default display-name=ckan_default processes=<%= node['datashades']['ckan_web']['wsgi']['processes'] %> threads=<%= node['datashades']['ckan_web']['wsgi']['threads'] %>
 
     WSGIProcessGroup ckan_default
 
