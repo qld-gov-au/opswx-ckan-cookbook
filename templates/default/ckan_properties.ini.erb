@@ -126,6 +126,9 @@ ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
+## QA
+qa.resource_format_openness_scores_json = /usr/lib/ckan/default/src/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
+
 ## Google Analytics
 googleanalytics.id = UA-7276966-13
 googleanalytics.track_frontend_events = false
