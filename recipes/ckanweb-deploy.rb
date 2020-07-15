@@ -315,7 +315,7 @@ end
 # Only set cron job for lower environments
 file '/etc/cron.hourly/ckan-tracking-update' do
 	content "/usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
-	mode '0755'
+	mode '0644'
 	owner "root"
 	group "root"
 	only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
