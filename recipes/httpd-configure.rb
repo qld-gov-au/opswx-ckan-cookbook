@@ -42,10 +42,8 @@ service 'httpd' do
 	action [:enable, :start, :reload]
 end
 
-# Reload Apache periodically if we have memory leaks.
-# Not an ideal solution, but a universal one.
-file '/etc/cron.hourly/httpd-reload-on-low-memory' do
-	content "free -m |head -3 |tail -1 |awk '{print $4}' |grep '^[5-9][0-9][0-9]' > /dev/null || (service httpd status > /dev/null && service httpd reload)"
+cookbook_file '/etc/cron.hourly/httpd-reload-on-low-memory' do
+	source "httpd-reload-on-low-memory"
 	mode "0755"
 	owner "root"
 	group "root"
