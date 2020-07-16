@@ -314,8 +314,8 @@ end
 
 # Only set cron job for lower environments
 file '/etc/cron.hourly/ckan-tracking-update' do
-	content "/usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
-	mode '0644'
+	content "/usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} >/dev/null 2>&1\n"
+	mode '0755'
 	owner "root"
 	group "root"
 	only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
@@ -323,7 +323,7 @@ end
 
 # Run tracking update at 8:30am everywhere
 file "/etc/cron.d/ckan-tracking-update" do
-	content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} 2>&1 >/dev/null\n"
+	content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} >/dev/null 2>&1\n"
 	mode '0755'
 	owner "root"
 	group "root"
@@ -331,7 +331,7 @@ end
 
 
 file "/etc/cron.hourly/ckan-email-notifications" do
-	content "/usr/local/bin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications 2>&1 > /dev/null\n"
+	content "/usr/local/bin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications > /dev/null 2>&1\n"
 	owner "root"
 	group "root"
 	mode "0755"

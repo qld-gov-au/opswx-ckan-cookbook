@@ -277,7 +277,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
 			file "/etc/cron.hourly/ckan-harvest-run" do
-				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini 2>&1 > /dev/null\n"
+				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini > /dev/null 2>&1\n"
 				mode "0755"
 			end
 		end

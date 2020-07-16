@@ -30,7 +30,7 @@ execute "Extend Nginx log rotation" do
 end
 
 file "/etc/cron.daily/archive-nginx-logs-to-s3" do
-	content "/usr/local/bin/archive-logs.sh nginx 2>&1 >/dev/null\n"
+	content "/usr/local/bin/archive-logs.sh nginx >/dev/null 2>&1\n"
 	owner "root"
 	group "root"
 	mode "0755"

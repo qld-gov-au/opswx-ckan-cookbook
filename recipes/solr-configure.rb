@@ -32,7 +32,7 @@ template "/usr/local/bin/solr-healthcheck.sh" do
 end
 
 file "/etc/cron.daily/archive-solr-logs-to-s3" do
-	content "/usr/local/bin/archive-logs.sh #{service_name} 2>&1 >/dev/null\n"
+	content "/usr/local/bin/archive-logs.sh #{service_name} >/dev/null 2>&1\n"
 	owner "root"
 	group "root"
 	mode "0755"
