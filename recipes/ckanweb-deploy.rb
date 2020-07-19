@@ -131,6 +131,7 @@ template "#{config_file}" do
 	variables({
 		:app_name =>  app['shortname'],
 		:app_url => app['domains'][0],
+		:src_dir => "#{virtualenv_dir}/src",
 		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
 	action :create
