@@ -292,6 +292,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				source "supervisor-ckan-archiver.conf"
 				mode "0744"
 			end
+
+			template "/usr/local/bin/archiverTriggerAll.sh" do
+				source 'archiverTriggerAll.sh'
+				owner 'root'
+				group 'root'
+				mode '0755'
+			end
+
+			#Trigger at 10pm monday nights weekly
+			file "/etc/cron.d/ckan-worker" do
+				content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+				mode '0644'
+			end
 		end
 
 		if "#{pluginname}".eql? 'qa'
