@@ -30,7 +30,7 @@ execute "Extend Apache log rotation" do
 end
 
 file "/etc/cron.daily/archive-apache-logs-to-s3" do
-	content "/usr/local/bin/archive-logs.sh httpd 2>&1 >/dev/null\n"
+	content "/usr/local/bin/archive-logs.sh httpd >/dev/null 2>&1\n"
 	owner "root"
 	group "root"
 	mode "0755"
@@ -40,4 +40,11 @@ end
 service 'httpd' do
 	supports :restart => true, :reload => true, :status => true
 	action [:enable, :start, :reload]
+end
+
+cookbook_file '/etc/cron.hourly/httpd-reload-on-low-memory' do
+	source "httpd-reload-on-low-memory"
+	mode "0755"
+	owner "root"
+	group "root"
 end

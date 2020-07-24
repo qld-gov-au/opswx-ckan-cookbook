@@ -48,7 +48,7 @@ extnames =
 	'qgov' => 'qgovext',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
-	'data-qld' => 'data_qld data_qld_google_analytics',
+	'data-qld' => 'data_qld data_qld_google_analytics data_qld_reporting',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
@@ -116,6 +116,8 @@ end
 
 # Do the actual extension installation using pip
 #
+archiver_present = false
+harvest_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
@@ -265,6 +267,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if "#{pluginname}".eql? 'harvest'
+			harvest_present = true
+
 			execute "Harvest CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
@@ -277,12 +281,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
 			file "/etc/cron.hourly/ckan-harvest-run" do
-				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini 2>&1 > /dev/null\n"
+				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini > /dev/null 2>&1\n"
 				mode "0755"
 			end
 		end
 
 		if "#{pluginname}".eql? 'archiver'
+			archiver_present = true
+
 			execute "Archiver CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-archiver archiver init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
@@ -291,6 +297,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
 				source "supervisor-ckan-archiver.conf"
 				mode "0744"
+			end
+
+			template "/usr/local/bin/archiverTriggerAll.sh" do
+				source 'archiverTriggerAll.sh'
+				owner 'root'
+				group 'root'
+				mode '0755'
+			end
+
+			#Trigger at 10pm monday nights weekly
+			file "/etc/cron.d/ckan-worker" do
+				content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+				mode '0644'
 			end
 		end
 
@@ -390,6 +409,26 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				SED
 			end
 		end
+	end
+end
+
+if not archiver_present then
+	execute "Clean Archiver supervisor config" do
+		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-archiver*.conf"
+	end
+
+	execute "Clean Archiver cron" do
+		command "rm -f /etc/cron.*/ckan-archiver*"
+	end
+end
+
+if not harvest_present then
+	execute "Clean Harvest supervisor config" do
+		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+	end
+
+	execute "Clean Harvest cron" do
+		command "rm -f /etc/cron.*/ckan-harvest*"
 	end
 end
 

@@ -126,6 +126,9 @@ ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
+## QA
+qa.resource_format_openness_scores_json = <%= @src_dir %>/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
+
 ## Google Analytics
 googleanalytics.id = UA-7276966-13
 googleanalytics.track_frontend_events = false
@@ -136,6 +139,10 @@ googleanalytics.domain = auto
 
 ckan.data_qld_googleanalytics.id = <%= node['datashades']['ckan_web']['google']['analytics_id'] %>
 ckan.data_qld_googleanalytics.collection_url = http://www.google-analytics.com/collect
+
+## ckanext-data-qld Reporting
+ckan.reporting.datarequest_open_max_days = 60
+ckan.reporting.comment_no_reply_max_days = 10
 
 ## Google Tag Manager
 ckan.google_tag_manager.gtm_container_id = <%= node['datashades']['ckan_web']['google']['gtm_container_id'] %>
@@ -188,7 +195,7 @@ ckan.comments.moderation.first_only = False
 ckan.comments.threaded_comments = True
 ckan.comments.users_can_edit = False
 ckan.comments.check_for_profanity = True
-ckan.comments.bad_words_file = /usr/lib/ckan/default/src/ckanext-ytp-comments/ckanext/ytp/comments/bad_words.txt
+ckan.comments.bad_words_file = <%= @src_dir %>/ckanext-ytp-comments/ckanext/ytp/comments/bad_words.txt
 ckan.comments.follow_mute_enabled = True
 ckan.comments.show_comments_tab_page = True
 
@@ -210,7 +217,7 @@ ckan.locale_default = en_AU
 ckan.locale_order = en pt_BR ja it cs_CZ ca es fr el sv sr sr@latin no sk fi ru de pl nl bg ko_KR hu sa sl lv
 ckan.locales_offered =
 ckan.locales_filtered_out =
-ckan.display_timezone = server
+ckan.display_timezone = <%= node['datashades']['timezone'] %>
 ckan.datastore.default_fts_lang=simple
 
 ## Feeds Settings

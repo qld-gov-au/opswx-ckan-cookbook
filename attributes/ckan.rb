@@ -54,6 +54,9 @@ default['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] = 
 default['datashades']['ckan_web']['google']['gtm_container_id'] = ''
 default['datashades']['ckan_web']['google']['analytics_id'] = 'UA-7276966-12'
 
+default['datashades']['ckan_web']['wsgi']['processes'] = '1'
+default['datashades']['ckan_web']['wsgi']['threads'] = '15'
+
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
 
 default['datashades']['postgres']['password'] = ""

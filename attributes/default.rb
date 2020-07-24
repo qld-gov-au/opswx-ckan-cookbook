@@ -21,7 +21,8 @@
 # limitations under the License.
 #
 
-default['datashades']['timezone'] = 'Australia/Brisbane'
+# default['datashades']['timezone'] = 'Australia/Brisbane' using Queensland due to pythong 2 not having Brisbane
+default['datashades']['timezone'] = 'Australia/Queensland'
 default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
