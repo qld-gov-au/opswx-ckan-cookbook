@@ -116,6 +116,8 @@ end
 
 # Do the actual extension installation using pip
 #
+archiver_present = false
+harvest_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
@@ -265,6 +267,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if "#{pluginname}".eql? 'harvest'
+			harvest_present = true
+
 			execute "Harvest CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
@@ -283,6 +287,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if "#{pluginname}".eql? 'archiver'
+			archiver_present = true
+
 			execute "Archiver CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-archiver archiver init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
@@ -403,6 +409,26 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				SED
 			end
 		end
+	end
+end
+
+if not archiver_present then
+	execute "Clean Archiver supervisor config" do
+		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-archiver*.conf"
+	end
+
+	execute "Clean Archiver cron" do
+		command "rm -f /etc/cron.*/ckan-archiver*"
+	end
+end
+
+if not harvest_present then
+	execute "Clean Harvest supervisor config" do
+		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+	end
+
+	execute "Clean Harvest cron" do
+		command "rm -f /etc/cron.*/ckan-harvest*"
 	end
 end
 
