@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Identify whether the current server is the Solr master.
+
+opsworks_hostname="<%= node['datashades']['hostname'] %>"
+layer_prefix=$(echo "$opsworks_hostname" | tr -d '[0-9]')
+NOW=$(date +'%s')
+MAX_AGE=120
+for i in {9..1}; do
+  SERVER_NAME="$layer_prefix$i"
+  HEALTH_FILE="/data/solr-healthcheck_$SERVER_NAME"
+  if [ -e "$HEALTH_FILE" ]; then
+    HEALTH_TIME=$(cat $HEALTH_FILE | tr -d '[:space:]')
+    AGE=$(expr $NOW - $HEALTH_TIME)
+    HEALTHY=$(expr $AGE '<=' $MAX_AGE)
+    if [ "$HEALTHY" = "1" ]; then
+      SELECTED_SERVER="$SERVER_NAME"
+    fi
+  fi
+done
+exit $([ "$SELECTED_SERVER" = "$opsworks_hostname" ])
