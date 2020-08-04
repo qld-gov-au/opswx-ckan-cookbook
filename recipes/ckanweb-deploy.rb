@@ -97,13 +97,20 @@ bash "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
-	# pull if we're checking out a branch, otherwise it doesn't matter
 	code <<-EOS
+                # retrieve latest branch metadata
 		git fetch
+                # drop unversioned files
+		git clean
+                # make versioned files pristine
 		git reset --hard
 		git checkout '#{version}'
+	        # get latest changes if we're checking out a branch, otherwise it doesn't matter
 		git pull
+                # drop compiled files from previous branch
 		find . -name '*.pyc' -delete
+                # regenerate metadata
+                #{virtualenv_dir}/bin/python setup.py develop
 	EOS
 end
 
