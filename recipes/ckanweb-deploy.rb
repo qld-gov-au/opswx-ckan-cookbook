@@ -67,7 +67,8 @@ apprelease = app['app_source']['url']
 
 if app['app_source']['type'].eql? "git" then
 	version = app['app_source']['revision']
-else
+end
+if not version then
 	apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
 	apprelease.sub! '.zip', ""
 	version = apprelease[/@(.*)/].sub! '@', ''
@@ -99,7 +100,7 @@ bash "Check out selected revision" do
 	cwd "#{install_dir}"
 	code <<-EOS
                 # retrieve latest branch metadata
-		git fetch
+		git fetch origin '#{version}'
                 # drop unversioned files
 		git clean
                 # make versioned files pristine
