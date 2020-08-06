@@ -90,7 +90,7 @@ else
 	execute "Install CKAN #{version}" do
 		user "#{service_name}"
 		group "#{service_name}"
-		command "#{pip} install -e 'git+#{apprelease}#egg=#{service_name}'"
+		command "#{pip} install -e 'git+#{apprelease}@#{version}#egg=#{service_name}'"
 	end
 end
 
