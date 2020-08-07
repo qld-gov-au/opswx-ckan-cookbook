@@ -168,7 +168,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# Install the extension and its requirements
 			#
-			if app['app_source']['type'].casecmp("git") == 0 then
 			execute "Pip Install #{app['shortname']}" do
 				user "#{account_name}"
 				group "#{account_name}"
