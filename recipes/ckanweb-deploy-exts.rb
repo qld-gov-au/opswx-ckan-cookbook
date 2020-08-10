@@ -153,12 +153,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if (::File.directory?("#{install_dir}")) then
-		    if app['app_source']['type'].casecmp("git") == 0 then
-                execute "Ensure correct Git origin" do
-                    user "#{account_name}"
-                    cwd "#{install_dir}"
-                    command "git remote set-url origin '#{app['app_source']['url']}'"
-                end
+			if app['app_source']['type'].casecmp("git") == 0 then
+				execute "Ensure correct Git origin" do
+					user "#{account_name}"
+					cwd "#{install_dir}"
+					command "git remote set-url origin '#{app['app_source']['url']}'"
+				end
 			end
 		else
 			log 'debug' do
