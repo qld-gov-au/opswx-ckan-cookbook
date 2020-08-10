@@ -122,11 +122,20 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
 
+	apprevision = app['app_source']['revision']
+	if ! apprevision
+		apprevision = "master"
+	end
+
 	# Don't install extensions not required by the batch node
 	#
 	installext = !batchnode || (batchnode && batchexts.include?(pluginname))
 	unless (!installext)
 		apprelease = app['app_source']['url'].sub 'http', "git+http"
+
+		if app['app_source']['type'].casecmp("git") == 0 then
+			apprelease << "@#{apprevision}"
+		end
 
 		if ! apprelease.include? '#egg' then
 			apprelease << "#egg=#{app['shortname']}"
@@ -144,10 +153,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if (::File.directory?("#{install_dir}")) then
-			execute "Ensure correct Git origin" do
-				user "#{account_name}"
-				cwd "#{install_dir}"
-				command "git remote set-url origin '#{app['app_source']['url']}'"
+			if app['app_source']['type'].casecmp("git") == 0 then
+				execute "Ensure correct Git origin" do
+					user "#{account_name}"
+					cwd "#{install_dir}"
+					command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
+				end
 			end
 		else
 			log 'debug' do
@@ -162,11 +173,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				group "#{account_name}"
 				command "#{pip} install -e '#{apprelease}'"
 			end
-		end
-
-		apprevision = app['app_source']['revision']
-		if ! apprevision
-			apprevision = "master"
 		end
 
 		bash "Check out selected revision" do
