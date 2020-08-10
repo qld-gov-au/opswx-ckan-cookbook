@@ -73,6 +73,7 @@ if not version then
 	apprelease.sub! '.zip', ""
 	version = apprelease[/@(.*)/].sub! '@', ''
 end
+version ||= "master"
 
 #
 # Install selected revision of CKAN core
@@ -83,7 +84,7 @@ if (::File.exist? "#{install_dir}/requirements.txt") then
 		execute "Ensure correct Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
-			command "git remote set-url origin '#{app['app_source']['url']}'"
+			command "git remote set-url origin '#{apprelease.sub(/@(.*)/, '')}'"
 		end
 	end
 else
