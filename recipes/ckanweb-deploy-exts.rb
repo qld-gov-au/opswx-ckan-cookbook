@@ -157,7 +157,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				execute "Ensure correct Git origin" do
 					user "#{account_name}"
 					cwd "#{install_dir}"
-					command "git remote set-url origin '#{app['app_source']['url']}'"
+					command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
 				end
 			end
 		else
