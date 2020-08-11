@@ -67,11 +67,13 @@ apprelease = app['app_source']['url']
 
 if app['app_source']['type'].eql? "git" then
 	version = app['app_source']['revision']
-else
+end
+if not version then
 	apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
 	apprelease.sub! '.zip', ""
 	version = apprelease[/@(.*)/].sub! '@', ''
 end
+version ||= "master"
 
 #
 # Install selected revision of CKAN core
@@ -82,14 +84,14 @@ if (::File.exist? "#{install_dir}/requirements.txt") then
 		execute "Ensure correct Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
-			command "git remote set-url origin '#{app['app_source']['url']}'"
+			command "git remote set-url origin '#{apprelease.sub(/@(.*)/, '')}'"
 		end
 	end
 else
 	execute "Install CKAN #{version}" do
 		user "#{service_name}"
 		group "#{service_name}"
-		command "#{pip} install -e 'git+#{apprelease}#egg=#{service_name}'"
+		command "#{pip} install -e 'git+#{apprelease}@#{version}#egg=#{service_name}'"
 	end
 end
 
@@ -97,13 +99,20 @@ bash "Check out selected revision" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
-	# pull if we're checking out a branch, otherwise it doesn't matter
 	code <<-EOS
-		git fetch
+		# retrieve latest branch metadata
+		git fetch origin '#{version}'
+		# drop unversioned files
+		git clean
+		# make versioned files pristine
 		git reset --hard
 		git checkout '#{version}'
+		# get latest changes if we're checking out a branch, otherwise it doesn't matter
 		git pull
+		# drop compiled files from previous branch
 		find . -name '*.pyc' -delete
+		# regenerate metadata
+		#{virtualenv_dir}/bin/python setup.py develop
 	EOS
 end
 
