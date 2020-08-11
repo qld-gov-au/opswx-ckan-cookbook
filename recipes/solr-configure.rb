@@ -31,6 +31,13 @@ template "/usr/local/bin/solr-healthcheck.sh" do
 	mode "0755"
 end
 
+template "/usr/local/bin/toggle-solr-healthcheck.sh" do
+	source "toggle-solr-healthcheck.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 template "/usr/local/bin/pick-solr-master.sh" do
 	source "pick-solr-master.sh.erb"
 	owner "root"
