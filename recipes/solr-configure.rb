@@ -31,6 +31,20 @@ template "/usr/local/bin/solr-healthcheck.sh" do
 	mode "0755"
 end
 
+template "/usr/local/bin/toggle-solr-healthcheck.sh" do
+	source "toggle-solr-healthcheck.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+template "/usr/local/bin/pick-solr-master.sh" do
+	source "pick-solr-master.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 file "/etc/cron.daily/archive-solr-logs-to-s3" do
 	content "/usr/local/bin/archive-logs.sh #{service_name} >/dev/null 2>&1\n"
 	owner "root"
@@ -50,8 +64,9 @@ cookbook_file "/etc/logrotate.d/solr" do
 	source "solr-logrotate"
 end
 
-cron "Solr health check" do
-	command "/usr/local/bin/solr-healthcheck.sh > /dev/null"
+file "/etc/cron.d/solr-healthcheck" do
+	content "* * * * * /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1"
+	mode "0644"
 end
 
 # Add DNS entry for service host
