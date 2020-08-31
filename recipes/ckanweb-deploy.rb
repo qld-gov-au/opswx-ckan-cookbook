@@ -70,7 +70,8 @@ if app['app_source']['type'].eql? "git" then
 	version = app['app_source']['revision']
 end
 apprelease = app['app_source']['url'].sub("#{service_name}/archive/", "#{service_name}.git@").sub('.zip', "")
-urlrevision = apprelease[/@(.*)/].sub! '@', ''
+urlrevision = apprelease[/@(.*)/].sub '@', ''
+apprelease.sub!(/@(.*)/, '')
 version ||= urlrevision
 version ||= "master"
 
@@ -83,7 +84,7 @@ if (::File.exist? "#{install_dir}/requirements.txt") then
 		execute "Ensure correct Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
-			command "git remote set-url origin '#{apprelease.sub(/@(.*)/, '')}'"
+			command "git remote set-url origin '#{apprelease}'"
 		end
 	end
 else
