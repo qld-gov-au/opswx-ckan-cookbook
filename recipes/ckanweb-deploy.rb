@@ -63,16 +63,15 @@ directory "#{shared_fs_dir}/private" do
 	action :create
 end
 
-apprelease = app['app_source']['url']
-
+# Get the version number from the app revision, by preference,
+# or from the app URL if revision is not defined.
+# Either way, ensure that the version number is stripped from the URL.
 if app['app_source']['type'].eql? "git" then
 	version = app['app_source']['revision']
 end
-if not version then
-	apprelease.sub! "#{service_name}/archive/", "#{service_name}.git@"
-	apprelease.sub! '.zip', ""
-	version = apprelease[/@(.*)/].sub! '@', ''
-end
+apprelease = app['app_source']['url'].sub("#{service_name}/archive/", "#{service_name}.git@").sub('.zip', "")
+urlrevision = apprelease[/@(.*)/].sub! '@', ''
+version ||= urlrevision
 version ||= "master"
 
 #
