@@ -81,7 +81,7 @@ version ||= "master"
 
 if (::File.exist? "#{install_dir}/requirements.txt") then
 	if app['app_source']['type'].casecmp("git") == 0 then
-		execute "Ensure correct Git origin" do
+		execute "Ensure correct CKAN Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
 			command "git remote set-url origin '#{apprelease}'"
@@ -95,7 +95,7 @@ else
 	end
 end
 
-bash "Check out selected revision" do
+bash "Check out #{version} revision of CKAN" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
