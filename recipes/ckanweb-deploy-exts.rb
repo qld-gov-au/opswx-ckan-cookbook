@@ -123,15 +123,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
 
 	apprevision = app['app_source']['revision']
-	if ! apprevision
-		apprevision = "master"
-	end
+	apprevision ||= app['app_source']['url'][/@(.*)/].sub '@', ''
+	apprevision ||= "master"
 
 	# Don't install extensions not required by the batch node
 	#
 	installext = !batchnode || (batchnode && batchexts.include?(pluginname))
 	unless (!installext)
-		apprelease = app['app_source']['url'].sub 'http', "git+http"
+		apprelease = app['app_source']['url'].sub('http', "git+http").sub(/@(.*)/, '')
 
 		if app['app_source']['type'].casecmp("git") == 0 then
 			apprelease << "@#{apprevision}"
