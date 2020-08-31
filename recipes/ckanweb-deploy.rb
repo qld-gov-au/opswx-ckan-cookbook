@@ -70,7 +70,8 @@ if app['app_source']['type'].eql? "git" then
 	version = app['app_source']['revision']
 end
 apprelease = app['app_source']['url'].sub("#{service_name}/archive/", "#{service_name}.git@").sub('.zip', "")
-urlrevision = apprelease[/@(.*)/].sub! '@', ''
+urlrevision = apprelease[/@(.*)/].sub '@', ''
+apprelease.sub!(/@(.*)/, '')
 version ||= urlrevision
 version ||= "master"
 
@@ -80,10 +81,10 @@ version ||= "master"
 
 if (::File.exist? "#{install_dir}/requirements.txt") then
 	if app['app_source']['type'].casecmp("git") == 0 then
-		execute "Ensure correct Git origin" do
+		execute "Ensure correct CKAN Git origin" do
 			user "#{service_name}"
 			cwd "#{install_dir}"
-			command "git remote set-url origin '#{apprelease.sub(/@(.*)/, '')}'"
+			command "git remote set-url origin '#{apprelease}'"
 		end
 	end
 else
@@ -94,7 +95,7 @@ else
 	end
 end
 
-bash "Check out selected revision" do
+bash "Check out #{version} revision of CKAN" do
 	user "#{service_name}"
 	group "#{service_name}"
 	cwd "#{install_dir}"
