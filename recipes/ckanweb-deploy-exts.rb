@@ -153,7 +153,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		if (::File.directory?("#{install_dir}")) then
 			if app['app_source']['type'].casecmp("git") == 0 then
-				execute "Ensure correct Git origin" do
+				execute "Ensure correct #{app['shortname']} Git origin" do
 					user "#{account_name}"
 					cwd "#{install_dir}"
 					command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
@@ -174,7 +174,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			end
 		end
 
-		bash "Check out selected revision" do
+		bash "Check out #{apprevision} revision of #{app['shortname']}" do
 			user "#{account_name}"
 			group "#{account_name}"
 			cwd "#{install_dir}"
