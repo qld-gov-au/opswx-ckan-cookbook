@@ -40,23 +40,40 @@ user account_name do
 end
 
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
-download_url = app['app_source']['url']
-solr_version = download_url[/\/solr-([^\/]+)[.]zip$/, 1]
+solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
+installed_solr_version = "/opt/solr-#{solr_version}"
 
-unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt/solr") and ::File.readlink("/opt/solr").eql? "/opt/solr-#{solr_version}")
-	remote_file "#{Chef::Config[:file_cache_path]}/solr.zip" do
-		source app['app_source']['url']
-	end
+unless ::File.identical?(installed_solr_version, "/opt/solr")
+    solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
 
-	bash "install #{service_name} #{solr_version}" do
-		user "root"
-		code <<-EOS
-		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
-		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip
-		cd /tmp/solr/solr-#{solr_version}
-		/tmp/solr/solr-#{solr_version}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f
-		EOS
-	end
+    remote_file "#{solr_artefact}" do
+        source app['app_source']['url']
+    end
+
+    # Would use archive_file but Chef client is not new enough
+    execute "Extract #{service_name} #{solr_version}" do
+        command "unzip -u -q #{solr_artefact} -d /tmp/solr"
+    end
+
+    service "solr" do
+        action [:stop]
+    end
+
+    # wipe old properties so we can install the right version
+    file "/etc/default/solr.in.sh" do
+        action :delete
+    end
+
+    execute "Recover backed up start properties" do
+        cwd "#{installed_solr_version}/bin"
+        command "mv solr.in.sh.orig solr.in.sh"
+        only_if { ::File.exist? "#{installed_solr_version}/bin/solr.in.sh.orig" }
+    end
+
+    execute "install #{service_name} #{solr_version}" do
+        cwd "/tmp/solr/solr-#{solr_version}"
+        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
+    end
 end
 
 # move Solr core to EFS
