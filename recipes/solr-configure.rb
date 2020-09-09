@@ -56,10 +56,6 @@ file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
 	action :touch
 end
 
-cookbook_file "/var/solr/log4j.properties" do
-	source "solr-log4j.properties"
-end
-
 cookbook_file "/etc/logrotate.d/solr" do
 	source "solr-logrotate"
 end
