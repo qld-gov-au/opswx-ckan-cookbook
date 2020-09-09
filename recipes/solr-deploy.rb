@@ -43,7 +43,7 @@ app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{no
 solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
 installed_solr_version = "/opt/solr-#{solr_version}"
 
-if not ::File.identical?(installed_solr_version, "/opt/solr") then
+unless ::File.identical?(installed_solr_version, "/opt/solr")
     solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
 
     remote_file "#{solr_artefact}" do
