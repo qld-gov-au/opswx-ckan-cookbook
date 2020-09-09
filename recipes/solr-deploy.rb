@@ -40,20 +40,21 @@ user account_name do
 end
 
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
-download_url = app['app_source']['url']
-solr_version = download_url[/\/solr-([^\/]+)[.]zip$/, 1]
-solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
+solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
+installed_solr_version = "/opt/solr-#{solr_version}"
 
-remote_file "#{solr_artefact}" do
-    source app['app_source']['url']
-end
+if not ::File.identical?(installed_solr_version, "/opt/solr") then
+    solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
 
-# Would use archive_file but Chef client is not new enough
-execute "Extract #{service_name} #{solr_version}" do
-    command "unzip -u -q #{solr_artefact} -d /tmp/solr"
-end
+    remote_file "#{solr_artefact}" do
+        source app['app_source']['url']
+    end
 
-if not ::File.identical?("/opt/solr-#{solr_version}", "/opt/solr") then
+    # Would use archive_file but Chef client is not new enough
+    execute "Extract #{service_name} #{solr_version}" do
+        command "unzip -u -q #{solr_artefact} -d /tmp/solr"
+    end
+
     service "solr" do
         action [:stop]
     end
@@ -61,6 +62,12 @@ if not ::File.identical?("/opt/solr-#{solr_version}", "/opt/solr") then
     # wipe old properties so we can install the right version
     file "/etc/default/solr.in.sh" do
         action :delete
+    end
+
+    execute "Recover backed up start properties" do
+        cwd "#{installed_solr_version}/bin"
+        command "mv solr.in.sh.orig solr.in.sh"
+        only_if { ::File.exist? "#{installed_solr_version}/bin/solr.in.sh.orig" }
     end
 
     execute "install #{service_name} #{solr_version}" do
