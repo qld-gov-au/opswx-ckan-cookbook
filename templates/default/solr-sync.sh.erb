@@ -1,0 +1,30 @@
+#!/bin/sh
+
+CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
+LOCAL_DIR="/tmp"
+BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
+SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
+LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME/"
+SYNC_DIR="/data/solr/data/$CORE_NAME/data"
+SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME/"
+HOST="http://localhost:8983/solr"
+BUCKET="<%= node['datashades']['log_bucket'] %>"
+
+rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
+if (/usr/local/bin/pick-solr-master.sh); then
+  MINUTE=$(date +%M)
+  rm -r $SYNC_DIR/snapshot.$CORE_NAME-*
+  curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
+  sleep 5
+  sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT"
+  if [ "$MINUTE" = "0" ]; then
+    cd "$LOCAL_DIR"
+    tar czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
+    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/"
+  fi
+else
+  # Give the master time to update the sync copy
+  sleep 10
+  sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT"
+  curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
+fi

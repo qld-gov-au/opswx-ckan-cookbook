@@ -45,8 +45,8 @@ template "/usr/local/bin/pick-solr-master.sh" do
 	mode "0755"
 end
 
-cookbook_file "/usr/local/bin/solr-sync.sh" do
-	source "solr-sync.sh"
+template "/usr/local/bin/solr-sync.sh" do
+	source "solr-sync.sh.erb"
 	owner "root"
 	group "root"
 	mode "0755"
