@@ -19,7 +19,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
   if [ "$MINUTE" = "00" ]; then
     cd "$LOCAL_DIR"
     tar czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
-    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/"
+    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
     rm -r snapshot.$CORE_NAME-*
   fi
 else
