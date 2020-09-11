@@ -82,7 +82,7 @@ extra_disk_present = ::File.exist? extra_disk
 # move Solr off root disk
 efs_data_dir = "/data/#{service_name}"
 var_data_dir = "/var/#{service_name}"
-var_log_dir = "/var/log/#{service_name}"
+var_log_dir = "/var/#{service_name}/logs"
 if extra_disk_present then
     real_data_dir = "#{extra_disk}/#{service_name}_data"
     real_log_dir = "#{extra_disk}/#{service_name}"
@@ -116,6 +116,11 @@ if not ::File.identical?(real_data_dir, var_data_dir) then
 end
 
 link var_data_dir do
+    to real_data_dir
+    ignore_failure true
+end
+
+link "/var/log/#{service_name}" do
     to real_data_dir
     ignore_failure true
 end
