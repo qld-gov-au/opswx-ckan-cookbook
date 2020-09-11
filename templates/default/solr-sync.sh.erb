@@ -18,7 +18,7 @@ fi
 if (/usr/local/bin/pick-solr-master.sh); then
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
   sleep 5
-  sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT"
+  sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT" || exit 1
   # make 'index' on EFS a symlink pointing at the latest index files
   mv "$SYNC_DIR/index" "$SYNC_DIR/index_old"
   sudo -u solr ln -s "$SNAPSHOT_NAME" "$SYNC_DIR/index"
@@ -37,7 +37,7 @@ else
   sleep 10
   if [ -d "$SYNC_SNAPSHOT" ]; then
     sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
-    sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT"
+    sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
     curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
   fi
 fi
