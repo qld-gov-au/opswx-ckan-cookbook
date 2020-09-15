@@ -39,7 +39,8 @@ user account_name do
 	gid 1001
 end
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
+core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
+app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
 solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
 installed_solr_version = "/opt/solr-#{solr_version}"
 
@@ -76,15 +77,47 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 end
 
-# move Solr core to EFS
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+# move Solr off root disk
 efs_data_dir = "/data/#{service_name}"
-var_data_dir = "/var/solr"
-if not ::File.identical?(efs_data_dir, var_data_dir) then
+var_data_dir = "/var/#{service_name}"
+var_log_dir = "/var/#{service_name}/logs"
+if extra_disk_present then
+    real_data_dir = "#{extra_disk}/#{service_name}_data"
+    real_log_dir = "#{extra_disk}/#{service_name}"
+else
+    real_data_dir = efs_data_dir
+    real_log_dir = var_log_dir
+end
+
+directory real_data_dir do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+end
+
+directory "#{efs_data_dir}/data/#{core_name}/data" do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+    recursive true
+end
+
+if not ::File.identical?(real_data_dir, var_data_dir) then
     service service_name do
         action [:stop]
     end
     # transfer existing contents to target directory
-    execute "rsync -a #{var_data_dir}/ #{efs_data_dir}/" do
+    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
+        user service_name
+        only_if { ::File.directory? efs_data_dir }
+    end
+    execute "rsync -a #{var_data_dir}/ #{real_data_dir}/" do
+        user service_name
         only_if { ::File.directory? var_data_dir }
     end
     directory "#{var_data_dir}" do
@@ -94,20 +127,16 @@ if not ::File.identical?(efs_data_dir, var_data_dir) then
 end
 
 link var_data_dir do
-    to efs_data_dir
+    to real_data_dir
     ignore_failure true
 end
 
-# move logs from root disk to extra EBS volume
-var_log_dir = "/var/log/#{service_name}"
-extra_disk = "/mnt/local_data"
-extra_disk_present = ::File.exist? extra_disk
-
-if extra_disk_present then
-    real_log_dir = "#{extra_disk}/#{service_name}"
-else
-    real_log_dir = var_log_dir
+link "/var/log/#{service_name}" do
+    to real_log_dir
+    ignore_failure true
 end
+
+# move logs off root disk
 
 directory real_log_dir do
     owner account_name
@@ -122,6 +151,7 @@ if not ::File.identical?(real_log_dir, var_log_dir) then
     end
     # transfer existing contents to target directory
     execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
+        user service_name
         only_if { ::File.directory? var_log_dir }
     end
     directory "#{var_log_dir}" do
@@ -143,6 +173,7 @@ if not ::File.identical?(efs_log_dir, var_log_dir) then
     end
     # transfer existing contents to target directory
     execute "rsync -a #{efs_log_dir}/ #{var_log_dir}/" do
+        user service_name
         only_if { ::File.directory? efs_log_dir }
     end
     directory "#{efs_log_dir}" do

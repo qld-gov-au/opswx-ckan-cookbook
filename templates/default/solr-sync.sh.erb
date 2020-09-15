@@ -1,0 +1,43 @@
+#!/bin/sh
+
+CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
+LOCAL_DIR="/tmp"
+BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
+SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
+LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME/"
+SYNC_DIR="/data/solr/data/$CORE_NAME/data"
+SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME/"
+HOST="http://localhost:8983/solr"
+BUCKET="<%= node['datashades']['log_bucket'] %>"
+MINUTE=$(date +%M)
+
+# we can't perform any replication operations if Solr is stopped
+if ! (curl -I "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
+    exit 0
+fi
+if (/usr/local/bin/pick-solr-master.sh); then
+  curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
+  sleep 5
+  sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT" || exit 1
+  # make 'index' on EFS a symlink pointing at the latest index files
+  mv "$SYNC_DIR/index" "$SYNC_DIR/index_old"
+  sudo -u solr ln -s "$SNAPSHOT_NAME" "$SYNC_DIR/index"
+  sudo -u solr rm -r "$SYNC_DIR/index_old"
+  for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
+    sudo -u solr rm -r "$old_snapshot"
+  done
+  if [ "$MINUTE" = "00" ]; then
+    cd "$LOCAL_DIR"
+    tar czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
+    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
+    sudo -u solr rm -r snapshot.$CORE_NAME-*
+  fi
+else
+  # Give the master time to update the sync copy
+  sleep 10
+  if [ -d "$SYNC_SNAPSHOT" ]; then
+    sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
+    sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
+    curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
+  fi
+fi

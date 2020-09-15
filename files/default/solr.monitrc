@@ -1,4 +1,4 @@
-check process solr with pidfile /data/solr/solr-8983.pid
+check process solr with pidfile /var/solr/solr-8983.pid
 group solr
 start program = "/etc/init.d/solr start"
 stop program = "/etc/init.d/solr stop"
