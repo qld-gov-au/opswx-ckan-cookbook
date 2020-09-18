@@ -39,35 +39,85 @@ user account_name do
 	gid 1001
 end
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-solr*").first
-download_url = app['app_source']['url']
-solr_version = download_url[/\/solr-([^\/]+)[.]zip$/, 1]
+core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
+app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
+solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
+installed_solr_version = "/opt/solr-#{solr_version}"
 
-unless (::File.directory?("/opt/solr-#{solr_version}") and ::File.symlink?("/opt/solr") and ::File.readlink("/opt/solr").eql? "/opt/solr-#{solr_version}")
-	remote_file "#{Chef::Config[:file_cache_path]}/solr.zip" do
-		source app['app_source']['url']
-	end
+unless ::File.identical?(installed_solr_version, "/opt/solr")
+    solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
 
-	bash "install #{service_name} #{solr_version}" do
-		user "root"
-		code <<-EOS
-		unzip -u -q #{Chef::Config[:file_cache_path]}/solr.zip -d /tmp/solr
-		mv #{Chef::Config[:file_cache_path]}/solr.zip #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip
-		cd /tmp/solr/solr-#{solr_version}
-		/tmp/solr/solr-#{solr_version}/bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f
-		EOS
-	end
+    remote_file "#{solr_artefact}" do
+        source app['app_source']['url']
+    end
+
+    # Would use archive_file but Chef client is not new enough
+    execute "Extract #{service_name} #{solr_version}" do
+        command "unzip -u -q #{solr_artefact} -d /tmp/solr"
+    end
+
+    service "solr" do
+        action [:stop]
+    end
+
+    # wipe old properties so we can install the right version
+    file "/etc/default/solr.in.sh" do
+        action :delete
+    end
+
+    execute "Recover backed up start properties" do
+        cwd "#{installed_solr_version}/bin"
+        command "mv solr.in.sh.orig solr.in.sh"
+        only_if { ::File.exist? "#{installed_solr_version}/bin/solr.in.sh.orig" }
+    end
+
+    execute "install #{service_name} #{solr_version}" do
+        cwd "/tmp/solr/solr-#{solr_version}"
+        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
+    end
 end
 
-# move Solr core to EFS
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+# move Solr off root disk
 efs_data_dir = "/data/#{service_name}"
-var_data_dir = "/var/solr"
-if not ::File.identical?(efs_data_dir, var_data_dir) then
+var_data_dir = "/var/#{service_name}"
+var_log_dir = "/var/#{service_name}/logs"
+if extra_disk_present then
+    real_data_dir = "#{extra_disk}/#{service_name}_data"
+    real_log_dir = "#{extra_disk}/#{service_name}"
+else
+    real_data_dir = efs_data_dir
+    real_log_dir = var_log_dir
+end
+
+directory real_data_dir do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+end
+
+directory "#{efs_data_dir}/data/#{core_name}/data" do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+    recursive true
+end
+
+if not ::File.identical?(real_data_dir, var_data_dir) then
     service service_name do
         action [:stop]
     end
     # transfer existing contents to target directory
-    execute "rsync -a #{var_data_dir}/ #{efs_data_dir}/" do
+    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
+        user service_name
+        only_if { ::File.directory? efs_data_dir }
+    end
+    execute "rsync -a #{var_data_dir}/ #{real_data_dir}/" do
+        user service_name
         only_if { ::File.directory? var_data_dir }
     end
     directory "#{var_data_dir}" do
@@ -77,20 +127,16 @@ if not ::File.identical?(efs_data_dir, var_data_dir) then
 end
 
 link var_data_dir do
-    to efs_data_dir
+    to real_data_dir
     ignore_failure true
 end
 
-# move logs from root disk to extra EBS volume
-var_log_dir = "/var/log/#{service_name}"
-extra_disk = "/mnt/local_data"
-extra_disk_present = ::File.exist? extra_disk
-
-if extra_disk_present then
-    real_log_dir = "#{extra_disk}/#{service_name}"
-else
-    real_log_dir = var_log_dir
+link "/var/log/#{service_name}" do
+    to real_log_dir
+    ignore_failure true
 end
+
+# move logs off root disk
 
 directory real_log_dir do
     owner account_name
@@ -105,6 +151,7 @@ if not ::File.identical?(real_log_dir, var_log_dir) then
     end
     # transfer existing contents to target directory
     execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
+        user service_name
         only_if { ::File.directory? var_log_dir }
     end
     directory "#{var_log_dir}" do
@@ -126,6 +173,7 @@ if not ::File.identical?(efs_log_dir, var_log_dir) then
     end
     # transfer existing contents to target directory
     execute "rsync -a #{efs_log_dir}/ #{var_log_dir}/" do
+        user service_name
         only_if { ::File.directory? efs_log_dir }
     end
     directory "#{efs_log_dir}" do

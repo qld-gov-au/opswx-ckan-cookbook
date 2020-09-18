@@ -45,6 +45,13 @@ template "/usr/local/bin/pick-solr-master.sh" do
 	mode "0755"
 end
 
+template "/usr/local/bin/solr-sync.sh" do
+	source "solr-sync.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 file "/etc/cron.daily/archive-solr-logs-to-s3" do
 	content "/usr/local/bin/archive-logs.sh #{service_name} >/dev/null 2>&1\n"
 	owner "root"
@@ -56,16 +63,18 @@ file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
 	action :touch
 end
 
-cookbook_file "/data/solr/log4j.properties" do
-	source "solr-log4j.properties"
-end
-
 cookbook_file "/etc/logrotate.d/solr" do
 	source "solr-logrotate"
 end
 
 file "/etc/cron.d/solr-healthcheck" do
-	content "* * * * * /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1"
+	content "* * * * * root /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n"
+	mode "0644"
+end
+
+# synchronise Solr cores via EFS
+file "/etc/cron.d/solr-sync" do
+	content "* * * * * root /usr/local/bin/solr-sync.sh > /dev/null 2>&1\n"
 	mode "0644"
 end
 

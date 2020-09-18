@@ -11,6 +11,9 @@ for i in {9..1}; do
   HEALTH_FILE="/data/solr-healthcheck_$SERVER_NAME"
   if [ -e "$HEALTH_FILE" ]; then
     HEALTH_TIME=$(cat $HEALTH_FILE | tr -d '[:space:]')
+    if [ "$HEALTH_TIME" = "" ]; then
+        continue
+    fi
     AGE=$(expr $NOW - $HEALTH_TIME)
     HEALTHY=$(expr $AGE '<=' $MAX_AGE)
     if [ "$HEALTHY" = "1" ]; then

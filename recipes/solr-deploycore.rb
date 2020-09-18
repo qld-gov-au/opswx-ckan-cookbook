@@ -22,7 +22,7 @@
 
 ckan = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
 
-solr_core_dir="/data/solr/data/#{ckan['shortname']}"
+solr_core_dir="/var/solr/data/#{ckan['shortname']}"
 
 # Create Solr core directory
 #
