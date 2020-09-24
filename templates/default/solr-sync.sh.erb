@@ -16,6 +16,8 @@ if ! (curl -I "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/nu
     exit 0
 fi
 if (/usr/local/bin/pick-solr-master.sh); then
+  sed -i 's/^solr_slave=/solr_master=/' /etc/hostnames
+  updatedns &
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
   sleep 5
   sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT" || exit 1
@@ -40,4 +42,6 @@ else
     sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
     curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
   fi
+  sed -i 's/^solr_master=/solr_slave=/' /etc/hostnames
+  updatedns &
 fi

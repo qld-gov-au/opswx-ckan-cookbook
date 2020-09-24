@@ -42,9 +42,9 @@ function update_dns
 	# Create cluster alias records as applicable
 	#
 	if [[ "${dns_type}" == *"_master"*  ]]; then
-		cli53 rrcreate -i ${dns_type} --failover PRIMARY ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+		cli53 rrcreate -i ${dns_type} --failover PRIMARY --replace ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
 	elif [[ "${dns_type}" == *"_slave"*  ]]; then
-		cli53 rrcreate -i ${dns_type} --failover SECONDARY ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+		cli53 rrcreate -i ${dns_type} --failover SECONDARY --replace ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
 	fi
 
 }
