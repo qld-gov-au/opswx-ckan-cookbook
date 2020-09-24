@@ -97,7 +97,7 @@ bash "Add #{service_name} DNS entry" do
 	EOS
 end
 
-cookbook_file '/sbin/updatedns' do
+cookbook_file '/bin/updatedns' do
 	source 'updatedns'
 	owner 'root'
 	group 'root'

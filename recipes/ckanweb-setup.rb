@@ -25,7 +25,7 @@ include_recipe "datashades::default"
 
 # Create ASG helper script
 #
-cookbook_file "/sbin/updateasg" do
+cookbook_file "/bin/updateasg" do
 	source "updateasg"
 	owner 'root'
 	group 'root'

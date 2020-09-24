@@ -131,7 +131,7 @@ end
 
 # Install cli53 for Failover recordset creation
 #
-remote_file "/sbin/cli53" do
+remote_file "/bin/cli53" do
 	source "https://github.com/barnybug/cli53/releases/download/0.8.5/cli53-linux-amd64"
 	owner 'root'
 	mode '0755'
@@ -139,7 +139,7 @@ end
 
 # Create DNS helper script
 #
-cookbook_file "/sbin/checkdns" do
+cookbook_file "/bin/checkdns" do
 	source "checkdns"
 	owner 'root'
 	group 'root'
