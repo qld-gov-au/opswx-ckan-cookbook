@@ -42,9 +42,12 @@ function update_dns
 	# Create cluster alias records as applicable
 	#
 	if [[ "${dns_type}" == *"_master"*  ]]; then
-		cli53 rrcreate -i ${dns_type} --failover PRIMARY --replace ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+		failover_type=PRIMARY
 	elif [[ "${dns_type}" == *"_slave"*  ]]; then
-		cli53 rrcreate -i ${dns_type} --failover SECONDARY --replace ${tld} "${alias} AWS ALIAS CNAME ${name} \$self true"
+		failover_type=SECONDARY
+	fi
+	if [ "$failover_type" != "" ]; then
+		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch "{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"${alias}.${tld}\",\"Type\":\"CNAME\",\"SetIdentifier\":\"${dns_type}\",\"Failover\":\"${failover_type}\",\"AliasTarget\":{\"HostedZoneId\":\"${zone_id}\",\"DNSName\":\"${name}.${tld}\",\"EvaluateTargetHealth\":true}}}]}"
 	fi
 
 }
