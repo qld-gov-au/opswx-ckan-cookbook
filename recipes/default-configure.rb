@@ -36,7 +36,7 @@ if ::File.directory?(extra_disk) then
 
 	bash "Enable swap disk on boot" do
 		code <<-EOS
-			sed -i '\|^#{swap_file} |d' /etc/fstab
+			sed -i '\\|^#{swap_file} |d' /etc/fstab
 			echo '#{swap_file} swap swap defaults 0 2' >> /etc/fstab
 		EOS
 	end
