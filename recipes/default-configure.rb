@@ -22,6 +22,26 @@
 
 include_recipe "datashades::stackparams"
 
+extra_disk = "/mnt/local_data"
+if ::File.directory?(extra_disk) then
+	swap_file = "#{extra_disk}/swapfile_1g"
+	bash "Add swap disk" do
+		code <<-EOS
+			dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
+			mkswap #{swap_file}
+			swapon #{swap_file}
+		EOS
+		not_if { ::File.exist?(swap_file) }
+	end
+
+	bash "Enable swap disk on boot" do
+		code <<-EOS
+			sed -i '|^#{swap_file} |d' /etc/fstab
+			echo '#{swap_file} swap swap defaults 0 2' >> /etc/fstab
+		EOS
+	end
+end
+
 template "/usr/local/bin/archive-logs.sh" do
 	source "archive-logs.sh.erb"
 	owner "root"
