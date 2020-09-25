@@ -54,7 +54,7 @@ end
 
 # Create script to update DNS on configure events
 #
-cookbook_file '/sbin/updatedns' do
+cookbook_file '/bin/updatedns' do
 	source 'updatedns'
 	owner 'root'
 	group 'root'
@@ -64,7 +64,7 @@ end
 # Run updateDNS script
 #
 execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
-	command	'/sbin/updatedns'
+	command	'/bin/updatedns'
 	user 'root'
 	group 'root'
 end

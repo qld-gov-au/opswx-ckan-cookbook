@@ -22,12 +22,6 @@
 
 include_recipe "datashades::stackparams"
 
-template "/usr/local/sbin/archive-logs.sh" do
-	source "archive-logs.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
 template "/usr/local/bin/archive-logs.sh" do
 	source "archive-logs.sh.erb"
 	owner "root"
@@ -49,10 +43,10 @@ end
 # Run updateDNS script
 #
 execute 'update dns' do
-	command	'/sbin/updatedns'
+	command	'/bin/updatedns'
 	user 'root'
 	group 'root'
-	not_if { ! ::File.directory? "/sbin/updatedns" }
+	only_if { ::File.exist? "/bin/updatedns" }
 end
 
 # Update custom auditd rules
