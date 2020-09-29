@@ -11,11 +11,22 @@ HOST="http://localhost:8983/solr"
 BUCKET="<%= node['datashades']['log_bucket'] %>"
 MINUTE=$(date +%M)
 
+function set_dns_primary () {
+  if [ "$1" = "true" ]; then
+    sed -i 's/^solr_slave=/solr_master=/' /etc/hostnames
+  else
+    sed -i 's/^solr_master=/solr_slave=/' /etc/hostnames
+  fi
+  updatedns &
+}
+
 # we can't perform any replication operations if Solr is stopped
 if ! (curl -I "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
-    exit 0
+  set_dns_primary false
+  exit 0
 fi
 if (/usr/local/bin/pick-solr-master.sh); then
+  set_dns_primary true
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
   sleep 5
   sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT" || exit 1
@@ -33,6 +44,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
     sudo -u solr rm -r snapshot.$CORE_NAME-*
   fi
 else
+  set_dns_primary false
   # Give the master time to update the sync copy
   sleep 10
   if [ -d "$SYNC_SNAPSHOT" ]; then

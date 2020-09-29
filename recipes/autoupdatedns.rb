@@ -22,7 +22,7 @@
 
 # Create script to auto update DNS on OpsWorks configure events
 #
-cookbook_file '/sbin/updatedns' do
+cookbook_file '/bin/updatedns' do
   source 'updatedns'
   owner 'root'
   group 'root'

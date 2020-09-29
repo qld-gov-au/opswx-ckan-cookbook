@@ -108,7 +108,7 @@ bash "Add #{service_name} DNS entry" do
 	EOS
 end
 
-cookbook_file '/sbin/updatedns' do
+cookbook_file '/bin/updatedns' do
 	source 'updatedns'
 	owner 'root'
 	group 'root'
@@ -116,7 +116,7 @@ cookbook_file '/sbin/updatedns' do
 end
 
 execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
-	command	'/sbin/updatedns'
+	command	'/bin/updatedns'
 	user 'root'
 	group 'root'
 end

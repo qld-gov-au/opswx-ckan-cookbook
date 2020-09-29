@@ -83,31 +83,24 @@ end
 bash "Add #{service_name} DNS entry" do
 	user "root"
 	code <<-EOS
-		zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
-		reccount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}')].Name" | jq '. | length')
-		aliascount=$(aws route53 list-resource-record-sets --hosted-zone-id $zoneid --query "ResourceRecordSets[?contains(Name, '#{node['datashades']['version']}#{service_name}.')].Name" | jq '. | length')
-		hostcount=`expr $reccount - $aliascount + 1`
-		echo ${hostcount} > /etc/#{service_name}id
+		server_id=$(echo "#{node['datashades']['hostname']}" |tr -cd '[[:digit:]]')
+		echo "${server_id}" > /etc/#{service_name}id
 		sed -i "/#{service_name}_/d" /etc/hostnames
-		if [ ${hostcount} -eq 1 ]; then
-			echo "#{service_name}_master=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
+		if [ "${server_id}" -eq 1 ]; then
+			failover_type=master
 		else
-			echo "#{service_name}_slave=#{node['datashades']['app_id']}#{service_name}${hostcount}.#{node['datashades']['tld']}" >> /etc/hostnames
+			failover_type=slave
 		fi
+		alias="#{node['datashades']['app_id']}#{service_name}${server_id}.#{node['datashades']['tld']}"
+		echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
 	EOS
 end
 
-cookbook_file '/sbin/updatedns' do
+cookbook_file '/bin/updatedns' do
 	source 'updatedns'
 	owner 'root'
 	group 'root'
 	mode '0755'
-end
-
-execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
-	command	'/sbin/updatedns'
-	user 'root'
-	group 'root'
 end
 
 service "solr" do
