@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
-LOCAL_DIR="/tmp"
+LOCAL_DIR="/mnt/local_data/solr_backup"
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME/"
@@ -25,6 +25,7 @@ if ! (curl -I "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/nu
   set_dns_primary false
   exit 0
 fi
+mkdir -p "$LOCAL_DIR"
 if (/usr/local/bin/pick-solr-master.sh); then
   set_dns_primary true
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
