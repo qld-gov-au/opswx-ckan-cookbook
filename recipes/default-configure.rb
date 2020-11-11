@@ -69,6 +69,20 @@ execute 'update dns' do
 	only_if { ::File.exist? "/bin/updatedns" }
 end
 
+# Recover from DNS failures
+#
+cookbook_file "/usr/local/bin/fix-dns.sh" do
+	source "fix-dns.sh"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+file "/etc/cron.d/fix-dns" do
+	content "*/5 * * * * root /usr/local/bin/fix-dns.sh\n"
+	mode '0644'
+end
+
 # Update custom auditd rules
 #
 template '/etc/audit/rules.d/link.rules' do

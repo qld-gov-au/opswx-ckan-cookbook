@@ -46,6 +46,12 @@ installed_solr_version = "/opt/solr-#{solr_version}"
 
 unless ::File.identical?(installed_solr_version, "/opt/solr")
     solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
+    working_dir = "/mnt/local_data/solr_install"
+
+    directory working_dir do
+        mode "0644"
+        action :create
+    end
 
     remote_file "#{solr_artefact}" do
         source app['app_source']['url']
@@ -53,7 +59,7 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
 
     # Would use archive_file but Chef client is not new enough
     execute "Extract #{service_name} #{solr_version}" do
-        command "unzip -u -q #{solr_artefact} -d /tmp/solr"
+        command "unzip -u -q #{solr_artefact} -d #{working_dir}"
     end
 
     service "solr" do
@@ -72,7 +78,7 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 
     execute "install #{service_name} #{solr_version}" do
-        cwd "/tmp/solr/solr-#{solr_version}"
+        cwd "#{working_dir}/solr-#{solr_version}"
         command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
     end
 end
