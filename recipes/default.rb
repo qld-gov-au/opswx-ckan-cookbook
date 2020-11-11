@@ -20,26 +20,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Move /tmp to extra disk.
-# Would be nice to do this with /var but that would disrupt the OS.
-#
-extra_disk = "/mnt/local_data"
-
-target_dir = "tmp"
-if not ::File.identical?("/#{target_dir}", "#{extra_disk}/#{target_dir}") then
-	execute "rsync -a /#{target_dir} #{extra_disk}/"
-
-	directory "/#{target_dir}" do
-		recursive true
-		action :delete
-	end
-end
-
-link "/#{target_dir}" do
-	to "#{extra_disk}/#{target_dir}"
-end
-
-
 # Set timezone to default value
 #
 link "/etc/localtime" do
