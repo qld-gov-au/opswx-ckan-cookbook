@@ -28,6 +28,7 @@ if ::File.directory?(extra_disk) then
 	bash "Add swap disk" do
 		code <<-EOS
 			dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
+			chmod 0600 #{swap_file}
 			mkswap #{swap_file}
 		EOS
 		not_if { ::File.exist?(swap_file) }
