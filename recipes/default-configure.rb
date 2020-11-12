@@ -35,7 +35,7 @@ if ::File.directory?(extra_disk) then
 	end
 
 	execute "Enable swap disk" do
-		command "swapon #{swap_file}"
+		command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
 	end
 end
 
