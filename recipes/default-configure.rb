@@ -28,17 +28,14 @@ if ::File.directory?(extra_disk) then
 	bash "Add swap disk" do
 		code <<-EOS
 			dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
+			chmod 0600 #{swap_file}
 			mkswap #{swap_file}
-			swapon #{swap_file}
 		EOS
 		not_if { ::File.exist?(swap_file) }
 	end
 
-	bash "Enable swap disk on boot" do
-		code <<-EOS
-			sed -i '\\|^#{swap_file} |d' /etc/fstab
-			echo '#{swap_file} swap swap defaults 0 2' >> /etc/fstab
-		EOS
+	execute "Enable swap disk" do
+		command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
 	end
 end
 
