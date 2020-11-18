@@ -28,17 +28,14 @@ if ::File.directory?(extra_disk) then
 	bash "Add swap disk" do
 		code <<-EOS
 			dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
+			chmod 0600 #{swap_file}
 			mkswap #{swap_file}
-			swapon #{swap_file}
 		EOS
 		not_if { ::File.exist?(swap_file) }
 	end
 
-	bash "Enable swap disk on boot" do
-		code <<-EOS
-			sed -i '\\|^#{swap_file} |d' /etc/fstab
-			echo '#{swap_file} swap swap defaults 0 2' >> /etc/fstab
-		EOS
+	execute "Enable swap disk" do
+		command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
 	end
 end
 
@@ -67,6 +64,20 @@ execute 'update dns' do
 	user 'root'
 	group 'root'
 	only_if { ::File.exist? "/bin/updatedns" }
+end
+
+# Recover from DNS failures
+#
+cookbook_file "/usr/local/bin/fix-dns.sh" do
+	source "fix-dns.sh"
+	owner "root"
+	group "root"
+	mode "0744"
+end
+
+file "/etc/cron.d/fix-dns" do
+	content "*/5 * * * * root /usr/local/bin/fix-dns.sh\n"
+	mode '0644'
 end
 
 # Update custom auditd rules
