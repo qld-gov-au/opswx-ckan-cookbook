@@ -237,7 +237,7 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 
 ckanext.s3filestore.aws_use_ami_role = true
 ckanext.s3filestore.aws_bucket_name = <%= node['datashades']['attachments_bucket'] %>
-ckanext.s3filestore.host_name = https://s3-ap-southeast-2.amazonaws.com
+ckanext.s3filestore.addressing_style = virtual
 ckanext.s3filestore.download_proxy = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>/<%= node['datashades']['attachments_bucket'] %>
 ckanext.s3filestore.region_name= ap-southeast-2
 ckanext.s3filestore.signature_version = s3v4
