@@ -48,8 +48,8 @@ bash "Enable Supervisor file inclusions" do
 	code <<-EOS
 		SUPERVISOR_CONFIG=/etc/supervisord.conf
 		if [ -f "$SUPERVISOR_CONFIG" ]; then
-			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
 			mkdir -p /etc/supervisor/conf.d
+			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
 			echo '[include]' >> $SUPERVISOR_CONFIG
 			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
 		fi
