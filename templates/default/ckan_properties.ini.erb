@@ -250,6 +250,9 @@ ckanext.cloudstorage.driver_options = use_role
 ckanext.cloudstorage.use_secure_urls = 1
 
 
+# download resources via Squid so we can block internal and private addresses
+ckan.download_proxy = http://localhost:3128
+
 #the plan; instead of on disk, we will be using the uploader, once we work out to get files dynamically from it
 ckanext-archiver.archive_dir = /var/shared_content/<%= @app_name %>/resource_cache
 #the plan; drop this for patten /dataset/{id}/resource/{resource_id}/archive/{filename}
