@@ -22,7 +22,7 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'java-1.8.0-openjdk-devel', 'java-1.8.0-openjdk', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27', 'supervisor']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'java-1.8.0-openjdk-devel', 'java-1.8.0-openjdk', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27', 'supervisor', 'squid']
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
 default['datashades']['ckan_web']['dbname'] = 'ckan_default'
