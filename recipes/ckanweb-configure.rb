@@ -21,6 +21,7 @@
 # limitations under the License.
 
 include_recipe "datashades::default-configure"
+include_recipe "datashades::squid-configure"
 
 # Fix Amazon PYTHON_INSTALL_LAYOUT so items are installed in sites/packages not distr/packages
 #
