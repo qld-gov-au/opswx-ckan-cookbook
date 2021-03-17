@@ -73,6 +73,10 @@ ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuse
 # See https://github.com/ckan/ckanext-xloader/issues/17 and https://github.com/ckan/ckanext-xloader/issues/83
 ckanext.xloader.jobs_db.uri = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
+# We need the SQL endpoint, despite the non-ideal security implications
+ckan.datastore.sqlsearch.enabled = True
+ckan.datastore.sqlsearch.allowed_functions_file = %(here)s/allowed_functions.txt
+
 ## Site Settings
 
 ckan.site_url = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>
