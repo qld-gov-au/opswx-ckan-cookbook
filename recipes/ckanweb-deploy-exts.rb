@@ -440,7 +440,7 @@ end
 
 # Enable DataStore and DataPusher extensions if desired
 # No installation necessary in CKAN 2.2+
-if "yes".eql? node['datashades']['ckan_web']['dsenable'] do
+if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 	bash "Enable DataStore-related extensions" do
 		user "ckan"
 		cwd "#{config_dir}"
@@ -469,4 +469,3 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] do
 		SED
 	end
 end
-
