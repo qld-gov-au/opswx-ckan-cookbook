@@ -186,13 +186,6 @@ link "#{config_dir}/who.ini" do
 	link_type :symbolic
 end
 
-cookbook_file "#{config_dir}/allowed_functions.txt" do
-	source 'allowed_functions.txt'
-	owner "#{service_name}"
-	group "#{service_name}"
-	mode "0755"
-end
-
 #
 # Initialise data
 #

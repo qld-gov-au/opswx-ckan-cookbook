@@ -280,8 +280,4 @@ xmlcomment
 xmlconcat
 xpath
 xpath_exists
-COUNT
 ictdashboards_tables
-MAX
-MIN
-SUM
