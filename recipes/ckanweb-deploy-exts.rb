@@ -453,8 +453,8 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 
 	cookbook_file "#{config_dir}/allowed_functions.txt" do
 		source 'allowed_functions.txt'
-		owner "#{service_name}"
-		group "#{service_name}"
+		owner "#{account_name}"
+		group "#{account_name}"
 		mode "0755"
 	end
 
