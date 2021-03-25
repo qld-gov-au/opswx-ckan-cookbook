@@ -25,7 +25,7 @@ instance = search("aws_opsworks_instance", "self:true").first
 # Batch nodes only need a limited set of extensions for harvesting
 # Ascertain whether or not the instance deploying is a batch node
 #
-batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-batch").first
+batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-batch").first
 if not batchlayer
 	batchlayer = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}-batch").first
 end
@@ -33,7 +33,7 @@ batchnode = false
 unless batchlayer.nil?
 	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
 end
-batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial']
+batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial', 'xloader', 'qa', 'validation', 'archiver', 'report']
 
 account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
@@ -103,17 +103,6 @@ installed_ordered_exts = Set[]
 node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
-
-## TODO work out how to purge when harvester extension is not found
-# Strip out existing config in case it's no longer used
-#
-#execute "Clean Harvest supervisor config" do
-#	command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
-#end
-#
-#execute "Clean Harvest cron" do
-#	command "rm -f /etc/cron.*/ckan-harvest*"
-#end
 
 # Do the actual extension installation using pip
 #
@@ -273,49 +262,53 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 
 		if "#{pluginname}".eql? 'harvest'
-			harvest_present = true
-
 			execute "Harvest CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
 			end
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
-				source "supervisor-ckan-harvest.conf"
-				mode "0744"
-			end
+			if batchnode
+				harvest_present = true
 
-			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
-			file "/etc/cron.hourly/ckan-harvest-run" do
-				content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini > /dev/null 2>&1\n"
-				mode "0755"
+				cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
+					source "supervisor-ckan-harvest.conf"
+					mode "0744"
+				end
+
+				# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
+				file "/etc/cron.hourly/ckan-harvest-run" do
+					content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini > /dev/null 2>&1\n"
+					mode "0755"
+				end
 			end
 		end
 
 		if "#{pluginname}".eql? 'archiver'
-			archiver_present = true
-
 			execute "Archiver CKAN ext database init" do
 				user "#{account_name}"
 				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-archiver archiver init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
 			end
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
-				source "supervisor-ckan-archiver.conf"
-				mode "0744"
-			end
+			if batchnode
+				archiver_present = true
 
-			template "/usr/local/bin/archiverTriggerAll.sh" do
-				source 'archiverTriggerAll.sh'
-				owner 'root'
-				group 'root'
-				mode '0755'
-			end
+				cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
+					source "supervisor-ckan-archiver.conf"
+					mode "0744"
+				end
 
-			#Trigger at 10pm monday nights weekly
-			file "/etc/cron.d/ckan-worker" do
-				content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
-				mode '0644'
+				template "/usr/local/bin/archiverTriggerAll.sh" do
+					source 'archiverTriggerAll.sh'
+					owner 'root'
+					group 'root'
+					mode '0755'
+				end
+
+				#Trigger at 10pm monday nights weekly
+				file "/etc/cron.d/ckan-worker" do
+					content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+					mode '0644'
+				end
 			end
 		end
 

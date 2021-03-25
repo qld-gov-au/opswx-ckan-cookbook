@@ -1,7 +1,7 @@
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2019, Queensland Government
+# Copyright 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::httpd-shutdown"
-
 # Hide this instance from others
 #
 file "/data/#{node['datashades']['hostname']}" do
@@ -29,11 +27,6 @@ bash "Archive remaining logs" do
 	cwd "/"
 	code <<-EOS
 		/etc/cron.daily/logrotate
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/nginx/*log /var/log/nginx/*/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/bin/archive-logs.sh nginx
+		/usr/local/bin/archive-logs.sh ckan
 	EOS
 end

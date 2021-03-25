@@ -118,6 +118,15 @@ cookbook_file "/bin/checkdns" do
 	mode '0755'
 end
 
+# Create ASG helper script
+#
+cookbook_file "/bin/updateasg" do
+	source "updateasg"
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
+
 # Push stats to enable Cloudwatch monitoring
 #
 cwmon_artifact = "CloudWatchMonitoringScripts-1.2.2.zip"

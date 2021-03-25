@@ -1,8 +1,4 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
-# Recipe:: ckanweb-configure
-#
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2016, Link Digital
@@ -21,6 +17,7 @@
 # limitations under the License.
 
 include_recipe "datashades::default-configure"
+include_recipe "datashades::squid-configure"
 
 # Fix Amazon PYTHON_INSTALL_LAYOUT so items are installed in sites/packages not distr/packages
 #
@@ -34,12 +31,28 @@ bash "Fix Python Install Layout" do
 	not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
 end
 
-include_recipe "datashades::httpd-configure"
-include_recipe "datashades::nginx-configure"
-service 'php-fpm-5.5' do
-	action [:restart]
+service "supervisord" do
+    action [:stop, :start]
+end
+
+template "/usr/local/bin/ckan-monitor-job-queue.sh" do
+  source 'ckan-monitor-job-queue.sh.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
+end
+
+file "/etc/cron.d/ckan-worker" do
+	content "*/5 * * * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
+	mode '0644'
 end
 
 cookbook_file "/etc/logrotate.d/ckan" do
 	source "ckan-logrotate"
+end
+
+# Make any other instances aware of us
+#
+file "/data/#{node['datashades']['hostname']}" do
+	content "#{node['datashades']['instid']}"
 end
