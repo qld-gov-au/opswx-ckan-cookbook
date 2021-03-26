@@ -24,10 +24,6 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
-# Set up shared directories
-#
-include_recipe "datashades::ckanweb-efs-setup"
-
 # Create CKAN Group
 #
 group "ckan" do
@@ -55,6 +51,10 @@ directory '/home/ckan' do
 	action :create
 	recursive true
 end
+
+# Set up shared directories
+#
+include_recipe "datashades::ckanweb-efs-setup"
 
 #
 # Set up Python virtual environment
