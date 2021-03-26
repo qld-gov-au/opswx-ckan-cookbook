@@ -1,7 +1,7 @@
 #
 # Installs prerequisites for CKAN itself.
 #
-# Copyright 2016, Link Digital
+# Copyright 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
