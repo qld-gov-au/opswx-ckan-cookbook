@@ -55,12 +55,6 @@ paths.each do |nfs_path, dir_owner|
 	end
 end
 
-execute "Create front-end resources" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{paster} front-end-build -c #{config_file}"
-end
-
 #
 # Create job worker config files.
 #
