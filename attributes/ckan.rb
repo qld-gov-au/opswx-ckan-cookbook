@@ -21,10 +21,8 @@
 # limitations under the License.
 #
 
-default['datashades']['ckan']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'squid']
-default['datashades']['ckan_web']['packages'] = ['mod24_wsgi-python27']
-default['datashades']['ckan_batch']['packages'] = ['supervisor']
 default['datashades']['ckan_web']['endpoint'] = '/'
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27', 'supervisor', 'squid']
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
 default['datashades']['ckan_web']['dbname'] = 'ckan_default'

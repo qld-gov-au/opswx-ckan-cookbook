@@ -22,6 +22,33 @@
 
 # Update EFS Data directory for CKAN
 #
+data_paths =
+{
+    "/data/shared_content" => 'apache'
+}
+
+data_paths.each do |data_path, dir_owner|
+    directory data_path do
+          owner dir_owner
+          group 'ec2-user'
+          mode '0775'
+          recursive true
+          action :create
+    end
+end
+
+link_paths =
+{
+    "/var/shared_content" => '/data/shared_content'
+}
+
+link_paths.each do |link_path, source_path|
+    link link_path do
+        to source_path
+        link_type :symbolic
+    end
+end
+
 service_name = "ckan"
 
 var_log_dir = "/var/log/#{service_name}"

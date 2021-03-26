@@ -20,7 +20,7 @@ include_recipe "datashades::default"
 
 # Install CKAN services and dependencies
 #
-node['datashades']['ckan']['packages'].each do |p|
+node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 

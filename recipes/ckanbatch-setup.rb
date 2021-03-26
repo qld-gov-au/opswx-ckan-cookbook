@@ -32,12 +32,7 @@ cookbook_file "/bin/updateasg" do
 	mode '0755'
 end
 
-# Install CKAN services and dependencies
-#
-node['datashades']['ckan_batch']['packages'].each do |p|
-	package p
-end
-
+include_recipe "datashades::ckan-setup"
 include_recipe "datashades::ckanbatch-efs-setup"
 
 # Installing via yum gives initd integration, but has import problems.
@@ -66,5 +61,3 @@ execute "Stop children on supervisord stop" do
 		sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
 	SED
 end
-
-include_recipe "datashades::ckan-setup"
