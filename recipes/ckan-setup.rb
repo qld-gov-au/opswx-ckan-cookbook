@@ -24,6 +24,10 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
+# Set up shared directories
+#
+include_recipe "datashades::ckanweb-efs-setup"
+
 # Create CKAN Group
 #
 group "ckan" do

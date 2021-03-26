@@ -1,7 +1,7 @@
 #
-# Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
+# Start/restart background job services.
 #
-# Copyright 2016, Link Digital
+# Copyright 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
