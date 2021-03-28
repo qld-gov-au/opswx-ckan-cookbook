@@ -102,7 +102,7 @@ end
 # Run tracking update at 8:30am everywhere
 file "/etc/cron.d/ckan-tracking-update" do
 	content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} >/dev/null 2>&1\n"
-	mode '0755'
+	mode '0644'
 	owner "root"
 	group "root"
 end
