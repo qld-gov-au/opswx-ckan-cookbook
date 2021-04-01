@@ -52,6 +52,14 @@ directory '/home/ckan' do
 	recursive true
 end
 
+directory '/usr/lib/ckan' do
+	owner 'ckan'
+	group 'ckan'
+	mode '0755'
+	action :create
+	recursive true
+end
+
 # Set up shared directories
 #
 include_recipe "datashades::ckanweb-efs-setup"
@@ -74,7 +82,7 @@ execute "Install Python Virtual Environment" do
 	command "pip --cache-dir=/tmp/ install virtualenv"
 end
 
-if not ::File.identical?(real_virtualenv_dir, var_virtualenv_dir) then
+if not ::File.identical?(real_virtualenv_dir, virtualenv_dir) then
 	# transfer existing contents to target directory
 	execute "mv #{virtualenv_dir} #{real_virtualenv_dir}" do
 		only_if { ::File.directory? virtualenv_dir }
