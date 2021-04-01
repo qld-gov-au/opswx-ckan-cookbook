@@ -61,10 +61,24 @@ include_recipe "datashades::ckanweb-efs-setup"
 #
 
 virtualenv_dir = "/usr/lib/ckan/default"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+if extra_disk_present then
+	real_virtualenv_dir = "#{extra_disk}/ckan_venv"
+else
+	real_virtualenv_dir = virtualenv_dir
+end
 
 execute "Install Python Virtual Environment" do
 	user "root"
 	command "pip install virtualenv"
+end
+
+if not ::File.identical?(real_virtualenv_dir, var_virtualenv_dir) then
+	# transfer existing contents to target directory
+	execute "mv #{virtualenv_dir} #{real_virtualenv_dir}" do
+		only_if { ::File.directory? virtualenv_dir }
+	end
 end
 
 bash "Create CKAN Default Virtual Environment" do
@@ -74,6 +88,11 @@ bash "Create CKAN Default Virtual Environment" do
 		chown -R ckan:ckan #{virtualenv_dir}
 	EOS
 	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
+end
+
+link virtualenv_dir do
+	to real_virtualenv_dir
+	ignore_failure true
 end
 
 bash "Fix VirtualEnv lib issue" do
