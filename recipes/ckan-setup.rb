@@ -71,7 +71,7 @@ end
 
 execute "Install Python Virtual Environment" do
 	user "root"
-	command "pip install virtualenv"
+	command "pip --cache-dir=/tmp/ install virtualenv"
 end
 
 if not ::File.identical?(real_virtualenv_dir, var_virtualenv_dir) then

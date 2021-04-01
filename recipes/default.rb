@@ -49,7 +49,7 @@ node['datashades']['core']['packages'].each do |p|
 end
 
 execute "Update AWS command-line interface" do
-	command "pip install --upgrade awscli"
+	command "pip --cache-dir=/tmp/ install --upgrade awscli"
 end
 
 node['datashades']['core']['unwanted-packages'].each do |p|

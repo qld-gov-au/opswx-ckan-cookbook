@@ -33,7 +33,7 @@ include_recipe "datashades::ckan-setup"
 # Installing via yum gives initd integration, but has import problems.
 # Installing via pip fixes the import problems, but doesn't provide the integration.
 # So we do both.
-execute "pip install supervisor"
+execute "pip --cache-dir=/tmp/ install supervisor"
 
 bash "Enable Supervisor file inclusions" do
 	user "root"
