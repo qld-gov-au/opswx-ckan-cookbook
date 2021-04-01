@@ -1,8 +1,3 @@
-#
-# Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
-# Cookbook Name:: datashades
-# Recipe:: ckanweb-efs-setup
-#
 # Sets up EFS and EBS directories and links for CKAN.
 #
 # Copyright 2020, Queensland Government

@@ -33,15 +33,11 @@ config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
-pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 paster = "#{virtualenv_dir}/bin/paster --plugin=#{service_name}"
-install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
 # Setup Site directories
 #
 paths = {
-	"/var/log/#{service_name}" => "#{service_name}",
-	"#{shared_fs_dir}" => "#{service_name}",
 	"#{shared_fs_dir}/ckan_storage" => 'apache',
 	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
 	"#{shared_fs_dir}/ckan_storage/resources" => 'apache'
@@ -57,94 +53,12 @@ paths.each do |nfs_path, dir_owner|
 	end
 end
 
-directory "#{shared_fs_dir}/private" do
-	owner "root"
-	mode '0700'
-	action :create
-end
-
-# Get the version number from the app revision, by preference,
-# or from the app URL if revision is not defined.
-# Either way, ensure that the version number is stripped from the URL.
-if app['app_source']['type'].eql? "git" then
-	version = app['app_source']['revision']
-end
-apprelease = app['app_source']['url'].sub("#{service_name}/archive/", "#{service_name}.git@").sub('.zip', "")
-urlrevision = apprelease[/@(.*)/].sub '@', ''
-apprelease.sub!(/@(.*)/, '')
-version ||= urlrevision
-version ||= "master"
-
 #
-# Install selected revision of CKAN core
+# Install CKAN source
 #
 
-if (::File.exist? "#{install_dir}/requirements.txt") then
-	if app['app_source']['type'].casecmp("git") == 0 then
-		execute "Ensure correct CKAN Git origin" do
-			user "#{service_name}"
-			cwd "#{install_dir}"
-			command "git remote set-url origin '#{apprelease}'"
-		end
-	end
-else
-	execute "Install CKAN #{version}" do
-		user "#{service_name}"
-		group "#{service_name}"
-		command "#{pip} install -e 'git+#{apprelease}@#{version}#egg=#{service_name}'"
-	end
-end
-
-bash "Check out #{version} revision of CKAN" do
-	user "#{service_name}"
-	group "#{service_name}"
-	cwd "#{install_dir}"
-	code <<-EOS
-		# retrieve latest branch metadata
-		git fetch origin '#{version}'
-		# drop unversioned files
-		git clean
-		# make versioned files pristine
-		git reset --hard
-		git checkout '#{version}'
-		# get latest changes if we're checking out a branch, otherwise it doesn't matter
-		git pull
-		# drop compiled files from previous branch
-		find . -name '*.pyc' -delete
-		# regenerate metadata
-		#{virtualenv_dir}/bin/python setup.py develop
-	EOS
-end
-
-execute "Install Python dependencies" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{pip} install -r '#{install_dir}/requirements.txt'"
-end
-
-execute "Install Raven Sentry client" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{pip} install --upgrade raven"
-end
-
-#
-# Set up CKAN configuration files
-#
-
-template "#{config_file}" do
-	source 'ckan_properties.ini.erb'
-	owner "#{service_name}"
-	group "#{service_name}"
-	mode "0755"
-	variables({
-		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
-		:src_dir => "#{virtualenv_dir}/src",
-		:email_domain => node['datashades']['ckan_web']['email_domain']
-	})
-	action :create
-end
+include_recipe "datashades::ckan-deploy"
+include_recipe "datashades::ckanweb-deploy-theme"
 
 # app_url == Domains[0] is used for site_url, email domain defaults to public_tld if email_domain is not injected via attributes/ckan.rb
 # # Update the CKAN site_url with the best public domain name we can find.
@@ -172,63 +86,6 @@ end
 # 	EOS
 # end
 
-node.default['datashades']['auditd']['rules'].push("#{config_file}")
-
-cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
-	source 'activate_this.py'
-	owner "#{service_name}"
-	group "#{service_name}"
-	mode "0755"
-end
-
-link "#{config_dir}/who.ini" do
-	to "#{install_dir}/who.ini"
-	link_type :symbolic
-end
-
-#
-# Initialise data
-#
-
-execute "Init CKAN DB" do
-	user "root"
-	command "#{paster} db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
-	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
-end
-
-execute "Update DB schema" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{paster} db upgrade -c #{config_file}"
-end
-
-bash "Create CKAN Admin user" do
-	user "root"
-	code <<-EOS
-		#{paster} --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
-		#{paster} --plugin=ckan sysadmin add sysadmin -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
-	EOS
-	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_admin.log"}
-end
-
-#
-# Create job worker config files.
-#
-
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
-	source "supervisor-ckan-worker.conf"
-	owner "root"
-	group "root"
-	mode "0744"
-end
-
-#
-# Install CKAN extensions
-#
-
-include_recipe "datashades::ckanweb-deploy-exts"
-include_recipe "datashades::ckanweb-deploy-theme"
-
 #
 # Clean up
 #
@@ -238,19 +95,6 @@ execute "Refresh virtualenv ownership" do
 	user "root"
 	group "root"
 	command "chown -R ckan:ckan #{virtualenv_dir}"
-end
-
-# Prepare front-end CSS and JavaScript
-# This needs to be after any extensions since they may affect the result.
-# It is also memory-intensive, so stop other processes first.
-service "supervisord" do
-	action :stop
-end
-
-execute "Create front-end resources" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{paster} front-end-build -c #{config_file}"
 end
 
 #
@@ -277,10 +121,6 @@ template '/etc/httpd/conf.d/ckan.conf' do
 	action :create
 end
 
-service "supervisord" do
-	action [:enable]
-end
-
 #
 # Create NGINX Config files
 #
@@ -301,48 +141,3 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
-
-# Set up maintenance cron jobs
-
-template "/usr/local/bin/pick-job-server.sh" do
-	source "pick-job-server.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-# Remove unwanted cron job
-file '/etc/cron.daily/ckan-tracking-update' do
-	action :delete
-end
-
-# Remove unwanted cron job from higher environments
-file '/etc/cron.hourly/ckan-tracking-update' do
-	action :delete
-	not_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
-end
-
-# Only set cron job for lower environments
-file '/etc/cron.hourly/ckan-tracking-update' do
-	content "/usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} >/dev/null 2>&1\n"
-	mode '0755'
-	owner "root"
-	group "root"
-	only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
-end
-
-# Run tracking update at 8:30am everywhere
-file "/etc/cron.d/ckan-tracking-update" do
-	content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{paster} tracking update -c #{config_file} >/dev/null 2>&1\n"
-	mode '0755'
-	owner "root"
-	group "root"
-end
-
-
-file "/etc/cron.hourly/ckan-email-notifications" do
-	content "/usr/local/bin/pick-job-server.sh && echo '{}' | #{paster} post -c #{config_file} /api/action/send_email_notifications > /dev/null 2>&1\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end

@@ -49,7 +49,7 @@ node['datashades']['core']['packages'].each do |p|
 end
 
 execute "Update AWS command-line interface" do
-	command "pip install --upgrade awscli"
+	command "pip --cache-dir=/tmp/ install --upgrade awscli"
 end
 
 node['datashades']['core']['unwanted-packages'].each do |p|
@@ -113,6 +113,15 @@ end
 #
 cookbook_file "/bin/checkdns" do
 	source "checkdns"
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
+
+# Create ASG helper script
+#
+cookbook_file "/bin/updateasg" do
+	source "updateasg"
 	owner 'root'
 	group 'root'
 	mode '0755'
