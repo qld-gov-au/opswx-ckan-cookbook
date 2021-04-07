@@ -14,7 +14,7 @@ function send_queue_metrics () {
     LOG_FILE="/var/log/ckan/${QUEUE_LOG}.log"
     TEMP_FILE="/tmp/${QUEUE_LOG}.log"
     echo "CKAN job $1 queue(s) at $(date):" >> $LOG_FILE
-    JOB_COUNT=$(/usr/lib/ckan/default/bin/paster --plugin=ckan jobs list $QUEUE -c /etc/ckan/default/production.ini 2>/dev/null | tee -a $LOG_FILE | tee $TEMP_FILE | wc -l)
+    JOB_COUNT=$(/usr/lib/ckan/default/bin/ckan_cli jobs list $QUEUE 2>/dev/null | tee -a $LOG_FILE | tee $TEMP_FILE | wc -l)
     echo "Total: $JOB_COUNT job(s)" >> $LOG_FILE
     if [ "$JOB_COUNT" -gt 0 ]; then
         OLDEST_TIME=$(date -u --date $(head -1 $TEMP_FILE | awk '{print $1}') +'%s')
