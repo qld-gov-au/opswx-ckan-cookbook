@@ -84,8 +84,12 @@ end
 
 if not ::File.identical?(real_virtualenv_dir, virtualenv_dir) then
 	# transfer existing contents to target directory
-	execute "mv #{virtualenv_dir} #{real_virtualenv_dir}" do
+	execute "rsync -a #{virtualenv_dir}/ #{real_virtualenv_dir}/" do
 		only_if { ::File.directory? virtualenv_dir }
+	end
+	directory "#{virtualenv_dir}" do
+		recursive true
+		action :delete
 	end
 end
 
