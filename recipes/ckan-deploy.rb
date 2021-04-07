@@ -43,17 +43,17 @@ end
 # Setup Site directories
 #
 paths = {
-	"/var/log/#{service_name}" => "#{service_name}",
-	"#{shared_fs_dir}" => "#{service_name}",
+	"/var/log/#{service_name}" => service_name,
+	shared_fs_dir => service_name,
 }
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
-	  owner dir_owner
-	  group "#{service_name}"
-	  recursive true
-	  mode '0775'
-	  action :create
+		owner dir_owner
+		group service_name
+		recursive true
+		mode '0775'
+		action :create
 	end
 end
 
@@ -82,23 +82,24 @@ version ||= "master"
 if (::File.exist? "#{install_dir}/requirements.txt") then
 	if app['app_source']['type'].casecmp("git") == 0 then
 		execute "Ensure correct CKAN Git origin" do
-			user "#{service_name}"
-			cwd "#{install_dir}"
+			user service_name
+			group service_name
+			cwd install_dir
 			command "git remote set-url origin '#{apprelease}'"
 		end
 	end
 else
 	execute "Install CKAN #{version}" do
-		user "#{service_name}"
-		group "#{service_name}"
+		user service_name
+		group service_name
 		command "#{pip} install -e 'git+#{apprelease}@#{version}#egg=#{service_name}'"
 	end
 end
 
 bash "Check out #{version} revision of CKAN" do
-	user "#{service_name}"
-	group "#{service_name}"
-	cwd "#{install_dir}"
+	user service_name
+	group service_name
+	cwd install_dir
 	code <<-EOS
 		# retrieve latest branch metadata
 		git fetch origin '#{version}'
@@ -117,14 +118,14 @@ bash "Check out #{version} revision of CKAN" do
 end
 
 execute "Install Python dependencies" do
-	user "#{service_name}"
-	group "#{service_name}"
+	user service_name
+	group service_name
 	command "#{pip} install -r '#{install_dir}/requirements.txt'"
 end
 
 execute "Install Raven Sentry client" do
-	user "#{service_name}"
-	group "#{service_name}"
+	user service_name
+	group service_name
 	command "#{pip} install --upgrade raven"
 end
 
@@ -132,10 +133,10 @@ end
 # Set up CKAN configuration files
 #
 
-template "#{config_file}" do
+template config_file do
 	source 'ckan_properties.ini.erb'
-	owner "#{service_name}"
-	group "#{service_name}"
+	owner service_name
+	group service_name
 	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
@@ -146,12 +147,12 @@ template "#{config_file}" do
 	action :create
 end
 
-node.default['datashades']['auditd']['rules'].push("#{config_file}")
+node.default['datashades']['auditd']['rules'].push(config_file)
 
 cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
 	source 'activate_this.py'
-	owner "#{service_name}"
-	group "#{service_name}"
+	owner service_name
+	group service_name
 	mode "0755"
 end
 
@@ -171,8 +172,8 @@ execute "Init CKAN DB" do
 end
 
 execute "Update DB schema" do
-	user "#{service_name}"
-	group "#{service_name}"
+	user service_name
+	group service_name
 	command "#{ckan_cli} db upgrade"
 end
 
@@ -197,8 +198,15 @@ end
 # Prepare front-end CSS and JavaScript
 # This needs to be after any extensions since they may affect the result.
 execute "Create front-end resources" do
-	user "#{service_name}"
-	group "#{service_name}"
+	user service_name
+	group service_name
 	command "#{ckan_cli} front-end-build"
 end
 
+# Ensure our translation is compiled even if it's fuzzy
+execute "Compile locale translation" do
+	user service_name
+	group service_name
+	cwd install_dir
+	command "#{virtualenv_dir}/bin/python setup.py compile_catalog -f --locale en_AU"
+end
