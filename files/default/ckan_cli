@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# Call either 'ckan' or 'paster' with appropriate syntax,
+# depending on what is present.
+
+# This script is aware of the VIRTUAL_ENV environment variable, and will
+# attempt to respect it with similar behaviour to commands like 'pip'.
+# Eg placing this script in a virtualenv 'bin' directory will cause it
+# to call the 'ckan' or 'paster' command in that directory, while
+# placing this script elsewhere will cause it to rely on the VIRTUAL_ENV
+# variable.
+
+CKAN_INI_FILE="${CKAN_INI_FILE:-/etc/ckan/default/production.ini}"
+PASTER_PLUGIN="${PASTER_PLUGIN:-ckan}"
+# First look alongside this file
+ENV_DIR=$(dirname "$0")
+if [ -f "$ENV_DIR/ckan" ]; then
+    COMMAND=ckan
+elif [ -f "$ENV_DIR/paster" ]; then
+    COMMAND=paster
+elif [ "$VIRTUAL_ENV" != "" ]; then
+    # If command not found alongside this file, check the virtualenv
+    ENV_DIR="$VIRTUAL_ENV/bin"
+    if [ -f "$ENV_DIR/ckan" ]; then
+        COMMAND=ckan
+    elif [ -f "$ENV_DIR/paster" ]; then
+        COMMAND=paster
+    fi
+else
+    # if no virtualenv is active, try the system path
+    if (which ckan > /dev/null 2>&1); then
+        ENV_DIR=$(dirname $(which ckan))
+        COMMAND=ckan
+    elif (which paster > /dev/null 2>&1); then
+        ENV_DIR=$(dirname $(which paster))
+        COMMAND=paster
+    else
+        echo "Unable to locate 'ckan' or 'paster' command" >&2
+        exit 1
+    fi
+fi
+
+if [ "$COMMAND" = "ckan" ]; then
+    echo "Using 'ckan' command from $ENV_DIR..." >&2
+    $ENV_DIR/ckan -c ${CKAN_INI_FILE} "$@"
+elif [ "$COMMAND" = "paster" ]; then
+    echo "Using 'paster' command from $ENV_DIR..." >&2
+    $ENV_DIR/paster --plugin=$PASTER_PLUGIN "$@" -c ${CKAN_INI_FILE}
+else
+    echo "Unable to locate 'ckan' or 'paster' command in $ENV_DIR" >&2
+    exit 1
+fi

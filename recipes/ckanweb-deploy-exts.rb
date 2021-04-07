@@ -39,6 +39,7 @@ account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
 python = "#{virtualenv_dir}/bin/python"
 pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 config_dir = "/etc/ckan/default"
 
 # Hash to map extname to pluginname
@@ -247,16 +248,17 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 		execute "Validation CKAN ext database init" do
 			user "#{account_name}"
-			command "#{virtualenv_dir}/bin/paster --plugin=ckanext-validation validation init-db -c #{config_dir}/production.ini || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
+			command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 			only_if { "#{pluginname}".eql? 'validation' }
 		end
 
 		bash "YTP CKAN ext database init" do
 			user "#{account_name}"
 			code <<-EOS
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments init_notifications_db -c #{config_dir}/production.ini || echo 'Ignoring expected error'
-				#{virtualenv_dir}/bin/paster --plugin=ckanext-ytp-comments updatedb -c #{config_dir}/production.ini || echo 'Ignoring expected error'
+				export PASTER_PLUGIN=ckanext-ytp-comments
+				#{ckan_cli} initdb || echo 'Ignoring expected error'
+				#{ckan_cli} init_notifications_db || echo 'Ignoring expected error'
+				#{ckan_cli} updatedb || echo 'Ignoring expected error'
 			EOS
 			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
@@ -264,7 +266,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if "#{pluginname}".eql? 'harvest'
 			execute "Harvest CKAN ext database init" do
 				user "#{account_name}"
-				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester initdb -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+				command "PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester initdb || echo 'Ignoring expected error'"
 			end
 
 			if batchnode
@@ -277,7 +279,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 				# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
 				file "/etc/cron.hourly/ckan-harvest-run" do
-					content "/usr/local/bin/pick-job-server.sh && #{virtualenv_dir}/bin/paster --plugin=ckanext-harvest harvester run -c #{config_dir}/production.ini > /dev/null 2>&1\n"
+					content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run > /dev/null 2>&1\n"
 					mode "0755"
 				end
 			end
@@ -286,7 +288,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if "#{pluginname}".eql? 'archiver'
 			execute "Archiver CKAN ext database init" do
 				user "#{account_name}"
-				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-archiver archiver init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+				command "PASTER_PLUGIN=ckanext-archiver #{ckan_cli} archiver init || echo 'Ignoring expected error'"
 			end
 
 			if batchnode
@@ -315,14 +317,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if "#{pluginname}".eql? 'qa'
 			execute "qa CKAN ext database init" do
 				user "#{account_name}"
-				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-qa qa init  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+				command "PASTER_PLUGIN=ckanext-qa #{ckan_cli} qa init || echo 'Ignoring expected error'"
 			end
 		end
 
 		if "#{pluginname}".eql? 'report'
 			execute "report CKAN ext database init" do
 				user "#{account_name}"
-				command "#{virtualenv_dir}/bin/paster --plugin=ckanext-report report initdb  -c #{config_dir}/production.ini || echo 'Ignoring expected error'"
+				command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
 			end
 		end
 

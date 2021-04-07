@@ -30,8 +30,15 @@ config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
 pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
-paster = "#{virtualenv_dir}/bin/paster --plugin=#{service_name}"
+ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
+
+cookbook_file "#{virtualenv_dir}/bin/ckan_cli" do
+	source 'ckan_cli'
+	owner "#{service_name}"
+	group "#{service_name}"
+	mode "0755"
+end
 
 # Setup Site directories
 #
@@ -159,21 +166,21 @@ end
 
 execute "Init CKAN DB" do
 	user "root"
-	command "#{paster} db init -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
+	command "#{ckan_cli} db init 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_db_init.log" }
 end
 
 execute "Update DB schema" do
 	user "#{service_name}"
 	group "#{service_name}"
-	command "#{paster} db upgrade -c #{config_file}"
+	command "#{ckan_cli} db upgrade"
 end
 
 bash "Create CKAN Admin user" do
 	user "root"
 	code <<-EOS
-		#{paster} --plugin=ckan user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
-		#{paster} --plugin=ckan sysadmin add sysadmin -c #{config_file} 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
+		#{ckan_cli} user add sysadmin password="#{node['datashades']['ckan_web']['adminpw']}" email="#{node['datashades']['ckan_web']['adminemail']}" 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp"
+		#{ckan_cli} sysadmin add sysadmin 2>&1 >> "#{shared_fs_dir}/private/ckan_admin.log.tmp" && mv "#{shared_fs_dir}/private/ckan_admin.log.tmp" "#{shared_fs_dir}/private/ckan_admin.log"
 	EOS
 	not_if { ::File.exist? "#{shared_fs_dir}/private/ckan_admin.log"}
 end
@@ -192,6 +199,6 @@ end
 execute "Create front-end resources" do
 	user "#{service_name}"
 	group "#{service_name}"
-	command "#{paster} front-end-build -c #{config_file}"
+	command "#{ckan_cli} front-end-build"
 end
 

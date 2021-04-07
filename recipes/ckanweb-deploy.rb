@@ -33,7 +33,6 @@ config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
-paster = "#{virtualenv_dir}/bin/paster --plugin=#{service_name}"
 
 # Setup Site directories
 #

@@ -1,4 +1,4 @@
 #!/bin/sh
 # Trigger archiver update to bulk queue
 
-/usr/lib/ckan/default/bin/paster --plugin=ckanext-archiver archiver update -c /etc/ckan/default/production.ini
+PASTER_PLUGIN=ckanext-archiver /usr/lib/ckan/default/bin/ckan_cli archiver update
