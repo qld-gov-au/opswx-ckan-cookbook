@@ -184,8 +184,15 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cwd "#{install_dir}"
 			code <<-EOS
 				#{python} setup.py develop
-				if [ -f "requirements.txt" ]; then
-					#{pip} install -r requirements.txt
+				PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
+				PY2_REQUIREMENTS_FILE=requirements-py2.txt
+				if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
+					REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
+				else
+					REQUIREMENTS_FILE=requirements.txt
+				fi
+				if [ -f "$REQUIREMENTS_FILE" ]; then
+					#{pip} install -r $REQUIREMENTS_FILE
 				fi
 				if [ -f "pip-requirements.txt" ]; then
 					#{pip} install -r "pip-requirements.txt"
