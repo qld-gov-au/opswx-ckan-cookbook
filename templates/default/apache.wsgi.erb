@@ -1,14 +1,22 @@
 import os
+from logging.config import fileConfig as loggingFileConfig
+
+config_filepath = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'production.ini')
+loggingFileConfig(config_filepath)
+
 activate_this = os.path.join('/usr/lib/ckan/default/bin/activate_this.py')
 execfile(activate_this, dict(__file__=activate_this))
-import site
-site.addsitedir('/usr/lib/ckan/default/lib/python2.7/site-packages')
 
-from paste.deploy import loadapp
-config_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'production.ini')
-from paste.script.util.logging_config import fileConfig
-fileConfig(config_filepath)
-application = loadapp('config:%s' % config_filepath)
+try:
+    from ckan.config.middleware import make_app
+    from ckan.cli import CKANConfigLoader
+    abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+    config = CKANConfigLoader(config_filepath).get_config()
+    application = make_app(config)
+except ImportError:
+    from paste.deploy import loadapp
+    application = loadapp('config:%s' % config_filepath)
 
 # Add raven Sentry client middleware to the stack if sentryurl provided
 #
