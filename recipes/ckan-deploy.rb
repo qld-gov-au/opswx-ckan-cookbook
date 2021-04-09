@@ -117,10 +117,19 @@ bash "Check out #{version} revision of CKAN" do
 	EOS
 end
 
-execute "Install Python dependencies" do
+bash "Install Python dependencies" do
 	user service_name
 	group service_name
-	command "#{pip} install -r '#{install_dir}/requirements.txt'"
+	code <<-EOS
+		PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
+		PY2_REQUIREMENTS_FILE=requirements-py2.txt
+		if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
+			REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
+		else
+			REQUIREMENTS_FILE=requirements.txt
+		fi
+		#{pip} install -r "#{install_dir}/$REQUIREMENTS_FILE"
+	EOS
 end
 
 execute "Install Raven Sentry client" do
