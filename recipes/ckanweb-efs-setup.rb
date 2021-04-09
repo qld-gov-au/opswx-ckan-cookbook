@@ -60,29 +60,15 @@ else
     real_log_dir = var_log_dir
 end
 
+datashades_move_and_link(var_log_dir) do
+    target real_log_dir
+    client_service "supervisord"
+end
+
 directory real_log_dir do
     owner service_name
     group 'ec2-user'
-    mode '0775'
+    mode '0755'
     recursive true
     action :create
-end
-
-if not ::File.identical?(real_log_dir, var_log_dir) then
-    service "supervisord" do
-        action [:stop]
-    end
-    # transfer existing contents to target directory
-    execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
-        only_if { ::File.directory? var_log_dir }
-    end
-    directory "#{var_log_dir}" do
-        recursive true
-        action :delete
-    end
-end
-
-link var_log_dir do
-    to real_log_dir
-    ignore_failure true
 end

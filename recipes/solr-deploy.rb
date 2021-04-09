@@ -86,7 +86,7 @@ end
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 
-# move Solr off root disk
+# move Solr onto extra EBS disk
 efs_data_dir = "/data/#{service_name}"
 var_data_dir = "/var/#{service_name}"
 var_log_dir = "/var/#{service_name}/logs"
@@ -113,84 +113,40 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-if not ::File.identical?(real_data_dir, var_data_dir) then
-    service service_name do
-        action [:stop]
-    end
-    # transfer existing contents to target directory
-    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
-        user service_name
-        only_if { ::File.directory? efs_data_dir }
-    end
-    execute "rsync -a #{var_data_dir}/ #{real_data_dir}/" do
-        user service_name
-        only_if { ::File.directory? var_data_dir }
-    end
-    directory "#{var_data_dir}" do
-        recursive true
-        action :delete
-    end
+datashades_move_and_link(efs_data_dir) do
+    target real_data_dir
+    client_service service_name
 end
 
-link var_data_dir do
-    to real_data_dir
-    ignore_failure true
-end
-
-link "/var/log/#{service_name}" do
-    to real_log_dir
-    ignore_failure true
+datashades_move_and_link(var_data_dir) do
+    target real_data_dir
+    client_service service_name
 end
 
 # move logs off root disk
 
+datashades_move_and_link(var_log_dir) do
+    target real_log_dir
+    client_service service_name
+end
+
+datashades_move_and_link("/var/log/#{service_name}") do
+    target real_log_dir
+    client_service service_name
+end
+
 directory real_log_dir do
     owner account_name
     group "ec2-user"
-    mode "0775"
-    action :create
-end
-
-if not ::File.identical?(real_log_dir, var_log_dir) then
-    service service_name do
-        action [:stop]
-    end
-    # transfer existing contents to target directory
-    execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
-        user service_name
-        only_if { ::File.directory? var_log_dir }
-    end
-    directory "#{var_log_dir}" do
-        recursive true
-        action :delete
-    end
-end
-
-link var_log_dir do
-    to real_log_dir
-    ignore_failure true
+    mode "0755"
 end
 
 # move logs from EFS to extra EBS volume, if any
-efs_log_dir = "#{efs_data_dir}/logs"
-if not ::File.identical?(efs_log_dir, var_log_dir) then
-    service service_name do
-        action [:stop]
-    end
-    # transfer existing contents to target directory
-    execute "rsync -a #{efs_log_dir}/ #{var_log_dir}/" do
-        user service_name
-        only_if { ::File.directory? efs_log_dir }
-    end
-    directory "#{efs_log_dir}" do
-        recursive true
-        action :delete
-    end
-end
 
-link efs_log_dir do
-    to var_log_dir
-    ignore_failure true
+efs_log_dir = "#{efs_data_dir}/logs"
+datashades_move_and_link(efs_log_dir) do
+    target var_log_dir
+    client_service service_name
 end
 
 # Create Monit config file to restart Solr when port 8983 not available

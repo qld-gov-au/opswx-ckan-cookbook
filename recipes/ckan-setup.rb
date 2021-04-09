@@ -78,33 +78,24 @@ else
 end
 
 execute "Install Python Virtual Environment" do
-	user "root"
 	command "pip --cache-dir=/tmp/ install virtualenv"
 end
 
-if not ::File.identical?(real_virtualenv_dir, virtualenv_dir) then
-	# transfer existing contents to target directory
-	execute "rsync -a #{virtualenv_dir}/ #{real_virtualenv_dir}/" do
-		only_if { ::File.directory? virtualenv_dir }
-	end
-	directory "#{virtualenv_dir}" do
-		recursive true
-		action :delete
-	end
-end
-
-bash "Create CKAN Default Virtual Environment" do
-	user "root"
-	code <<-EOS
-		/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}
-		chown -R ckan:ckan #{real_virtualenv_dir}
-	EOS
+execute "Create CKAN Default Virtual Environment" do
+	command "/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}"
 	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
 end
 
-link virtualenv_dir do
-	to real_virtualenv_dir
-	ignore_failure true
+datashades_move_and_link virtualenv_dir do
+	target real_virtualenv_dir
+end
+
+directory real_virtualenv_dir do
+	owner 'ckan'
+	group 'ckan'
+	mode '0755'
+	action :create
+	recursive true
 end
 
 bash "Fix VirtualEnv lib issue" do
