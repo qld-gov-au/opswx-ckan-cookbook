@@ -33,7 +33,6 @@ batchnode = false
 unless batchlayer.nil?
 	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
 end
-batchexts = ['datastore', 'datapusher', 'harvest', 'datajson', 'spatial', 'xloader', 'qa', 'validation', 'archiver', 'report']
 
 account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
@@ -54,7 +53,6 @@ extnames =
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
 	'basiccharts' => 'linechart barchart piechart basicgrid',
-	'scheming' => 'scheming_datasets',
 	'pdfview' => 'pdf_view',
 	'dashboard' => 'dashboard_preview',
 	'datajson' => 'datajson datajson_harvest',
@@ -117,305 +115,300 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	apprevision ||= app['app_source']['url'][/@(.*)/].sub '@', ''
 	apprevision ||= "master"
 
-	# Don't install extensions not required by the batch node
+	apprelease = app['app_source']['url'].sub('http', "git+http").sub(/@(.*)/, '')
+
+	if app['app_source']['type'].casecmp("git") == 0 then
+		apprelease << "@#{apprevision}"
+	end
+
+	if ! apprelease.include? '#egg' then
+		apprelease << "#egg=#{app['shortname']}"
+	end
+
+	# Install Extension
 	#
-	installext = !batchnode || (batchnode && batchexts.include?(pluginname))
-	unless (!installext)
-		apprelease = app['app_source']['url'].sub('http', "git+http").sub(/@(.*)/, '')
+	install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
 
+	# Many extensions use a different name on the plugins line so these need to be managed
+	#
+	extname = pluginname.gsub '-', '_'
+	if extnames.has_key? pluginname
+		extname = extnames[pluginname]
+	end
+
+	if (::File.directory?("#{install_dir}")) then
 		if app['app_source']['type'].casecmp("git") == 0 then
-			apprelease << "@#{apprevision}"
-		end
-
-		if ! apprelease.include? '#egg' then
-			apprelease << "#egg=#{app['shortname']}"
-		end
-
-		# Install Extension
-		#
-		install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
-
-		# Many extensions use a different name on the plugins line so these need to be managed
-		#
-		extname = pluginname.gsub '-', '_'
-		if extnames.has_key? pluginname
-			extname = extnames[pluginname]
-		end
-
-		if (::File.directory?("#{install_dir}")) then
-			if app['app_source']['type'].casecmp("git") == 0 then
-				execute "Ensure correct #{app['shortname']} Git origin" do
-					user "#{account_name}"
-					cwd "#{install_dir}"
-					command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
-				end
-			end
-		else
-			log 'debug' do
-	  			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{install_dir}"
-				level :info
-			end
-
-			# Install the extension and its requirements
-			#
-			execute "Pip Install #{app['shortname']}" do
+			execute "Ensure correct #{app['shortname']} Git origin" do
 				user "#{account_name}"
-				group "#{account_name}"
-				command "#{pip} install -e '#{apprelease}'"
+				cwd "#{install_dir}"
+				command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
 			end
 		end
+	else
+		log 'debug' do
+			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{install_dir}"
+			level :info
+		end
 
-		bash "Check out #{apprevision} revision of #{app['shortname']}" do
+		# Install the extension and its requirements
+		#
+		execute "Pip Install #{app['shortname']}" do
 			user "#{account_name}"
 			group "#{account_name}"
-			cwd "#{install_dir}"
+			command "#{pip} install -e '#{apprelease}'"
+		end
+	end
+
+	bash "Check out #{apprevision} revision of #{app['shortname']}" do
+		user "#{account_name}"
+		group "#{account_name}"
+		cwd "#{install_dir}"
+		code <<-EOS
+			git fetch
+			git reset --hard
+			git checkout '#{apprevision}'
+			git pull
+			find . -name '*.pyc' -delete
+		EOS
+	end
+
+	bash "Install #{app['shortname']} requirements" do
+		user "#{account_name}"
+		group "#{account_name}"
+		cwd "#{install_dir}"
+		code <<-EOS
+			#{python} setup.py develop
+			PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
+			PY2_REQUIREMENTS_FILE=requirements-py2.txt
+			if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
+				REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
+			else
+				REQUIREMENTS_FILE=requirements.txt
+			fi
+			if [ -f "$REQUIREMENTS_FILE" ]; then
+				#{pip} install -r $REQUIREMENTS_FILE
+			fi
+			if [ -f "pip-requirements.txt" ]; then
+				#{pip} install -r "pip-requirements.txt"
+			fi
+		EOS
+	end
+
+	# Add the extension to production.ini
+	# Go as close to the end as possible while respecting the ordering constraints if any
+	insert_before = nil
+	if extordering.has_key? extname
+		min_ordering = extordering[extname]
+		max_ordering = 9999
+		installed_ordered_exts.each do |prefix|
+			installed_ordering = extordering[prefix]
+			if installed_ordering > min_ordering and installed_ordering < max_ordering
+				insert_before = prefix
+				max_ordering = installed_ordering
+			end
+		end
+		installed_ordered_exts.add extname
+	end
+
+	if insert_before
+		bash "Enable #{app['shortname']} plugin before #{insert_before}" do
+			user "#{account_name}"
+			cwd "#{config_dir}"
 			code <<-EOS
-				git fetch
-				git reset --hard
-				git checkout '#{apprevision}'
-				git pull
-				find . -name '*.pyc' -delete
+				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+					sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
+				fi
 			EOS
 		end
-
-		bash "Install #{app['shortname']} requirements" do
+	else
+		bash "Enable #{app['shortname']} plugin" do
 			user "#{account_name}"
-			group "#{account_name}"
-			cwd "#{install_dir}"
+			cwd "#{config_dir}"
 			code <<-EOS
-				#{python} setup.py develop
-				PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
-				PY2_REQUIREMENTS_FILE=requirements-py2.txt
-				if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
-					REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
+				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
+					sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
+				fi
+			EOS
+		end
+	end
+
+	# Add the extension to the default_views line if required
+	#
+	if extviews.has_key? pluginname
+		viewname = extviews[pluginname]
+		bash "#{app['shortname']} ext config" do
+			user "#{account_name}"
+			cwd "#{config_dir}"
+			code <<-EOS
+				if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
+					sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
+				fi
+			EOS
+		end
+	end
+
+	execute "Validation CKAN ext database init" do
+		user "#{account_name}"
+		command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
+		only_if { "#{pluginname}".eql? 'validation' }
+	end
+
+	bash "YTP CKAN ext database init" do
+		user "#{account_name}"
+		code <<-EOS
+			export PASTER_PLUGIN=ckanext-ytp-comments
+			#{ckan_cli} initdb || echo 'Ignoring expected error'
+			#{ckan_cli} init_notifications_db || echo 'Ignoring expected error'
+			#{ckan_cli} updatedb || echo 'Ignoring expected error'
+		EOS
+		only_if { "#{pluginname}".eql? 'ytp-comments' }
+	end
+
+	if "#{pluginname}".eql? 'harvest'
+		execute "Harvest CKAN ext database init" do
+			user "#{account_name}"
+			command "PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester initdb || echo 'Ignoring expected error'"
+		end
+
+		if batchnode
+			harvest_present = true
+
+			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
+				source "supervisor-ckan-harvest.conf"
+				mode "0744"
+			end
+
+			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
+			file "/etc/cron.hourly/ckan-harvest-run" do
+				content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run > /dev/null 2>&1\n"
+				mode "0755"
+			end
+		end
+	end
+
+	if "#{pluginname}".eql? 'archiver'
+		execute "Archiver CKAN ext database init" do
+			user "#{account_name}"
+			command "PASTER_PLUGIN=ckanext-archiver #{ckan_cli} archiver init || echo 'Ignoring expected error'"
+		end
+
+		if batchnode
+			archiver_present = true
+
+			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
+				source "supervisor-ckan-archiver.conf"
+				mode "0744"
+			end
+
+			template "/usr/local/bin/archiverTriggerAll.sh" do
+				source 'archiverTriggerAll.sh'
+				owner 'root'
+				group 'root'
+				mode '0755'
+			end
+
+			#Trigger at 10pm monday nights weekly
+			file "/etc/cron.d/ckan-worker" do
+				content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+				mode '0644'
+			end
+		end
+	end
+
+	if "#{pluginname}".eql? 'qa'
+		execute "qa CKAN ext database init" do
+			user "#{account_name}"
+			command "PASTER_PLUGIN=ckanext-qa #{ckan_cli} qa init || echo 'Ignoring expected error'"
+		end
+	end
+
+	if "#{pluginname}".eql? 'report'
+		execute "report CKAN ext database init" do
+			user "#{account_name}"
+			command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
+		end
+	end
+
+	bash "Provide custom Bootstrap version" do
+		user "#{account_name}"
+		group "#{account_name}"
+		cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"
+		code <<-EOS
+			BOOTSTRAP_VERSION_PATTERN="\\bv[0-9]+\\.[0-9]\\.[0-9]\\b"
+			CORE_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" bootstrap.min.js)
+			CUSTOM_BOOTSTRAP=#{virtualenv_dir}/src/ckanext-data-qld-theme/ckanext/data_qld_theme/bootstrap/
+			CUSTOM_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" $CUSTOM_BOOTSTRAP/bootstrap.min.js)
+			if [ "$CUSTOM_BOOTSTRAP_VERSION" != "" ]; then
+				cp $CUSTOM_BOOTSTRAP/bootstrap.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js
+				cp $CUSTOM_BOOTSTRAP/bootstrap.min.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js
+				if [ -L bootstrap.js ]; then
+					rm bootstrap.js bootstrap.min.js
 				else
-					REQUIREMENTS_FILE=requirements.txt
+					mv bootstrap.js bootstrap-$CORE_BOOTSTRAP_VERSION.js
+					mv bootstrap.min.js bootstrap-$CORE_BOOTSTRAP_VERSION.min.js
 				fi
-				if [ -f "$REQUIREMENTS_FILE" ]; then
-					#{pip} install -r $REQUIREMENTS_FILE
-				fi
-				if [ -f "pip-requirements.txt" ]; then
-					#{pip} install -r "pip-requirements.txt"
+				ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js bootstrap.js
+				ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js bootstrap.min.js
+			fi
+		EOS
+		only_if { "#{pluginname}".eql? 'data-qld-theme' }
+	end
+
+	# Viewhelpers is a special case because stats needs to be loaded before it
+	#
+	if "#{pluginname}".eql? 'viewhelpers' then
+		bash "View Helpers CKAN ext config" do
+			user "#{account_name}"
+			cwd "#{config_dir}"
+			code <<-EOS
+				if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
+					sed -i "s/viewhelpers/ /g" production.ini;
+					sed -i "s/stats/stats viewhelpers/g" production.ini;
 				fi
 			EOS
 		end
+	end
 
-		# Add the extension to production.ini
-		# Go as close to the end as possible while respecting the ordering constraints if any
-		insert_before = nil
-		if extordering.has_key? extname
-			min_ordering = extordering[extname]
-			max_ordering = 9999
-			installed_ordered_exts.each do |prefix|
-				installed_ordering = extordering[prefix]
-				if installed_ordering > min_ordering and installed_ordering < max_ordering
-					insert_before = prefix
-					max_ordering = installed_ordering
-				end
-			end
-			installed_ordered_exts.add extname
-		end
-
-		if insert_before
-			bash "Enable #{app['shortname']} plugin before #{insert_before}" do
-				user "#{account_name}"
-				cwd "#{config_dir}"
-				code <<-EOS
-					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-						sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
-					fi
-				EOS
-			end
-		else
-			bash "Enable #{app['shortname']} plugin" do
-				user "#{account_name}"
-				cwd "#{config_dir}"
-				code <<-EOS
-					if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-						sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
-					fi
-				EOS
-			end
-		end
-
-		# Add the extension to the default_views line if required
-		#
-		if extviews.has_key? pluginname
-			viewname = extviews[pluginname]
-			bash "#{app['shortname']} ext config" do
-				user "#{account_name}"
-				cwd "#{config_dir}"
-				code <<-EOS
-					if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
-						sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
-					fi
-				EOS
-			end
-		end
-
-		execute "Validation CKAN ext database init" do
-			user "#{account_name}"
-			command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
-			only_if { "#{pluginname}".eql? 'validation' }
-		end
-
-		bash "YTP CKAN ext database init" do
+	# Install any additional pip packages required
+	#
+	if extextras.has_key? pluginname
+		pip_packages = extextras[pluginname]
+		bash "Install extra PIP packages for #{pluginname}" do
 			user "#{account_name}"
 			code <<-EOS
-				export PASTER_PLUGIN=ckanext-ytp-comments
-				#{ckan_cli} initdb || echo 'Ignoring expected error'
-				#{ckan_cli} init_notifications_db || echo 'Ignoring expected error'
-				#{ckan_cli} updatedb || echo 'Ignoring expected error'
+				read -r -a packages <<< "#{pip_packages}"
+				for package in "${packages[@]}"
+				do
+					#{pip} install ${package}
+				done
 			EOS
-			only_if { "#{pluginname}".eql? 'ytp-comments' }
 		end
+	end
 
-		if "#{pluginname}".eql? 'harvest'
-			execute "Harvest CKAN ext database init" do
-				user "#{account_name}"
-				command "PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester initdb || echo 'Ignoring expected error'"
-			end
-
-			if batchnode
-				harvest_present = true
-
-				cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
-					source "supervisor-ckan-harvest.conf"
-					mode "0744"
-				end
-
-				# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
-				file "/etc/cron.hourly/ckan-harvest-run" do
-					content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run > /dev/null 2>&1\n"
-					mode "0755"
-				end
-			end
+	# Cesium preview requires some NPM extras
+	#
+	if "#{pluginname}".eql? 'cesiumpreview' then
+		execute "Cesium Preview CKAN ext config" do
+			user "root"
+			command "npm install --save geojson-extent"
 		end
+	end
 
-		if "#{pluginname}".eql? 'archiver'
-			execute "Archiver CKAN ext database init" do
-				user "#{account_name}"
-				command "PASTER_PLUGIN=ckanext-archiver #{ckan_cli} archiver init || echo 'Ignoring expected error'"
-			end
-
-			if batchnode
-				archiver_present = true
-
-				cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
-					source "supervisor-ckan-archiver.conf"
-					mode "0744"
-				end
-
-				template "/usr/local/bin/archiverTriggerAll.sh" do
-					source 'archiverTriggerAll.sh'
-					owner 'root'
-					group 'root'
-					mode '0755'
-				end
-
-				#Trigger at 10pm monday nights weekly
-				file "/etc/cron.d/ckan-worker" do
-					content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
-					mode '0644'
-				end
-			end
-		end
-
-		if "#{pluginname}".eql? 'qa'
-			execute "qa CKAN ext database init" do
-				user "#{account_name}"
-				command "PASTER_PLUGIN=ckanext-qa #{ckan_cli} qa init || echo 'Ignoring expected error'"
-			end
-		end
-
-		if "#{pluginname}".eql? 'report'
-			execute "report CKAN ext database init" do
-				user "#{account_name}"
-				command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
-			end
-		end
-
-		bash "Provide custom Bootstrap version" do
+	# Work around https://github.com/numpy/numpy/issues/14012
+	if "#{pluginname}".eql? 'xloader' then
+		execute "Lock numpy version until issue 14012 is fixed" do
 			user "#{account_name}"
-			group "#{account_name}"
-			cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"
-			code <<-EOS
-				BOOTSTRAP_VERSION_PATTERN="\\bv[0-9]+\\.[0-9]\\.[0-9]\\b"
-				CORE_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" bootstrap.min.js)
-				CUSTOM_BOOTSTRAP=#{virtualenv_dir}/src/ckanext-data-qld-theme/ckanext/data_qld_theme/bootstrap/
-				CUSTOM_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" $CUSTOM_BOOTSTRAP/bootstrap.min.js)
-				if [ "$CUSTOM_BOOTSTRAP_VERSION" != "" ]; then
-					cp $CUSTOM_BOOTSTRAP/bootstrap.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js
-					cp $CUSTOM_BOOTSTRAP/bootstrap.min.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js
-					if [ -L bootstrap.js ]; then
-						rm bootstrap.js bootstrap.min.js
-					else
-						mv bootstrap.js bootstrap-$CORE_BOOTSTRAP_VERSION.js
-						mv bootstrap.min.js bootstrap-$CORE_BOOTSTRAP_VERSION.min.js
-					fi
-					ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js bootstrap.js
-					ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js bootstrap.min.js
-				fi
-			EOS
-			only_if { "#{pluginname}".eql? 'data-qld-theme' }
+			command "#{pip} install numpy==1.15.4"
 		end
 
-		# Viewhelpers is a special case because stats needs to be loaded before it
-		#
-		if "#{pluginname}".eql? 'viewhelpers' then
-			bash "View Helpers CKAN ext config" do
-				user "#{account_name}"
-				cwd "#{config_dir}"
-				code <<-EOS
-					if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
-						sed -i "s/viewhelpers/ /g" production.ini;
-						sed -i "s/stats/stats viewhelpers/g" production.ini;
-					fi
-				EOS
-			end
-		end
-
-		# Install any additional pip packages required
-		#
-		if extextras.has_key? pluginname
-			pip_packages = extextras[pluginname]
-			bash "Install extra PIP packages for #{pluginname}" do
-				user "#{account_name}"
-				code <<-EOS
-					read -r -a packages <<< "#{pip_packages}"
-					for package in "${packages[@]}"
-					do
-						#{pip} install ${package}
-					done
-				EOS
-			end
-		end
-
-		# Cesium preview requires some NPM extras
-		#
-		if "#{pluginname}".eql? 'cesiumpreview' then
-			execute "Cesium Preview CKAN ext config" do
-				user "root"
-				command "npm install --save geojson-extent"
-			end
-		end
-
-		# Work around https://github.com/numpy/numpy/issues/14012
-		if "#{pluginname}".eql? 'xloader' then
-			execute "Lock numpy version until issue 14012 is fixed" do
-				user "#{account_name}"
-				command "#{pip} install numpy==1.15.4"
-			end
-
-			# The dateparser library defaults to month-first but is configurable.
-			# Unfortunately, simply toggling the day-first flag breaks ISO dates.
-			# See https://github.com/dateutil/dateutil/issues/402
-			execute "Patch date parser format" do
-				user "#{account_name}"
-				command <<-'SED'.strip + " #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
-					sed -i "s/^\(\s*\)return parser[.]parse(value)/\1for fmt in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z', '%Y-%m-%d %H:%M:%S.%f%z']:\n\1    try:\n\1        return datetime.datetime.strptime(value, fmt)\n\1    except ValueError:\n\1        pass\n\1return parser.parse(value, dayfirst=True)/"
-				SED
-			end
+		# The dateparser library defaults to month-first but is configurable.
+		# Unfortunately, simply toggling the day-first flag breaks ISO dates.
+		# See https://github.com/dateutil/dateutil/issues/402
+		execute "Patch date parser format" do
+			user "#{account_name}"
+			command <<-'SED'.strip + " #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
+				sed -i "s/^\(\s*\)return parser[.]parse(value)/\1for fmt in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z', '%Y-%m-%d %H:%M:%S.%f%z']:\n\1    try:\n\1        return datetime.datetime.strptime(value, fmt)\n\1    except ValueError:\n\1        pass\n\1return parser.parse(value, dayfirst=True)/"
+			SED
 		end
 	end
 end
