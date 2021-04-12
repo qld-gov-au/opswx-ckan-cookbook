@@ -25,8 +25,9 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
-include_recipe "datashades::ckan-setup"
+include_recipe "datashades::httpd-efs-setup"
 include_recipe "datashades::nginx-setup"
+include_recipe "datashades::ckan-setup"
 
 # Change Apache default port to 8000 and fix access to /
 #

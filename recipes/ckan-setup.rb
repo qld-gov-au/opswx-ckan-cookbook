@@ -62,23 +62,27 @@ end
 
 # Set up shared directories
 #
-include_recipe "datashades::ckanweb-efs-setup"
+include_recipe "datashades::efs-setup"
 
 #
 # Set up Python virtual environment
 #
+
+execute "Install Python Virtual Environment" do
+	command "pip --cache-dir=/tmp/ install virtualenv"
+end
 
 virtualenv_dir = "/usr/lib/ckan/default"
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 if extra_disk_present then
 	real_virtualenv_dir = "#{extra_disk}/ckan_venv"
+
+	datashades_move_and_link virtualenv_dir do
+		target real_virtualenv_dir
+	end
 else
 	real_virtualenv_dir = virtualenv_dir
-end
-
-execute "Install Python Virtual Environment" do
-	command "pip --cache-dir=/tmp/ install virtualenv"
 end
 
 execute "Create CKAN Default Virtual Environment" do
@@ -86,15 +90,10 @@ execute "Create CKAN Default Virtual Environment" do
 	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
 end
 
-datashades_move_and_link virtualenv_dir do
-	target real_virtualenv_dir
-end
-
 directory real_virtualenv_dir do
 	owner 'ckan'
 	group 'ckan'
 	mode '0755'
-	action :create
 	recursive true
 end
 

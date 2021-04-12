@@ -17,7 +17,7 @@
 
 # Update EFS Data directory for CKAN
 #
-include_recipe "datashades::httpd-efs-setup"
+include_recipe "datashades::efs-setup"
 
 data_paths =
 {
@@ -56,13 +56,13 @@ extra_disk_present = ::File.exist? extra_disk
 
 if extra_disk_present then
     real_log_dir = "#{extra_disk}/#{service_name}"
+
+    datashades_move_and_link(var_log_dir) do
+        target real_log_dir
+        client_service "supervisord"
+    end
 else
     real_log_dir = var_log_dir
-end
-
-datashades_move_and_link(var_log_dir) do
-    target real_log_dir
-    client_service "supervisord"
 end
 
 directory real_log_dir do
@@ -70,5 +70,4 @@ directory real_log_dir do
     group 'ec2-user'
     mode '0755'
     recursive true
-    action :create
 end
