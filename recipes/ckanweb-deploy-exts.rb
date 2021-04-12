@@ -109,89 +109,23 @@ archiver_present = false
 harvest_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
-	pluginname = "#{app['shortname']}".sub(/.*ckanext-/, "")
-
-	apprevision = app['app_source']['revision']
-	apprevision ||= app['app_source']['url'][/@(.*)/].sub '@', ''
-	apprevision ||= "master"
-
-	apprelease = app['app_source']['url'].sub('http', "git+http").sub(/@(.*)/, '')
-
-	if app['app_source']['type'].casecmp("git") == 0 then
-		apprelease << "@#{apprevision}"
-	end
-
-	if ! apprelease.include? '#egg' then
-		apprelease << "#egg=#{app['shortname']}"
-	end
+	egg_name = app['shortname']
 
 	# Install Extension
 	#
-	install_dir = "#{virtualenv_dir}/src/#{app['shortname']}"
+
+	datashades_pip_install_app egg_name do
+		type app['app_source']['type']
+		revision app['app_source']['revision']
+		url app['app_source']['url']
+	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
 	#
+	pluginname = egg_name.sub(/.*ckanext-/, "")
 	extname = pluginname.gsub '-', '_'
 	if extnames.has_key? pluginname
 		extname = extnames[pluginname]
-	end
-
-	if (::File.directory?("#{install_dir}")) then
-		if app['app_source']['type'].casecmp("git") == 0 then
-			execute "Ensure correct #{app['shortname']} Git origin" do
-				user "#{account_name}"
-				cwd "#{install_dir}"
-				command "git remote set-url origin '#{app['app_source']['url'].sub(/@(.*)/, '')}'"
-			end
-		end
-	else
-		log 'debug' do
-			message "Installing #{pluginname} #{app['shortname']} from #{apprelease} into #{install_dir}"
-			level :info
-		end
-
-		# Install the extension and its requirements
-		#
-		execute "Pip Install #{app['shortname']}" do
-			user "#{account_name}"
-			group "#{account_name}"
-			command "#{pip} install -e '#{apprelease}'"
-		end
-	end
-
-	bash "Check out #{apprevision} revision of #{app['shortname']}" do
-		user "#{account_name}"
-		group "#{account_name}"
-		cwd "#{install_dir}"
-		code <<-EOS
-			git fetch
-			git reset --hard
-			git checkout '#{apprevision}'
-			git pull
-			find . -name '*.pyc' -delete
-		EOS
-	end
-
-	bash "Install #{app['shortname']} requirements" do
-		user "#{account_name}"
-		group "#{account_name}"
-		cwd "#{install_dir}"
-		code <<-EOS
-			#{python} setup.py develop
-			PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
-			PY2_REQUIREMENTS_FILE=requirements-py2.txt
-			if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
-				REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
-			else
-				REQUIREMENTS_FILE=requirements.txt
-			fi
-			if [ -f "$REQUIREMENTS_FILE" ]; then
-				#{pip} install -r $REQUIREMENTS_FILE
-			fi
-			if [ -f "pip-requirements.txt" ]; then
-				#{pip} install -r "pip-requirements.txt"
-			fi
-		EOS
 	end
 
 	# Add the extension to production.ini
@@ -211,7 +145,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	end
 
 	if insert_before
-		bash "Enable #{app['shortname']} plugin before #{insert_before}" do
+		bash "Enable #{egg_name} plugin before #{insert_before}" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -221,7 +155,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			EOS
 		end
 	else
-		bash "Enable #{app['shortname']} plugin" do
+		bash "Enable #{egg_name} plugin" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -236,7 +170,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 	#
 	if extviews.has_key? pluginname
 		viewname = extviews[pluginname]
-		bash "#{app['shortname']} ext config" do
+		bash "#{egg_name} view config" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS

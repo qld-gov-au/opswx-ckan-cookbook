@@ -63,73 +63,14 @@ directory "#{shared_fs_dir}/private" do
 	action :create
 end
 
-# Get the version number from the app revision, by preference,
-# or from the app URL if revision is not defined.
-# Either way, ensure that the version number is stripped from the URL.
-if app['app_source']['type'].eql? "git" then
-	version = app['app_source']['revision']
-end
-apprelease = app['app_source']['url'].sub("#{service_name}/archive/", "#{service_name}.git@").sub('.zip', "")
-urlrevision = apprelease[/@(.*)/].sub '@', ''
-apprelease.sub!(/@(.*)/, '')
-version ||= urlrevision
-version ||= "master"
-
 #
 # Install selected revision of CKAN core
 #
 
-if (::File.exist? "#{install_dir}/requirements.txt") then
-	if app['app_source']['type'].casecmp("git") == 0 then
-		execute "Ensure correct CKAN Git origin" do
-			user service_name
-			group service_name
-			cwd install_dir
-			command "git remote set-url origin '#{apprelease}'"
-		end
-	end
-else
-	execute "Install CKAN #{version}" do
-		user service_name
-		group service_name
-		command "#{pip} install -e 'git+#{apprelease}@#{version}#egg=#{service_name}'"
-	end
-end
-
-bash "Check out #{version} revision of CKAN" do
-	user service_name
-	group service_name
-	cwd install_dir
-	code <<-EOS
-		# retrieve latest branch metadata
-		git fetch origin '#{version}'
-		# drop unversioned files
-		git clean
-		# make versioned files pristine
-		git reset --hard
-		git checkout '#{version}'
-		# get latest changes if we're checking out a branch, otherwise it doesn't matter
-		git pull
-		# drop compiled files from previous branch
-		find . -name '*.pyc' -delete
-		# regenerate metadata
-		#{virtualenv_dir}/bin/python setup.py develop
-	EOS
-end
-
-bash "Install Python dependencies" do
-	user service_name
-	group service_name
-	code <<-EOS
-		PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
-		PY2_REQUIREMENTS_FILE=requirements-py2.txt
-		if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f #{install_dir}/$PY2_REQUIREMENTS_FILE ]; then
-			REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
-		else
-			REQUIREMENTS_FILE=requirements.txt
-		fi
-		#{pip} install -r "#{install_dir}/$REQUIREMENTS_FILE"
-	EOS
+datashades_pip_install_app "ckan" do
+	type app['app_source']['type']
+	revision app['app_source']['revision']
+	url app['app_source']['url']
 end
 
 execute "Install Raven Sentry client" do
