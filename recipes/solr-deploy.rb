@@ -145,7 +145,7 @@ end
 
 efs_log_dir = "#{efs_data_dir}/logs"
 datashades_move_and_link(efs_log_dir) do
-    target var_log_dir
+    target real_log_dir
     client_service service_name
 end
 
