@@ -85,8 +85,11 @@ else
 	real_virtualenv_dir = virtualenv_dir
 end
 
-execute "Create CKAN Default Virtual Environment" do
-	command "/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}"
+bash "Create CKAN Default Virtual Environment" do
+	code <<-EOS
+		/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}
+		chown -R ckan:ckan #{real_virtualenv_dir}
+	EOS
 	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
 end
 
