@@ -60,6 +60,7 @@ if extra_disk_present then
     datashades_move_and_link(var_log_dir) do
         target real_log_dir
         client_service "supervisord"
+        owner service_name
     end
 else
     real_log_dir = var_log_dir
