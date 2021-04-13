@@ -140,9 +140,7 @@ include_recipe "datashades::ckanweb-deploy-exts"
 
 # Just in case something created files as root
 execute "Refresh virtualenv ownership" do
-	user "root"
-	group "root"
-	command "chown -R ckan:ckan #{virtualenv_dir}"
+	command "chown -RH ckan:ckan #{virtualenv_dir}"
 end
 
 # Prepare front-end CSS and JavaScript
