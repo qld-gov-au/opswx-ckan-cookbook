@@ -73,6 +73,11 @@ datashades_pip_install_app "ckan" do
 	url app['app_source']['url']
 end
 
+# Just in case something created files as root
+execute "Refresh virtualenv ownership" do
+	command "chown -RH ckan:ckan #{virtualenv_dir}"
+end
+
 execute "Install Raven Sentry client" do
 	user service_name
 	group service_name
