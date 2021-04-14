@@ -116,11 +116,13 @@ end
 datashades_move_and_link(efs_data_dir) do
     target real_data_dir
     client_service service_name
+    owner service_name
 end
 
 datashades_move_and_link(var_data_dir) do
     target real_data_dir
     client_service service_name
+    owner service_name
 end
 
 # move logs off root disk
@@ -128,11 +130,13 @@ end
 datashades_move_and_link(var_log_dir) do
     target real_log_dir
     client_service service_name
+    owner service_name
 end
 
 datashades_move_and_link("/var/log/#{service_name}") do
     target real_log_dir
     client_service service_name
+    owner service_name
 end
 
 directory real_log_dir do
@@ -147,6 +151,7 @@ efs_log_dir = "#{efs_data_dir}/logs"
 datashades_move_and_link(efs_log_dir) do
     target real_log_dir
     client_service service_name
+    owner service_name
 end
 
 # Create Monit config file to restart Solr when port 8983 not available

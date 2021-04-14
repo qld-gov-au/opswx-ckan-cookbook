@@ -80,6 +80,7 @@ if extra_disk_present then
 
 	datashades_move_and_link virtualenv_dir do
 		target real_virtualenv_dir
+		owner 'ckan'
 	end
 else
 	real_virtualenv_dir = virtualenv_dir
