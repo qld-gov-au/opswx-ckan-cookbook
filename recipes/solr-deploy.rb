@@ -86,7 +86,6 @@ end
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 
-# move Solr onto extra EBS disk
 efs_data_dir = "/data/#{service_name}"
 var_data_dir = "/var/#{service_name}"
 var_log_dir = "/var/#{service_name}/logs"
@@ -96,33 +95,6 @@ if extra_disk_present then
 else
     real_data_dir = efs_data_dir
     real_log_dir = var_log_dir
-end
-
-directory real_data_dir do
-    owner account_name
-    group "ec2-user"
-    mode "0775"
-    action :create
-end
-
-directory "#{efs_data_dir}/data/#{core_name}/data" do
-    owner account_name
-    group "ec2-user"
-    mode "0775"
-    action :create
-    recursive true
-end
-
-datashades_move_and_link(efs_data_dir) do
-    target real_data_dir
-    client_service service_name
-    owner service_name
-end
-
-datashades_move_and_link(var_data_dir) do
-    target real_data_dir
-    client_service service_name
-    owner service_name
 end
 
 # move logs off root disk
@@ -150,6 +122,35 @@ end
 efs_log_dir = "#{efs_data_dir}/logs"
 datashades_move_and_link(efs_log_dir) do
     target real_log_dir
+    client_service service_name
+    owner service_name
+end
+
+# move Solr core onto extra EBS disk
+
+directory real_data_dir do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+end
+
+directory "#{efs_data_dir}/data/#{core_name}/data" do
+    owner account_name
+    group "ec2-user"
+    mode "0775"
+    action :create
+    recursive true
+end
+
+datashades_move_and_link(efs_data_dir) do
+    target real_data_dir
+    client_service service_name
+    owner service_name
+end
+
+datashades_move_and_link(var_data_dir) do
+    target real_data_dir
     client_service service_name
     owner service_name
 end
