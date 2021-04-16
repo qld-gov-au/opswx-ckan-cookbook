@@ -32,33 +32,26 @@ extra_disk_present = ::File.exist? extra_disk
 
 if extra_disk_present then
     real_log_dir = "#{extra_disk}/#{service_name}"
+
+    datashades_move_and_link(var_log_dir) do
+        target real_log_dir
+        client_service service_name
+        owner service_name
+    end
 else
     real_log_dir = var_log_dir
+end
+
+directory real_log_dir do
+    owner service_name
+    group 'ec2-user'
+    mode '0755'
+    recursive true
 end
 
 directory "#{real_log_dir}/#{node['datashades']['sitename']}" do
     owner service_name
     group 'ec2-user'
-    mode '0775'
+    mode '0755'
     recursive true
-    action :create
-end
-
-if not ::File.identical?(real_log_dir, var_log_dir) then
-    service service_name do
-        action [:stop]
-    end
-    # transfer existing contents to target directory
-    execute "rsync -a #{var_log_dir}/ #{real_log_dir}/" do
-        only_if { ::File.directory? var_log_dir }
-    end
-    directory "#{var_log_dir}" do
-        recursive true
-        action :delete
-    end
-end
-
-link var_log_dir do
-    to real_log_dir
-    ignore_failure true
 end

@@ -1,9 +1,5 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
-# Recipe:: ckanweb-setup
-#
-# Creates NGINX Web server for CKAN
+# Creates web server for CKAN
 #
 # Copyright 2016, Link Digital
 #
@@ -23,78 +19,15 @@
 
 include_recipe "datashades::default"
 
-# Create ASG helper script
-#
-cookbook_file "/bin/updateasg" do
-	source "updateasg"
-	owner 'root'
-	group 'root'
-	mode '0755'
-end
-
 # Install CKAN services and dependencies
 #
 node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
-# Installing via yum gives initd integration, but has import problems.
-# Installing via pip fixes the import problems, but doesn't provide the integration.
-# So we do both.
-execute "pip install supervisor"
-
-bash "Enable Supervisor file inclusions" do
-	user "root"
-	code <<-EOS
-		SUPERVISOR_CONFIG=/etc/supervisord.conf
-		if [ -f "$SUPERVISOR_CONFIG" ]; then
-			mkdir -p /etc/supervisor/conf.d
-			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
-			echo '[include]' >> $SUPERVISOR_CONFIG
-			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
-		fi
-	EOS
-end
-
-# Managed processes sometimes don't shut down properly on daemon stop,
-# leaving them 'orphaned' and resulting in duplicates.
-# Work around by issuing a stop command to the children first.
-execute "Stop children on supervisord stop" do
-	command <<-'SED'.strip + " /etc/init.d/supervisord"
-		sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
-	SED
-end
-
-# Create CKAN Group
-#
-group "ckan" do
-	action :create
-	gid '1000'
-end
-
-# Create CKAN User
-#
-user "ckan" do
-	comment "CKAN User"
-	home "/home/ckan"
-	shell "/sbin/nologin"
-	action :create
-	uid '1000'
-	group 'ckan'
-end
-
-# Explicitly set permissions on ckan directory so it's readable by Apache
-#
-directory '/home/ckan' do
-	owner 'ckan'
-	group 'ckan'
-	mode '0755'
-	action :create
-	recursive true
-end
-
+include_recipe "datashades::httpd-efs-setup"
 include_recipe "datashades::nginx-setup"
-include_recipe "datashades::ckanweb-efs-setup"
+include_recipe "datashades::ckan-setup"
 
 # Change Apache default port to 8000 and fix access to /
 #
@@ -112,61 +45,4 @@ end
 #
 service 'httpd' do
 	action [:enable]
-end
-
-#
-# Set up Python virtual environment
-#
-
-virtualenv_dir = "/usr/lib/ckan/default"
-
-execute "Install Python Virtual Environment" do
-	user "root"
-	command "pip install virtualenv"
-end
-
-bash "Create CKAN Default Virtual Environment" do
-	user "root"
-	code <<-EOS
-		/usr/bin/virtualenv --no-site-packages #{virtualenv_dir}
-		chown -R ckan:ckan #{virtualenv_dir}
-	EOS
-	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
-end
-
-bash "Fix VirtualEnv lib issue" do
-	user "ckan"
-	group "ckan"
-	cwd "#{virtualenv_dir}"
-	code <<-EOS
-		mv -f lib/python2.7/site-packages lib64/python2.7/
-		rm -rf lib
-		ln -sf lib64 lib
-	EOS
-	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
-end
-
-#
-# Create CKAN configuration directory
-#
-
-directory "#{virtualenv_dir}/etc" do
-  owner 'ckan'
-  group 'ckan'
-  mode '0755'
-  action :create
-  recursive true
-end
-
-directory "/etc/ckan" do
-  owner 'ckan'
-  group 'ckan'
-  mode '0755'
-  action :create
-  recursive true
-end
-
-link "/etc/ckan/default" do
-	to "#{virtualenv_dir}/etc"
-	link_type :symbolic
 end

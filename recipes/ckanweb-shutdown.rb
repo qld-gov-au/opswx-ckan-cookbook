@@ -1,8 +1,4 @@
 #
-# Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
-# Cookbook Name:: datashades
-# Recipe:: datapusher-shutdown
-#
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
 # Copyright 2019, Queensland Government

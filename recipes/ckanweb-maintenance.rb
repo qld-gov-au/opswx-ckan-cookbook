@@ -27,7 +27,7 @@ if not app
 	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
 end
 
-paster = "/usr/lib/ckan/default/bin/paster --plugin=ckan"
+ckan_cli = "/usr/lib/ckan/default/bin/ckan_cli"
 config_file = "/etc/ckan/default/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 
@@ -35,12 +35,12 @@ shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 #
 execute "Tracking update" do
 	user "root"
-	command "#{paster} tracking update -c #{config_file} 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
+	command "#{ckan_cli} tracking update 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
 	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
 end
 
 # Update the Solr search index
 execute "Build search index" do
 	user "root"
-	command "#{paster} search-index rebuild -r -c #{config_file} 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
+	command "#{ckan_cli} search-index rebuild -r 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
 end

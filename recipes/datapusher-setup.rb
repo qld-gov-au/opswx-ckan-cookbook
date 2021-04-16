@@ -58,7 +58,7 @@ include_recipe "datashades::httpd-efs-setup"
 
 execute "Install Python Virtual Environment" do
 	user "root"
-	command "pip install virtualenv"
+	command "pip --cache-dir=/tmp/ install virtualenv"
 end
 
 bash "Create Virtual Environment" do

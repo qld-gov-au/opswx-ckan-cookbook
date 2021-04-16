@@ -1,11 +1,7 @@
 #
-# Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
-# Recipe:: ckanweb-configure
-#
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +16,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::ckan-configure"
-include_recipe "datashades::httpd-configure"
-include_recipe "datashades::nginx-configure"
+# Hide this instance from others
+#
+file "/data/#{node['datashades']['hostname']}" do
+	action :delete
+end
 
-service 'php-fpm-5.5' do
-	action [:restart]
+bash "Archive remaining logs" do
+	user "root"
+	cwd "/"
+	code <<-EOS
+		/etc/cron.daily/logrotate
+		/usr/local/bin/archive-logs.sh ckan
+	EOS
 end
