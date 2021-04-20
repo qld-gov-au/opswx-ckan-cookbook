@@ -143,10 +143,15 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-datashades_move_and_link(efs_data_dir) do
-    target real_data_dir
-    client_service service_name
-    owner service_name
+# copy EFS contents if we need them, but don't alter them
+if not ::File.identical?(real_data_dir, var_data_dir) then
+    service service_name do
+        action [:stop]
+    end
+    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
+        user service_name
+        only_if { ::File.directory? efs_data_dir }
+    end
 end
 
 datashades_move_and_link(var_data_dir) do

@@ -41,7 +41,6 @@ action :create do
     # Either way, ensure that the version number is stripped from the URL.
     if is_git then
         version = new_resource.revision
-        apprelease.sub!('http', "git+http")
         apprelease.sub!("#{new_resource.service_name}/archive/", "#{new_resource.service_name}.git@")
         apprelease.sub!('.zip', "")
     end
@@ -67,6 +66,7 @@ action :create do
         end
     else
         if is_git then
+            apprelease.sub!('^http:', "git+http:")
             apprelease << "@#{version}"
         end
         if ! apprelease.include? '#egg' then
@@ -87,7 +87,7 @@ action :create do
             # retrieve latest branch metadata
             git fetch origin '#{version}'
             # drop unversioned files
-            git clean
+            git clean -f
             # make versioned files pristine
             git reset --hard
             git checkout '#{version}'
