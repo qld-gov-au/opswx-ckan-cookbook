@@ -66,7 +66,7 @@ action :create do
         end
     else
         if is_git then
-            apprelease.sub!('^http:', "git+http:")
+            apprelease.sub!('^http', "git+http")
             apprelease << "@#{version}"
         end
         if ! apprelease.include? '#egg' then
