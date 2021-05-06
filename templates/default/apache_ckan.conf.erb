@@ -24,7 +24,7 @@
     RewriteRule / "/%3" [R]
 
     # API calls with significant side effects should not respect auth_tkt cookies, they should require the API key.
-    <Location ~ /api/(?!storage|action/(package_resource_reorder|resource_view_reorder|[-_a-zA-Z0-9]*follow)|([12]/)?util/[a-z]+/(format_)?autocomplete) >
+    <Location ~ [/]api[/](?!([0-9][/])?(storage|action[/](package_resource_reorder|resource_view_reorder|user_activity_list_html|[-_a-zA-Z0-9]*follow)|util[/][a-z]+[/](format_)?autocomplete)) >
         RequestHeader unset Cookie
     </Location>
 
