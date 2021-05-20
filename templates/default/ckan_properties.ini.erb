@@ -284,6 +284,8 @@ ckan.use_pylons_response_cleanup_middleware = true
 ## Make ckan commit changes solr after every dataset update change.
 ##Turn this to False if on solr 4.0 and you have automatic (soft)commits enabled
 ##ckan.search.solr_commit = True
+# Group/organisation list is computation-intensive, so it is truncated
+ckan.group_and_organization_list_all_fields_max = 100
 
 ## Datapusher settings
 
