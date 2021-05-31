@@ -107,6 +107,7 @@ end
 #
 archiver_present = false
 harvest_present = false
+csrf_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 	egg_name = app['shortname']
@@ -263,6 +264,14 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
+	if "#{pluginname}".eql? 'csrf-filter'
+		csrf_present = true
+		execute "set CSRF plugin in Repoze config" do
+			user "#{account_name}"
+			command "sed -i 's/repoze[.]who[.]plugins[.]friendlyform:FriendlyFormPlugin/ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin/g' #{config_dir}/who.ini"
+		end
+	end
+
 	bash "Provide custom Bootstrap version" do
 		user "#{account_name}"
 		group "#{account_name}"
@@ -364,6 +373,13 @@ if not harvest_present then
 
 	execute "Clean Harvest cron" do
 		command "rm -f /etc/cron.*/ckan-harvest*"
+	end
+end
+
+if not csrf_present then
+	execute "revert CSRF plugin from Repoze config" do
+		user "#{account_name}"
+		command "sed -i 's/ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin/repoze.who.plugins.friendlyform:FriendlyFormPlugin/g' #{config_dir}/who.ini"
 	end
 end
 
