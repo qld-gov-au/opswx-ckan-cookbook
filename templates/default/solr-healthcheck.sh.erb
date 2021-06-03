@@ -1,12 +1,26 @@
 #!/bin/sh
 
 HEARTBEAT_FILE="/data/solr-healthcheck_<%= node['datashades']['hostname'] %>"
+# If present, this file marks a server as "just started, may not be updated, don't use yet"
+STARTUP_FILE="$HEARTBEAT_FILE.start"
 # Only update heartbeat if it is present.
 # This allows us to manually drop a server from the pool
 if [ -e "$HEARTBEAT_FILE" ]; then
-  CURRENT_TIME=`date +%s`
+  CURRENT_TIME=$(date +%s)
   if (curl -I "http://localhost:8983/solr/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
+    PREVIOUS_HEALTH_TIME=$(cat $HEARTBEAT_FILE | tr -d '[:space:]')
     echo $CURRENT_TIME > "$HEARTBEAT_FILE"
+    if [ "$PREVIOUS_HEALTH_TIME" = "" ]; then
+      IS_HEALTHY=0
+    else
+      AGE=$(expr $CURRENT_TIME - $PREVIOUS_HEALTH_TIME)
+      IS_HEALTHY=$(expr $AGE '>' $MAX_AGE)
+    fi
+    if $IS_HEALTHY; then
+      rm -f $STARTUP_FILE
+    else
+      touch $STARTUP_FILE
+    fi
   else
     exit 1
   fi
