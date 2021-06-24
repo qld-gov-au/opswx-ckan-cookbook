@@ -1,4 +1,4 @@
-# Sets up EFS and EBS directories and links for CKAN.
+# Sets up EFS and EBS directories and links for CKAN batch layer.
 #
 # Copyright 2020, Queensland Government
 #
@@ -19,26 +19,9 @@
 #
 include_recipe "datashades::efs-setup"
 
-data_paths =
-{
-    "/data/shared_content" => 'apache',
-    "/data/sites" => 'apache'
-}
-
-data_paths.each do |data_path, dir_owner|
-    directory data_path do
-          owner dir_owner
-          group 'ec2-user'
-          mode '0775'
-          recursive true
-          action :create
-    end
-end
-
 link_paths =
 {
     "/var/shared_content" => '/data/shared_content',
-    "/var/www/sites" => '/data/sites'
 }
 
 link_paths.each do |link_path, source_path|
@@ -46,4 +29,29 @@ link_paths.each do |link_path, source_path|
         to source_path
         link_type :symbolic
     end
+end
+
+service_name = "ckan"
+
+var_log_dir = "/var/log/#{service_name}"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+if extra_disk_present then
+    real_log_dir = "#{extra_disk}/#{service_name}"
+
+    datashades_move_and_link(var_log_dir) do
+        target real_log_dir
+        client_service "supervisord"
+        owner service_name
+    end
+else
+    real_log_dir = var_log_dir
+end
+
+directory real_log_dir do
+    owner service_name
+    group 'ec2-user'
+    mode '0755'
+    recursive true
 end

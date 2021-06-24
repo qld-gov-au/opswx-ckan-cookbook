@@ -26,6 +26,7 @@ node['datashades']['ckan_web']['packages'].each do |p|
 end
 
 include_recipe "datashades::httpd-efs-setup"
+include_recipe "datashades::ckanweb-efs-setup"
 include_recipe "datashades::nginx-setup"
 include_recipe "datashades::ckan-setup"
 
