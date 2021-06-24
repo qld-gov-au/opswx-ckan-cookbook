@@ -1,4 +1,7 @@
 # Sets up EFS and EBS directories and links for CKAN batch layer.
+# This includes the batch logging directory /var/log/ckan
+# and ensuring that /var/shared_content points to the EFS.
+# If possible, it will move logs off the root disk.
 #
 # Copyright 2020, Queensland Government
 #
@@ -15,8 +18,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update EFS Data directory for CKAN
-#
 include_recipe "datashades::efs-setup"
 
 link_paths =
