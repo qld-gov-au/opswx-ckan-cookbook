@@ -25,9 +25,8 @@ link_paths =
 }
 
 link_paths.each do |link_path, source_path|
-    link link_path do
-        to source_path
-        link_type :symbolic
+    datashades_move_and_link(link_path) do
+        target source_path
     end
 end
 
