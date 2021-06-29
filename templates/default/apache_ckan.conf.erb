@@ -42,6 +42,9 @@
     Redirect /organization/science-information-technology-innovation-and-the-arts /organization/science-information-technology-and-innovation
     Redirect /organization/state-development-infrastructure-and-planning /organization/state-development
 
+    SetEnvIf Request_URI "/<%= node['datashades']['attachments_bucket'] %>/" file_download=1
+    Header always set X-Robots-Tag "noindex,nofollow" env=file_download
+
     Header always set Strict-Transport-Security "max-age=31536000"
     Header always edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure
 

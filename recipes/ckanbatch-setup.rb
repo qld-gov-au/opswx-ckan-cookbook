@@ -29,6 +29,7 @@ cookbook_file "/bin/updateasg" do
 end
 
 include_recipe "datashades::ckan-setup"
+include_recipe "datashades::ckanbatch-efs-setup"
 
 # Installing via yum gives initd integration, but has import problems.
 # Installing via pip fixes the import problems, but doesn't provide the integration.
