@@ -7,7 +7,7 @@
 # Since this isn't on the root filesystem and may not be instantly
 # available on startup, it's not added to /etc/fstab.
 #
-# Copyright 2016, Link Digital
+# Copyright 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
