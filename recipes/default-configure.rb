@@ -22,28 +22,15 @@
 
 include_recipe "datashades::stackparams"
 
-extra_disk = "/mnt/local_data"
-if ::File.directory?(extra_disk) then
-	swap_file = "#{extra_disk}/swapfile_1g"
-	bash "Add swap disk" do
-		code <<-EOS
-			dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
-			chmod 0600 #{swap_file}
-			mkswap #{swap_file}
-		EOS
-		not_if { ::File.exist?(swap_file) }
-	end
-
-	execute "Enable swap disk" do
-		command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
-	end
-end
+# Add a larger swapfile if we have spare disk space
+#
+include_recipe "datashades::swapfile"
 
 template "/usr/local/bin/archive-logs.sh" do
-	source "archive-logs.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
+    source "archive-logs.sh.erb"
+    owner "root"
+    group "root"
+    mode "0755"
 end
 
 # Archive regular system logs to S3.
@@ -51,53 +38,53 @@ end
 # however, if logs in subdirectories are already compressed by logrotate,
 # then they will be archived too.
 file "/etc/cron.daily/archive-system-logs-to-s3" do
-	content "LOG_DIR=/var/log /usr/local/bin/archive-logs.sh system >/dev/null 2>&1\n"
-	owner "root"
-	group "root"
-	mode "0755"
+    content "LOG_DIR=/var/log /usr/local/bin/archive-logs.sh system >/dev/null 2>&1\n"
+    owner "root"
+    group "root"
+    mode "0755"
 end
 
 # Run updateDNS script
 #
 execute 'update dns' do
-	command	'/bin/updatedns'
-	user 'root'
-	group 'root'
-	only_if { ::File.exist? "/bin/updatedns" }
+    command '/bin/updatedns'
+    user 'root'
+    group 'root'
+    only_if { ::File.exist? "/bin/updatedns" }
 end
 
 # Recover from DNS failures
 #
 cookbook_file "/usr/local/bin/fix-dns.sh" do
-	source "fix-dns.sh"
-	owner "root"
-	group "root"
-	mode "0744"
+    source "fix-dns.sh"
+    owner "root"
+    group "root"
+    mode "0744"
 end
 
 file "/etc/cron.d/fix-dns" do
-	content "*/5 * * * * root /usr/local/bin/fix-dns.sh\n"
-	mode '0644'
+    content "*/5 * * * * root /usr/local/bin/fix-dns.sh\n"
+    mode '0644'
 end
 
 # Update custom auditd rules
 #
 template '/etc/audit/rules.d/link.rules' do
-	source 'auditd.rules.erb'
-	owner 'root'
+    source 'auditd.rules.erb'
+    owner 'root'
 end
 
 # Remove unwanted cron job from previous script versions
 #
 file '/etc/cron.daily/manageadmins' do
-	action :delete
+    action :delete
 end
 
 service 'aws-smtp-relay' do
-	action [:enable, :restart]
+    action [:enable, :restart]
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions
 service 'sendmail' do
-	action [:enable, :start]
+    action [:enable, :start]
 end
