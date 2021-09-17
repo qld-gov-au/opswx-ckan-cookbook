@@ -72,14 +72,14 @@ end
 
 # Set up maintenance cron jobs
 
-cookbook_file "/usr/local/bin/archive-resource-revisions.sql"
+cookbook_file "/usr/local/bin/archive-resource-revisions.sql" do
     source "archive-resource-revisions.sql"
     owner "root"
     group "root"
     mode "0644"
 end
 
-cookbook_file "/usr/local/bin/archive-resource-revisions.sh"
+cookbook_file "/usr/local/bin/archive-resource-revisions.sh" do
     source "archive-resource-revisions.sql"
     owner "root"
     group "root"
