@@ -121,6 +121,15 @@ file "/etc/cron.d/ckan-tracking-update" do
     group "root"
 end
 
+# Run dataset require updates notifications at 7am and 7:15am on batch
+file "/etc/cron.d/ckan-dataset-notification-due" do
+    content "00 7 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} ckanext-data-qld send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
+            "15 7 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} ckanext-data-qld send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+    mode '0644'
+    owner "root"
+    group "root"
+end
+
 file "/etc/cron.hourly/ckan-email-notifications" do
     content "/usr/local/bin/pick-job-server.sh && curl -d '{}' #{app['domains'][0]}#{node['datashades']['ckan_web']['endpoint']}api/action/send_email_notifications > /dev/null 2>&1\n"
     mode '0755'
