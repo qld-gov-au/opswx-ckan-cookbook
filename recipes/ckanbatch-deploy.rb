@@ -123,8 +123,8 @@ end
 
 # Run dataset require updates notifications at 7am and 7:15am on batch
 file "/etc/cron.d/ckan-dataset-notification-due" do
-    content "00 7 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} ckanext-data-qld send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
-            "15 7 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} ckanext-data-qld send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+    content "00 7 * * * root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
+            "15 7 * * * root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >/dev/null 2>&1\n"
     mode '0644'
     owner "root"
     group "root"
