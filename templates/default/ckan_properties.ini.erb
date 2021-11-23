@@ -253,7 +253,7 @@ ckanext.s3filestore.addressing_style = virtual
 ckanext.s3filestore.download_proxy = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>/<%= node['datashades']['attachments_bucket'] %>
 ckanext.s3filestore.region_name= ap-southeast-2
 ckanext.s3filestore.signature_version = s3v4
-ckanext.s3filestore.acl = auto
+ckanext.s3filestore.acl = private
 ckanext.s3filestore.filesystem_download_fallback = True
 
 ckanext.cloudstorage.driver = S3_AP_SOUTHEAST2
