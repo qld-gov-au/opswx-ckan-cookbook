@@ -1,14 +1,16 @@
 #!/bin/sh
 
+BUCKET="<%= node['datashades']['log_bucket'] %>"
 CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
-LOCAL_DIR="/mnt/local_data/solr_backup"
+EXTRA_DISK="/mnt/local_data"
+LOCAL_DIR="$EXTRA_DISK/solr_backup"
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME/"
+DATA_DIR="$EXTRA_DISK/solr_data/data/$CORE_NAME/data"
 SYNC_DIR="/data/solr/data/$CORE_NAME/data"
 SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME/"
 HOST="http://localhost:8983/solr"
-BUCKET="<%= node['datashades']['log_bucket'] %>"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -53,5 +55,6 @@ else
     sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
     sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
     curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
+    sudo -u solr rm "$DATA_DIR/index"
   fi
 fi
