@@ -18,7 +18,8 @@ is_healthy () {
   fi
   LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
   (sudo -u solr java -cp "$LUCENE_JAR" -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex "$BACKUP_DIR" \
-    | sudo -u solr tee -a /var/log/solr/solr_${CORE_NAME}_health-check.log) || return 1
+    | sudo -u solr tee -a /var/log/solr/solr_${CORE_NAME}_health-check.log \
+    | grep "No problems were detected with this index.") || return 1
   rm -rf "/tmp/snapshot.health_check"
 }
 
