@@ -52,6 +52,22 @@ node['datashades']['core']['packages'].each do |p|
     package p
 end
 
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
+
+if extra_disk_present then
+    real_cache_dir = "#{extra_disk}/.cache"
+
+    directory real_cache_dir do
+        mode '0755'
+        recursive true
+    end
+
+    datashades_move_and_link('/root/.cache') do
+        target real_cache_dir
+    end
+end
+
 execute "Update AWS command-line interface" do
     command "pip --cache-dir=/tmp/ install --upgrade awscli"
 end
