@@ -13,6 +13,8 @@ HOST="http://localhost:8983/solr"
 PING_URL="$HOST/$CORE_NAME/admin/ping"
 DATA_DIR="/mnt/local_data/solr_data/data/$CORE_NAME/data"
 LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
+LUCENE_CHECK="java -cp $LUCENE_JAR -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex"
+LOG_FILE="/var/log/solr/solr_${CORE_NAME}_health-check.log"
 BACKUP_DIR="/tmp/snapshot.health_check"
 
 fix_index () {
@@ -31,9 +33,8 @@ fix_index () {
   # Attempt to exorcise index corruption.
   # If even that fails, move the whole index aside for later forensics.
   # (Solr should recreate it and try to recover from the master sync.)
-  (sudo -u solr java -cp "$LUCENE_JAR" -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex -exorcise "$INDEX_DIR" \
-    || sudo -u solr mv -v $INDEX_DIR $INDEX_DIR.bad.`date +'%s'`) \
-    | sudo -u solr tee -a /var/log/solr/solr_${CORE_NAME}_health-check.log
+  sudo -u solr sh -c "$LUCENE_CHECK -exorcise $INDEX_DIR >> $LOG_FILE \
+    || mv -v $INDEX_DIR $INDEX_DIR.bad.`date +'%s'` >> $LOG_FILE"
   sudo service solr start
   touch $HEARTBEAT_FILE
 }
@@ -47,8 +48,7 @@ is_index_healthy () {
     |grep '"status": *"OK"' > /dev/null
   IS_HEALTHY=$?
   if [ "$IS_HEALTHY" = "0" ]; then
-    sudo -u solr java -cp "$LUCENE_JAR" -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex "$BACKUP_DIR" \
-      | sudo -u solr tee -a /var/log/solr/solr_${CORE_NAME}_health-check.log >/dev/null
+    sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"
     IS_HEALTHY=$?
   fi
   if [ "$IS_HEALTHY" -ne "0" ]; then
