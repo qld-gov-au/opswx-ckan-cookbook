@@ -10,12 +10,16 @@ HOST="http://localhost:8983/solr"
 PING_URL="$HOST/$CORE_NAME/admin/ping"
 
 is_healthy () {
-    (curl -I "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
+  (curl -I "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
+  BACKUP_DIR=$(find /mnt/local_data/solr_backup/* -type d -cmin -2 |tail -1)
+  if [ "$BACKUP_DIR" = "" ]; then
     curl "$HOST/$CORE_NAME/replication?command=backup&location=/tmp&name=health_check" || return 1
     BACKUP_DIR="/tmp/snapshot.health_check"
-    LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
-    sudo -u solr java -cp "$LUCENE_JAR" org.apache.lucene.index.CheckIndex "$BACKUP_DIR" >/dev/null || return 1
-    rm -r $BACKUP_DIR
+  fi
+  LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
+  (sudo -u solr java -cp "$LUCENE_JAR" -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex "$BACKUP_DIR" \
+    | sudo -u solr tee -a /var/log/solr/solr_${CORE_NAME}_health-check.log) || return 1
+  rm -rf "/tmp/snapshot.health_check"
 }
 
 # Only update heartbeat if it is present.
