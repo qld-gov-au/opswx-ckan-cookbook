@@ -1,27 +1,88 @@
 #!/bin/sh
 
+# ensure we can still grab the correct exit code after piping output to 'tee'
+set +o pipefail
+
+MAX_AGE=120
 HEARTBEAT_FILE="/data/solr-healthcheck_<%= node['datashades']['hostname'] %>"
 # If present, this file marks a server as "just started, may not be updated, don't use yet"
 STARTUP_FILE="$HEARTBEAT_FILE.start"
+
+CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
+HOST="http://localhost:8983/solr"
+PING_URL="$HOST/$CORE_NAME/admin/ping"
+DATA_DIR="/mnt/local_data/solr_data/data/$CORE_NAME/data"
+LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
+LUCENE_CHECK="java -cp $LUCENE_JAR -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex"
+LOG_FILE="/var/log/solr/solr_${CORE_NAME}_health-check.log"
+BACKUP_DIR="/tmp/snapshot.health_check"
+
+fix_index () {
+  # Attempt to fix a corrupted Lucene index.
+  # This will drop the server out of the pool,
+  # as the Lucene check can only run offline.
+  rm $HEARTBEAT_FILE
+  sudo service solr stop
+  # extract the index location from 'index.properties' if it exists,
+  # otherwise default to 'index'
+  INDEX_DIR=$(grep 'index=' "$DATA_DIR/index.properties" |awk -F= '{print $2}')
+  if [ "$INDEX_DIR" = "" ]; then
+    INDEX_DIR=index
+  fi
+  INDEX_DIR="$DATA_DIR/$INDEX_DIR"
+  # Attempt to exorcise index corruption.
+  # If even that fails, move the whole index aside for later forensics.
+  # (Solr should recreate it and try to recover from the master sync.)
+  sudo -u solr sh -c "$LUCENE_CHECK -exorcise $INDEX_DIR >> $LOG_FILE \
+    || mv -v $INDEX_DIR $INDEX_DIR.bad.`date +'%s'` >> $LOG_FILE"
+  sudo service solr start
+  touch $HEARTBEAT_FILE
+}
+
+is_ping_healthy () {
+  (curl -I "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
+}
+
+is_index_healthy () {
+  curl "$HOST/$CORE_NAME/replication?command=backup&location=/tmp&name=health_check" 2>/dev/null \
+    |grep '"status": *"OK"' > /dev/null
+  IS_HEALTHY=$?
+  if [ "$IS_HEALTHY" = "0" ]; then
+    sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"
+    IS_HEALTHY=$?
+  fi
+  if [ "$IS_HEALTHY" -ne "0" ]; then
+    fix_index
+  fi
+  rm -rf "$BACKUP_DIR"
+  # even if fix_index worked, don't become master yet,
+  # because we might have cleared the index and need to resync.
+  return $IS_HEALTHY
+}
+
+is_healthy () {
+  is_ping_healthy || return 1
+  is_index_healthy || return 1
+}
+
 # Only update heartbeat if it is present.
 # This allows us to manually drop a server from the pool
-if [ -e "$HEARTBEAT_FILE" ]; then
-  CURRENT_TIME=$(date +%s)
-  if (curl -I "http://localhost:8983/solr/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
-    PREVIOUS_HEALTH_TIME=$(cat $HEARTBEAT_FILE | tr -d '[:space:]')
-    echo $CURRENT_TIME > "$HEARTBEAT_FILE"
-    if [ "$PREVIOUS_HEALTH_TIME" = "" ]; then
-      IS_HEALTHY=0
-    else
-      AGE=$(expr $CURRENT_TIME - $PREVIOUS_HEALTH_TIME)
-      IS_HEALTHY=$(expr $AGE '>' $MAX_AGE)
-    fi
-    if $IS_HEALTHY; then
-      rm -f $STARTUP_FILE
-    else
-      touch $STARTUP_FILE
-    fi
-  else
-    exit 1
-  fi
+if ! [ -e "$HEARTBEAT_FILE" ]; then
+  exit 0
+fi
+
+CURRENT_TIME=$(date +%s)
+is_healthy || exit 1
+PREVIOUS_HEALTH_TIME=$(cat $HEARTBEAT_FILE | tr -d '[:space:]')
+echo $CURRENT_TIME > "$HEARTBEAT_FILE"
+if [ "$PREVIOUS_HEALTH_TIME" = "" ]; then
+  IS_HEALTHY=1
+else
+  AGE=$(expr $CURRENT_TIME - $PREVIOUS_HEALTH_TIME)
+  IS_HEALTHY=$(expr $AGE '>' $MAX_AGE)
+fi
+if [ "$IS_HEALTHY" = "0" ]; then
+  rm -f $STARTUP_FILE
+else
+  touch $STARTUP_FILE
 fi
