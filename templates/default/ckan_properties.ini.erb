@@ -123,8 +123,8 @@ solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']
 # Note: Add ``datastore`` to enable the CKAN DataStore
 #       Add ``datapusher`` to enable DataPusher
 #       Add ``pdf_preview`` to enable the resource preview for PDFs
-#		Add ``resource_proxy`` to enable resorce proxying and get around the
-#		same origin policy
+#       Add ``resource_proxy`` to enable resorce proxying and get around the
+#       same origin policy
 ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view
 ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
@@ -253,7 +253,7 @@ ckanext.s3filestore.addressing_style = virtual
 ckanext.s3filestore.download_proxy = https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>/<%= node['datashades']['attachments_bucket'] %>
 ckanext.s3filestore.region_name= ap-southeast-2
 ckanext.s3filestore.signature_version = s3v4
-ckanext.s3filestore.acl = auto
+ckanext.s3filestore.acl = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/s3filestore_acl}
 ckanext.s3filestore.filesystem_download_fallback = True
 
 ckanext.cloudstorage.driver = S3_AP_SOUTHEAST2
