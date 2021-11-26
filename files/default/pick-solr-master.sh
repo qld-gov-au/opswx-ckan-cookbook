@@ -2,6 +2,8 @@
 
 # Identify whether the current server is the Solr master.
 
+. `dirname $0`/solr-env.sh
+
 function is_healthy() {
   HEALTH_FILE=$1
   IGNORE_STARTUP=$2
@@ -19,7 +21,6 @@ function is_healthy() {
   return $(expr $AGE '>' $MAX_AGE)
 }
 
-opsworks_hostname="<%= node['datashades']['hostname'] %>"
 layer_prefix=$(echo "$opsworks_hostname" | tr -d '[0-9]')
 NOW=$(date +'%s')
 MAX_AGE=120

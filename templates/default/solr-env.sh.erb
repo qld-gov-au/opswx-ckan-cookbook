@@ -1,0 +1,17 @@
+#!/bin/sh
+
+opsworks_hostname="<%= node['datashades']['hostname'] %>"
+BUCKET="<%= node['datashades']['log_bucket'] %>"
+CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
+HEARTBEAT_FILE="/data/solr-healthcheck_$opsworks_hostname"
+# If present, this file marks a server as "just started, may not be updated, don't use yet"
+STARTUP_FILE="$HEARTBEAT_FILE.start"
+
+EXTRA_DISK="/mnt/local_data"
+LOCAL_DIR="$EXTRA_DISK/solr_backup"
+DATA_DIR="$EXTRA_DISK/solr_data/data/$CORE_NAME/data"
+SYNC_DIR="/data/solr/data/$CORE_NAME/data"
+HOST="http://localhost:8983/solr"
+PING_URL="$HOST/$CORE_NAME/admin/ping"
+LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
+LUCENE_CHECK="java -cp $LUCENE_JAR -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex"

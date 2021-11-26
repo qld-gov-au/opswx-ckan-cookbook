@@ -24,29 +24,36 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
-template "/usr/local/bin/solr-healthcheck.sh" do
-	source "solr-healthcheck.sh.erb"
+template "/usr/local/bin/solr-env.sh" do
+	source "solr-env.sh.erb"
 	owner "root"
 	group "root"
 	mode "0755"
 end
 
-template "/usr/local/bin/toggle-solr-healthcheck.sh" do
-	source "toggle-solr-healthcheck.sh.erb"
+cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
+	source "solr-healthcheck.sh"
 	owner "root"
 	group "root"
 	mode "0755"
 end
 
-template "/usr/local/bin/pick-solr-master.sh" do
-	source "pick-solr-master.sh.erb"
+cookbook_file "/usr/local/bin/toggle-solr-healthcheck.sh" do
+	source "toggle-solr-healthcheck.sh"
 	owner "root"
 	group "root"
 	mode "0755"
 end
 
-template "/usr/local/bin/solr-sync.sh" do
-	source "solr-sync.sh.erb"
+cookbook_file "/usr/local/bin/pick-solr-master.sh" do
+	source "pick-solr-master.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-sync.sh" do
+	source "solr-sync.sh"
 	owner "root"
 	group "root"
 	mode "0755"
