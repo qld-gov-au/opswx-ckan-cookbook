@@ -48,7 +48,7 @@ is_ping_healthy () {
 
 is_index_healthy () {
   curl "$HOST/$CORE_NAME/replication?command=backup&location=/tmp&name=health_check" 2>/dev/null \
-    |grep '"status": *"OK"' > /dev/null || return 1
+    |grep '"status": *"OK"' > /dev/null
   IS_HEALTHY=$?
   if [ "$IS_HEALTHY" = "0" ]; then
     sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"
