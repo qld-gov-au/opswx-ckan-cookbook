@@ -35,7 +35,7 @@ fix_index () {
             (echo 'Index is unrecoverable, copy from backup'; \
             mv $INDEX_DIR $INDEX_DIR.bad.`date +'%s'` && \
             rm $DATA_DIR/index.properties && \
-            rsync -a --delete $SYNC_DIR/index/ $DATA_DIR/index') \
+            rsync -a --delete $SYNC_DIR/index/ $DATA_DIR/index) \
         ) >> $LOG_FILE"
   fi
   sudo service solr start
@@ -48,24 +48,20 @@ is_ping_healthy () {
 
 is_index_healthy () {
   curl "$HOST/$CORE_NAME/replication?command=backup&location=/tmp&name=health_check" 2>/dev/null \
-    |grep '"status": *"OK"' > /dev/null
-  IS_HEALTHY=$?
-  if [ "$IS_HEALTHY" = "0" ]; then
-    sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"
-    IS_HEALTHY=$?
+    |grep '"status": *"OK"' > /dev/null || return 1
+  if ! (sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"); then
+    rm -rf "$BACKUP_DIR"
+    return 1
   fi
-  if [ "$IS_HEALTHY" -ne "0" ]; then
-    fix_index
-  fi
-  rm -rf "$BACKUP_DIR"
-  # even if fix_index worked, don't become master yet,
-  # because we might have cleared the index and need to resync.
-  return $IS_HEALTHY
 }
 
 is_healthy () {
-  is_ping_healthy || return 1
-  is_index_healthy || return 1
+  if ! (is_ping_healthy && is_index_healthy); then
+    fix_index
+    # even if fix_index worked, don't become master yet,
+    # because we might have cleared the index and need to resync.
+    return 1
+  fi
 }
 
 # Only update heartbeat if it is present.
