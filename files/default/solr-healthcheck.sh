@@ -3,17 +3,10 @@
 # ensure we can still grab the correct exit code after piping output to 'tee'
 set +o pipefail
 
-MAX_AGE=120
-HEARTBEAT_FILE="/data/solr-healthcheck_<%= node['datashades']['hostname'] %>"
-# If present, this file marks a server as "just started, may not be updated, don't use yet"
-STARTUP_FILE="$HEARTBEAT_FILE.start"
+. `dirname $0`/solr-env.sh
 
-CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
-HOST="http://localhost:8983/solr"
-PING_URL="$HOST/$CORE_NAME/admin/ping"
-DATA_DIR="/mnt/local_data/solr_data/data/$CORE_NAME/data"
-LUCENE_JAR=$(ls /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/lucene-core-*.jar | tail -1)
-LUCENE_CHECK="java -cp $LUCENE_JAR -ea:org.apache.lucene... org.apache.lucene.index.CheckIndex"
+MAX_AGE=120
+
 LOG_FILE="/var/log/solr/solr_${CORE_NAME}_health-check.log"
 BACKUP_DIR="/tmp/snapshot.health_check"
 
@@ -31,10 +24,20 @@ fix_index () {
   fi
   INDEX_DIR="$DATA_DIR/$INDEX_DIR"
   # Attempt to exorcise index corruption.
-  # If even that fails, move the whole index aside for later forensics.
-  # (Solr should recreate it and try to recover from the master sync.)
-  sudo -u solr sh -c "$LUCENE_CHECK -exorcise $INDEX_DIR >> $LOG_FILE \
-    || mv -v $INDEX_DIR $INDEX_DIR.bad.`date +'%s'` >> $LOG_FILE"
+  # If even that fails, move the whole index aside for later forensics
+  # and copy a fresh index from the EFS sync.
+  if ! (sudo -u solr sh -c "$LUCENE_CHECK $INDEX_DIR >> $LOG_FILE"); then
+    # Lucene returns an error code if the index was bad,
+    # even if it was successfully exorcised,
+    # so check again to determine whether we actually succeeded.
+    sudo -u solr sh -c "(echo 'Index failed check, attempting to fix'; \
+        $LUCENE_CHECK -exorcise $INDEX_DIR; $LUCENE_CHECK $INDEX_DIR || \
+            (echo 'Index is unrecoverable, copy from backup'; \
+            mv $INDEX_DIR $INDEX_DIR.bad.`date +'%s'` && \
+            rm $DATA_DIR/index.properties && \
+            rsync -a --delete $SYNC_DIR/index/ $DATA_DIR/index) \
+        ) >> $LOG_FILE"
+  fi
   sudo service solr start
   touch $HEARTBEAT_FILE
 }
@@ -51,18 +54,17 @@ is_index_healthy () {
     sudo -u solr sh -c "$LUCENE_CHECK $BACKUP_DIR >> $LOG_FILE"
     IS_HEALTHY=$?
   fi
-  if [ "$IS_HEALTHY" -ne "0" ]; then
-    fix_index
-  fi
   rm -rf "$BACKUP_DIR"
-  # even if fix_index worked, don't become master yet,
-  # because we might have cleared the index and need to resync.
   return $IS_HEALTHY
 }
 
 is_healthy () {
-  is_ping_healthy || return 1
-  is_index_healthy || return 1
+  if ! (is_ping_healthy && is_index_healthy); then
+    fix_index
+    # even if fix_index worked, don't become master yet,
+    # because we might have cleared the index and need to resync.
+    return 1
+  fi
 }
 
 # Only update heartbeat if it is present.

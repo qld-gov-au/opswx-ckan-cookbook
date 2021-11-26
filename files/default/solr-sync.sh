@@ -1,16 +1,11 @@
 #!/bin/sh
 
-BUCKET="<%= node['datashades']['log_bucket'] %>"
-CORE_NAME="<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>"
-EXTRA_DISK="/mnt/local_data"
-LOCAL_DIR="$EXTRA_DISK/solr_backup"
+. `dirname $0`/solr-env.sh
+
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME/"
-DATA_DIR="$EXTRA_DISK/solr_data/data/$CORE_NAME/data"
-SYNC_DIR="/data/solr/data/$CORE_NAME/data"
 SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME/"
-HOST="http://localhost:8983/solr"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -33,7 +28,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
   set_dns_primary true
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
   sleep 5
-  sudo -u solr rsync -a --delete "$LOCAL_SNAPSHOT" "$SYNC_SNAPSHOT" || exit 1
+  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || exit 1
   # make 'index' on EFS a symlink pointing at the latest index files
   mv "$SYNC_DIR/index" "$SYNC_DIR/index_old"
   sudo -u solr ln -s "$SNAPSHOT_NAME" "$SYNC_DIR/index"

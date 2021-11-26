@@ -18,6 +18,23 @@
 
 include_recipe "datashades::ckan-configure"
 
+extra_disk = "/mnt/local_data"
+if ::File.directory?(extra_disk) then
+    swap_file = "#{extra_disk}/swapfile_2g"
+    bash "Add swap disk" do
+        code <<-EOS
+            dd if=/dev/zero of=#{swap_file} bs=1024 count=2M
+            chmod 0600 #{swap_file}
+            mkswap #{swap_file}
+        EOS
+        not_if { ::File.exist?(swap_file) }
+    end
+
+    execute "Enable swap disk" do
+        command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
+    end
+end
+
 service "supervisord" do
     action [:stop, :start]
 end
