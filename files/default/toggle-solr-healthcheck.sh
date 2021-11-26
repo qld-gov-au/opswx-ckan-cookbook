@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. `dirname $0`/solr-env.sh
+
 usage () {
   echo "Usage: $0 on|off"
   exit 1
@@ -8,7 +10,6 @@ if [ "$#" -lt 1 ]; then
   usage
 fi
 COMMAND="$1"
-HEARTBEAT_FILE="/data/solr-healthcheck_<%= node['datashades']['hostname'] %>"
 if [ "$COMMAND" = "on" ]; then
   sudo touch $HEARTBEAT_FILE
 elif [ "$COMMAND" = "off" ]; then
