@@ -85,16 +85,15 @@ action :create do
         cwd install_dir
         code <<-EOS
             # retrieve latest branch metadata
-            git fetch origin '#{version}'
-            # drop unversioned files
-            git clean -f
+            git fetch origin '#{version}' || exit 1
             # make versioned files pristine
+            git clean -f
             git reset --hard
-            git checkout '#{version}'
+            find . -name '*.pyc' -delete
+            # move to target revision
+            git checkout '#{version}' || exit 1
             # get latest changes if we're checking out a branch, otherwise it doesn't matter
             git pull
-            # drop compiled files from previous branch
-            find . -name '*.pyc' -delete
             # regenerate metadata
             #{new_resource.virtualenv_dir}/bin/python setup.py develop
         EOS
