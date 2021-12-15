@@ -83,6 +83,18 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 end
 
+log4j_version = '2.16.0'
+for jar_type in ['api', 'core', 'slf4j-impl'] do
+    log4j_artefact = "log4j-#{jar_type}"
+    bash "Patch #{log4j_artefact} to version #{log4j_version}" do
+        cwd "/opt/solr/server/lib/ext"
+        code <<-EOS
+            ls #{log4j_artefact}-*.jar |grep -v '[-]#{log4j_version}.jar' |xargs rm
+            curl -O -C - "https://repo1.maven.org/maven2/org/apache/logging/log4j/#{log4j_artefact}/#{log4j_version}/#{log4j_artefact}-#{log4j_version}.jar"
+        EOS
+    end
+end
+
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 
