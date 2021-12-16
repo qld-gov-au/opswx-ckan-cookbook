@@ -80,7 +80,7 @@ cookbook_file "/usr/local/bin/archive-resource-revisions.sql" do
 end
 
 cookbook_file "/usr/local/bin/archive-resource-revisions.sh" do
-    source "archive-resource-revisions.sql"
+    source "archive-resource-revisions.sh"
     owner "root"
     group "root"
     mode "0755"
