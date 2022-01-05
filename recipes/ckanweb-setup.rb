@@ -56,7 +56,7 @@ end
 
 execute "Remove unused Apache modules" do
     cwd "#{httpd_conf_dir}/conf.modules.d"
-    command "mv *-dav.conf *-lua.conf *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
+    command "mv *-dav.conf *-lua.conf *-php.conf *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
 end
 
 # Enable Apache service
