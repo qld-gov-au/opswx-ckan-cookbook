@@ -22,7 +22,7 @@ include_recipe "datashades::default"
 # Install CKAN services and dependencies
 #
 node['datashades']['ckan_web']['packages'].each do |p|
-	package p
+    package p
 end
 
 include_recipe "datashades::httpd-efs-setup"
@@ -30,20 +30,37 @@ include_recipe "datashades::ckanweb-efs-setup"
 include_recipe "datashades::nginx-setup"
 include_recipe "datashades::ckan-setup"
 
+httpd_conf_dir = "/etc/httpd"
+
 # Change Apache default port to 8000 and fix access to /
 #
 bash "Change Apache config" do
-	user 'root'
-	group 'root'
-	code <<-EOS
-	sed -i 's~Listen 80~Listen 8000~g' /etc/httpd/conf/httpd.conf
-	sed -i '/<Directory /{n;n;s/Require all denied/# Require all denied/}' /etc/httpd/conf/httpd.conf
-	EOS
-	not_if "grep 'Listen 8000' /etc/httpd/conf/httpd.conf"
+    user 'root'
+    group 'root'
+    cwd httpd_conf_dir
+    code <<-EOS
+    sed -i 's~Listen 80~Listen 8000~g' conf/httpd.conf
+    sed -i '/<Directory /{n;n;s/Require all denied/# Require all denied/}' conf/httpd.conf
+    EOS
+    not_if "grep 'Listen 8000' #{httpd_conf_dir}/conf/httpd.conf"
+end
+
+# Drop Apache modules that we don't need as they're dead weight
+# and points of vulnerability.
+#
+directory "#{httpd_conf_dir}/conf.modules.disabled" do
+    owner 'root'
+    mode '0755'
+    action :create
+end
+
+execute "Remove unused Apache modules" do
+    cwd "#{httpd_conf_dir}/conf.modules.d"
+    command "mv *-dav.conf *-lua.conf *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
 end
 
 # Enable Apache service
 #
 service 'httpd' do
-	action [:enable]
+    action [:enable]
 end

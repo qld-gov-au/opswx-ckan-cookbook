@@ -83,7 +83,7 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 end
 
-log4j_version = '2.16.0'
+log4j_version = '2.17.0'
 for jar_type in ['api', 'core', 'slf4j-impl'] do
     log4j_artefact = "log4j-#{jar_type}"
     bash "Patch #{log4j_artefact} to version #{log4j_version}" do
