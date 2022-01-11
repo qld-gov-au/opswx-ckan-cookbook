@@ -74,6 +74,10 @@ cookbook_file "/etc/logrotate.d/solr" do
 	source "solr-logrotate"
 end
 
+cron "Solr health check" do
+	action :delete
+end
+
 file "/etc/cron.d/solr-healthcheck" do
 	content "* * * * * root /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n"
 	mode "0644"
