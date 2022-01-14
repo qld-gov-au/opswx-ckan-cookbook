@@ -133,7 +133,7 @@ if File.foreach(config_file).grep(/^\s*ckan[.]plugins\s*=.*\bdata_qld(_integrati
 end
 
 file "/etc/cron.hourly/ckan-email-notifications" do
-    content "/usr/local/bin/pick-job-server.sh && curl -d '{}' #{app['domains'][0]}#{node['datashades']['ckan_web']['endpoint']}api/action/send_email_notifications > /dev/null 2>&1\n"
+    content "/usr/local/bin/pick-job-server.sh && (echo '{}' | #{virtualenv_dir}/bin/paster post #{config_file} /api/action/send_email_notifications) > /dev/null 2>&1\n"
     mode '0755'
     owner "root"
     group "root"
