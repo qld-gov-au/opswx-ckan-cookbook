@@ -74,7 +74,7 @@ if ! [ -e "$HEARTBEAT_FILE" ]; then
 fi
 
 CURRENT_TIME=$(date +%s)
-is_healthy || exit 1
+is_ping_healthy || exit 1
 PREVIOUS_HEALTH_TIME=$(cat $HEARTBEAT_FILE | tr -d '[:space:]')
 echo $CURRENT_TIME > "$HEARTBEAT_FILE"
 if [ "$PREVIOUS_HEALTH_TIME" = "" ]; then

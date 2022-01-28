@@ -18,7 +18,7 @@ function set_dns_primary () {
 }
 
 # we can't perform any replication operations if Solr is stopped
-if ! (curl -I "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
+if ! (curl -I --connect-timeout 5 "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
   set_dns_primary false
   exit 0
 fi
@@ -29,13 +29,10 @@ if (/usr/local/bin/pick-solr-master.sh); then
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME"
   sleep 5
   sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || exit 1
-  # make 'index' on EFS a symlink pointing at the latest index files
-  mv "$SYNC_DIR/index" "$SYNC_DIR/index_old"
-  sudo -u solr ln -s "$SNAPSHOT_NAME" "$SYNC_DIR/index"
-  sudo -u solr rm -r "$SYNC_DIR/index_old"
   for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
     sudo -u solr rm -r "$old_snapshot"
   done
+  # sweep backups to S3 every hour
   if [ "$MINUTE" = "00" ]; then
     cd "$LOCAL_DIR"
     tar --force-local -czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
@@ -50,6 +47,5 @@ else
     sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
     sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
     curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
-    sudo -u solr rm "$DATA_DIR/index"
   fi
 fi
