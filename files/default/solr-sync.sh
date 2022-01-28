@@ -28,6 +28,9 @@ function wait_for_replication_success () {
       sleep 1
     fi
   done
+  if [ "$BACKUP_STATUS" = "unknown" ]; then
+    return 1
+  fi
 }
 
 function export_snapshot () {
