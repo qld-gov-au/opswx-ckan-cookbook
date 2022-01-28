@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 . `dirname $0`/solr-env.sh
 
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
