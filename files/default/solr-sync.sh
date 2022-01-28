@@ -31,7 +31,7 @@ function wait_for_replication_success () {
 }
 
 # we can't perform any replication operations if Solr is stopped
-if ! (curl -I --connect-timeout 5 "$HOST/$CORE_NAME/admin/ping" 2>/dev/null |grep '200 OK' > /dev/null); then
+if ! (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null); then
   set_dns_primary false
   exit 0
 fi
