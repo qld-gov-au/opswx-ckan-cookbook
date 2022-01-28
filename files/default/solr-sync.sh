@@ -30,6 +30,14 @@ function wait_for_replication_success () {
   done
 }
 
+function export_snapshot () {
+  # export a snapshot of the index and verify its integrity,
+  # then copy to EFS so secondary servers can read it
+  curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME" | grep 'status[^a-zA-Z]*OK' || return 1
+  wait_for_replication_success || return 1
+  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || return 1
+}
+
 # we can't perform any replication operations if Solr is stopped
 if ! (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null); then
   set_dns_primary false
@@ -41,11 +49,9 @@ if (/usr/local/bin/pick-solr-master.sh); then
   # point traffic to this instance
   set_dns_primary true
 
-  # export a snapshot of the index and verify its integrity,
-  # then copy to EFS so secondary servers can read it
-  curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME" | grep 'status[^a-zA-Z]*OK' || exit 1
-  wait_for_replication_success || exit 1
-  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || exit 1
+  # Export a snapshot of the index.
+  # Drop this server from being master if it fails.
+  export_snapshot || (echo "" > $HEARTBEAT_FILE; exit 1) || exit 1
 
   # clean up - remove old snapshots, hourly backup to S3
   for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
