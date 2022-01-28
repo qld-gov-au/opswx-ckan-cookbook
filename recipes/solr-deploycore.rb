@@ -61,3 +61,6 @@ execute 'Unzip Core Config' do
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
 end
 
+service "solr" do
+	action [:start]
+end

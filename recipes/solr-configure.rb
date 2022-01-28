@@ -85,7 +85,7 @@ end
 
 # synchronise Solr cores via EFS
 file "/etc/cron.d/solr-sync" do
-	content "* * * * * root /usr/local/bin/solr-sync.sh > /dev/null 2>&1\n"
+	content "* * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
 	mode "0644"
 end
 
