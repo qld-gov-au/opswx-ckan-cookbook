@@ -41,8 +41,8 @@ if (/usr/local/bin/pick-solr-master.sh); then
   fi
 else
   set_dns_primary false
-  # Give the master time to update the sync copy
-  sleep 10
+  # Give the master time to update the sync copy; run halfway between exports
+  sleep 30
   if [ -d "$SYNC_SNAPSHOT" ]; then
     sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
     sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT" "$LOCAL_SNAPSHOT" || exit 1
