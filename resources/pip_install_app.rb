@@ -85,7 +85,7 @@ action :create do
         cwd install_dir
         code <<-EOS
             # retrieve latest branch metadata
-            git fetch origin '#{version}' || exit 1
+            git fetch --tags origin '#{version}' || exit 1
             # make versioned files pristine
             git clean -f
             git reset --hard
