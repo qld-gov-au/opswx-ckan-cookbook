@@ -93,6 +93,20 @@ template "/usr/local/bin/pick-job-server.sh" do
     mode "0755"
 end
 
+cookbook_file "/usr/local/bin/redis-clear.py" do
+    source "redis-clear.py.erb"
+    owner "root"
+    group "root"
+    mode "0755"
+end
+
+cookbook_file "/usr/local/bin/redis-backup.py" do
+    source "redis-backup.py.erb"
+    owner "root"
+    group "root"
+    mode "0755"
+end
+
 # Remove unwanted cron job
 file '/etc/cron.daily/ckan-tracking-update' do
     action :delete
