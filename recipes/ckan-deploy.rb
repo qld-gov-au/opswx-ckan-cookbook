@@ -1,4 +1,7 @@
 #
+# Cookbook Name:: datashades
+# Recipe:: ckan-deploy
+#
 # Deploys OpsWorks CKAN App
 #
 # Copyright 2021, Queensland Government
