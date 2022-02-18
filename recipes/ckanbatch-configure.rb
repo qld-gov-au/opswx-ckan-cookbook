@@ -35,11 +35,13 @@ if ::File.directory?(extra_disk) then
     end
 end
 
-service "supervisord" do
+service "supervisord stop and start" do
+    service_name "supervisord"
     action [:stop, :start]
 end
 
-service "httpd" do
+service "httpd stop and disable" do
+    service_name "httpd"
     action [:stop, :disable]
 end
 

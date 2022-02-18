@@ -16,7 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-service "supervisord" do
+service "supervisord stop" do
+    service_name "supervisord"
     action :stop
 end
 
@@ -39,21 +40,21 @@ ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
 # Setup Site directories
+# In ckan-deploy
+# paths = {
+#     "/var/log/#{service_name}" => "#{service_name}",
+#     "#{shared_fs_dir}" => "#{service_name}",
+# }
 #
-paths = {
-    "/var/log/#{service_name}" => "#{service_name}",
-    "#{shared_fs_dir}" => "#{service_name}",
-}
-
-paths.each do |nfs_path, dir_owner|
-    directory nfs_path do
-      owner dir_owner
-      group "#{service_name}"
-      recursive true
-      mode '0775'
-      action :create
-    end
-end
+# paths.each do |nfs_path, dir_owner|
+#     directory nfs_path do
+#       owner dir_owner
+#       group "#{service_name}"
+#       recursive true
+#       mode '0775'
+#       action :create
+#     end
+# end
 
 #
 # Create job worker config files.
@@ -66,7 +67,8 @@ cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
     mode "0644"
 end
 
-service "supervisord" do
+service "supervisord enable" do
+    service_name "supervisord"
     action [:enable]
 end
 
@@ -111,12 +113,12 @@ end
 file '/etc/cron.daily/ckan-tracking-update' do
     action :delete
 end
-
-# Remove unwanted cron job from higher environments
-file '/etc/cron.hourly/ckan-tracking-update' do
-    action :delete
-    not_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
-end
+#
+# # Remove unwanted cron job from higher environments
+# file '/etc/cron.hourly/ckan-tracking-update' do
+#     action :delete
+#     not_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
+# end
 
 # Only set cron job for lower environments
 file '/etc/cron.hourly/ckan-tracking-update' do

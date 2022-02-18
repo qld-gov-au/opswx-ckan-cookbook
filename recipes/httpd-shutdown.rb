@@ -22,7 +22,8 @@
 
 include_recipe "datashades::stackparams"
 
-service "httpd" do
+service "httpd stop" do
+    service_name "httpd"
 	action [:stop]
 end
 

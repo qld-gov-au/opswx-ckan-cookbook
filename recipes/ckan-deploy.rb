@@ -147,7 +147,7 @@ end
 include_recipe "datashades::ckanweb-deploy-exts"
 
 # Just in case something created files as root
-execute "Refresh virtualenv ownership" do
+execute "Refresh virtualenv ownership round2" do
 	command "chown -RH ckan:ckan #{virtualenv_dir}"
 end
 

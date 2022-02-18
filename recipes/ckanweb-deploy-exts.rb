@@ -182,13 +182,13 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-	execute "Validation CKAN ext database init" do
+	execute "#{pluginname}: Validation CKAN ext database init" do
 		user "#{account_name}"
 		command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 		only_if { "#{pluginname}".eql? 'validation' }
 	end
 
-	bash "YTP CKAN ext database init" do
+	bash "#{pluginname}: YTP CKAN ext database init" do
 		user "#{account_name}"
 		code <<-EOS
 			export PASTER_PLUGIN=ckanext-ytp-comments
@@ -272,7 +272,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-	bash "Provide custom Bootstrap version" do
+	bash "#{pluginname}: Provide custom Bootstrap version" do
 		user "#{account_name}"
 		group "#{account_name}"
 		cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"

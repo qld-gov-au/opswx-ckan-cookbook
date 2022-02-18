@@ -19,15 +19,6 @@
 
 include_recipe "datashades::default"
 
-# Create ASG helper script
-#
-cookbook_file "/bin/updateasg" do
-	source "updateasg"
-	owner 'root'
-	group 'root'
-	mode '0755'
-end
-
 include_recipe "datashades::ckan-setup"
 include_recipe "datashades::ckanbatch-efs-setup"
 
