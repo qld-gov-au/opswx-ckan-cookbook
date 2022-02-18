@@ -21,7 +21,7 @@ service "supervisord" do
 end
 
 include_recipe "datashades::stackparams"
-include_recipe "ckan-deploy.rb"
+include_recipe "datashades::ckan-deploy"
 
 service_name = "ckan"
 
