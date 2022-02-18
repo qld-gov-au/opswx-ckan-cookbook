@@ -221,6 +221,20 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
+	if "#{pluginname}".eql? 'data-qld'
+		if batchnode
+        	# Run dataset require updates notifications at 7am and 7:15am on batch
+            file "/etc/cron.d/ckan-dataset-notification-due" do
+                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
+                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+                mode '0644'
+                owner "root"
+                group "root"
+            end
+        end
+	end
+
+
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
 			user "#{account_name}"

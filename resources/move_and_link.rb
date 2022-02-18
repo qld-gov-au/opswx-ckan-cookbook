@@ -42,6 +42,7 @@ action :create do
 
 		execute "Ensure correct ownership of #{new_resource.target}" do
 			command "chown -RH #{new_resource.owner}:#{new_resource.owner} #{new_resource.target}"
+			ignore_failure true
 			only_if { new_resource.owner and ::File.directory? new_resource.target }
 		end
 

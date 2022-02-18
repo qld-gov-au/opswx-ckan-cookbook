@@ -52,7 +52,8 @@ cookbook_file "#{Chef::Config[:file_cache_path]}/solr_core_config.zip" do
 	source "ckan_solr_conf.zip"
 end
 
-service "solr" do
+service "solr stop" do
+    service_name "solr"
 	action [:stop]
 end
 
@@ -61,6 +62,7 @@ execute 'Unzip Core Config' do
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
 end
 
-service "solr" do
+service "solr start" do
+    service_name "solr"
 	action [:start]
 end
