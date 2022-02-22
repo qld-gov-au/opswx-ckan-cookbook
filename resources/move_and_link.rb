@@ -30,7 +30,8 @@ property :client_service, [String, nil], default: nil
 action :create do
 	if not ::File.identical?(new_resource.source, new_resource.target) then
 		if new_resource.client_service then
-			service new_resource.client_service do
+			service "Stop #{new_resource.client_service} before moving #{new_resource.source}" do
+				service_name new_resource.client_service
 				action [:stop]
 			end
 		end
