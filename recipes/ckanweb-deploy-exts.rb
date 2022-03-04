@@ -182,13 +182,13 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-	execute "Validation CKAN ext database init" do
+	execute "#{pluginname}: Validation CKAN ext database init" do
 		user "#{account_name}"
 		command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
 		only_if { "#{pluginname}".eql? 'validation' }
 	end
 
-	bash "YTP CKAN ext database init" do
+	bash "#{pluginname}: YTP CKAN ext database init" do
 		user "#{account_name}"
 		code <<-EOS
 			export PASTER_PLUGIN=ckanext-ytp-comments
@@ -221,6 +221,20 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
+	if "#{pluginname}".eql? 'data-qld'
+		if batchnode
+        	# Run dataset require updates notifications at 7am and 7:15am on batch
+            file "/etc/cron.d/ckan-dataset-notification-due" do
+                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
+                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+                mode '0644'
+                owner "root"
+                group "root"
+            end
+        end
+	end
+
+
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
 			user "#{account_name}"
@@ -242,9 +256,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				mode '0755'
 			end
 
-			#Trigger at 10pm monday nights weekly
-			file "/etc/cron.d/ckan-worker" do
-				content "0 22 * * 1 ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+			#Trigger at 6:30am twice a month
+			file "/etc/cron.d/ckan-archiverTriggerAll" do
+				content "30 6 1,15 * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
 				mode '0644'
 			end
 		end
@@ -272,7 +286,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-	bash "Provide custom Bootstrap version" do
+	bash "#{pluginname}: Provide custom Bootstrap version" do
 		user "#{account_name}"
 		group "#{account_name}"
 		cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"

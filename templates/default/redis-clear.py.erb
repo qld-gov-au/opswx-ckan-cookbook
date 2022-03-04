@@ -1,0 +1,24 @@
+#!/usr/lib/ckan/default/bin/python
+
+import redis
+import time
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
+r = redis.Redis(host='<%= node['datashades']['redis']['hostname'] %>', port=<%= node['datashades']['redis']['port'] %>)
+#logfile = open('/var/log/ckan/redis-backup.all.'+timestr+'.log', 'a')
+logfile_deleted = open('/var/log/ckan/redis-clear.'+timestr+'.log', 'a')
+for key in r.keys('*'):
+    print("Key {}".format(key))
+    #logfile.write("key {}: \r\ndata:\r\n{}\r\n\r\n\r\n".format(key, value))
+
+for key in r.keys('*:job:*'):
+    try:
+        value = r.hgetall(key)
+
+        if value['status'] == 'failed': # or (value['status'] == 'queued' and '2022-02' not in value['enqueued_at']):
+            print("Clearing {}".format(key))
+            logfile_deleted.write("key {}: \r\ndata:\r\n{}\r\n\r\n\r\n".format(key, value))
+            r.delete(key)
+    except Exception as e:
+        print("Error when clearing {}: {}".format(key, e))
+        pass

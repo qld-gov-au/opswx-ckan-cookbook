@@ -1,0 +1,16 @@
+#!/usr/lib/ckan/default/bin/python
+
+import redis
+import time
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
+r = redis.Redis(host='<%= node['datashades']['redis']['hostname'] %>', port=<%= node['datashades']['redis']['port'] %>)
+logfile = open('/home/ec2-user/redis-backup.'+timestr+'.log', 'a')
+#logfile = open('/home/ec2-user/redis-backup.log', 'w')
+for key in r.keys('*:job:*'):
+    try:
+        value = r.hgetall(key)
+        logfile.write("key {}: \r\ndata:\r\n{}\r\n\r\n\r\n".format(key, value))
+    except Exception as e:
+        print("Error when writing {}: {}".format(key, e))
+        pass
