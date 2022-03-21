@@ -11,11 +11,16 @@ execfile(activate_this, dict(__file__=activate_this))
 try:
     from ckan.config.middleware import make_app
     from ckan.cli import CKANConfigLoader
+    use_flask = True
+except ImportError:
+    from paste.deploy import loadapp
+    use_flask = False
+
+if use_flask:
     abspath = os.path.join(os.path.dirname(os.path.abspath(__file__)))
     config = CKANConfigLoader(config_filepath).get_config()
     application = make_app(config)
-except ImportError:
-    from paste.deploy import loadapp
+else:
     application = loadapp('config:%s' % config_filepath)
 
 # Add raven Sentry client middleware to the stack if sentryurl provided
