@@ -9,20 +9,25 @@ try:
     __file__
 except NameError:
     raise AssertionError(
-        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
+        "You must run this like execfile('path/to/activate_this.py',"
+        " dict(__file__='path/to/activate_this.py'))")
 import sys
 import os
 
+import site
+
 old_os_path = os.environ.get('PATH', '')
-os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
-base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+this_dir = os.path.dirname(os.path.abspath(__file__))
+os.environ['PATH'] = this_dir + os.pathsep + old_os_path
+base = os.path.dirname(this_dir)
 if sys.platform == 'win32':
     site_packages = os.path.join(base, 'Lib', 'site-packages')
 else:
-    site_packages = os.path.join(base, 'lib', 'python%s' % sys.version[:3], 'site-packages')
-    site_packages64 = os.path.join(base, 'lib64', 'python%s' % sys.version[:3], 'site-packages')
+    site_packages = os.path.join(
+        base, 'lib', 'python%s' % sys.version[:3], 'site-packages')
+    site_packages64 = os.path.join(
+        base, 'lib64', 'python%s' % sys.version[:3], 'site-packages')
 prev_sys_path = list(sys.path)
-import site
 site.addsitedir(site_packages)
 site.addsitedir(site_packages64)
 sys.real_prefix = sys.prefix
