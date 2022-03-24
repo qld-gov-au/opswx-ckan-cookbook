@@ -232,7 +232,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cwd "#{config_dir}"
 			code <<-EOS
 				if [ -z "$(grep 'ckanext.data_qld_harvester:geoscience_dataset.json' production.ini)" ]; then
-					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.data_qld_harvester:geoscience_dataset.json/g" production.ini;
+					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json$/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.data_qld_harvester:geoscience_dataset.json/g" production.ini;
 				fi
 			EOS
 		end
