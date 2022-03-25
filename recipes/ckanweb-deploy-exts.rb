@@ -93,7 +93,7 @@ extordering =
 	'qa' => 60,
 	'archiver' => 70,
 	'report' => 80,
-	'data-qld-harvester' => 81,
+	'harvester_data_qld_geoscience' => 85,
 	'harvest' => 90
 }
 
@@ -107,7 +107,7 @@ end
 
 # Do the actual extension installation using pip
 #
-data_qld_harvester_present = false
+harvester_data_qld_geoscience_present = false
 archiver_present = false
 harvest_present = false
 csrf_present = false
@@ -224,15 +224,15 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-    if "#{pluginname}".eql? 'data-qld-harvester'
-        data_qld_harvester_present = true
-        #Add ckanext.data_qld_harvester:geoscience_dataset.json to scheming.dataset_schemas
+    if "#{pluginname}".eql? 'ckanext-harvester-data-qld-geoscience'
+        harvester_data_qld_geoscience_present = true
+        #Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
         bash "Inject geoscience_dataset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z "$(grep 'ckanext.data_qld_harvester:geoscience_dataset.json' production.ini)" ]; then
-					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json$/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.data_qld_harvester:geoscience_dataset.json/g" production.ini;
+				if [ -z "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
+					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json$/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
 				fi
 			EOS
 		end
@@ -406,18 +406,19 @@ if not harvest_present then
 		command "rm -f /etc/cron.*/ckan-harvest*"
 	end
 end
-if not data_qld_harvester_present then
-	#clean production.ini of ckanext.data_qld_harvester:geoscience_dataset.json
-    bash "Remove geoscience_dataset if set" do
-        user "#{account_name}"
-        cwd "#{config_dir}"
-        code <<-EOS
-            if [ -n "$(grep 'ckanext.data_qld_harvester:geoscience_dataset.json' production.ini)" ]; then
-                sed -i "s/ ckanext.data_qld_harvester:geoscience_dataset.json//g" production.ini;
-            fi
-        EOS
-    end
-end
+# if extra items are added for harvester_data_qld_geoscience then use this to remove on disable (i.e. cron jobs etc)
+# if not harvester_data_qld_geoscience_present then
+# 	#clean production.ini of ckanext.harvester_data_qld_geoscience:geoscience_dataset.json
+#     bash "Remove geoscience_dataset if set" do
+#         user "#{account_name}"
+#         cwd "#{config_dir}"
+#         code <<-EOS
+#             if [ -n "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
+#                 sed -i "s/ ckanext.harvester_data_qld_geoscience:geoscience_dataset.json//g" production.ini;
+#             fi
+#         EOS
+#     end
+# end
 
 if not csrf_present then
 	execute "revert CSRF plugin from Repoze config" do
