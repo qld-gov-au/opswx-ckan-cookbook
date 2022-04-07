@@ -100,6 +100,10 @@ template "/usr/local/bin/ckan-email-notifications.sh" do
     owner "root"
     group "root"
     mode "0755"
+    variables({
+        :app_name =>  app['shortname'],
+        :app_url => app['domains'][0]
+    })
 end
 
 template "/usr/local/bin/redis-clear.py" do

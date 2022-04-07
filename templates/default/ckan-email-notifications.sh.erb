@@ -3,7 +3,7 @@
 VIRTUAL_ENV=${VIRTUAL_ENV:-/usr/lib/ckan/default}
 CKAN_INI=${CKAN_INI:-/etc/ckan/default/production.ini}
 EMAIL_NOTIFICATION_API=/api/action/send_email_notifications
-EMAIL_NOTIFICATION_ENDPOINT=https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>$EMAIL_NOTIFICATION_API
+EMAIL_NOTIFICATION_ENDPOINT=https://<%= @app_url %><%= node['datashades']['ckan_web']['endpoint'] %>$EMAIL_NOTIFICATION_API
 ACCOUNT=<%= @app_name %>
 
 if [ -f "$VIRTUAL_ENV/bin/ckan" ]; then
