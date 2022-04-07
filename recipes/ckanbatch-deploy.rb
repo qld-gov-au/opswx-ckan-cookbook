@@ -95,6 +95,13 @@ template "/usr/local/bin/pick-job-server.sh" do
     mode "0755"
 end
 
+template "/usr/local/bin/ckan-email-notifications.sh" do
+    source "ckan-email-notifications.sh.erb"
+    owner "root"
+    group "root"
+    mode "0755"
+end
+
 template "/usr/local/bin/redis-clear.py" do
     source "redis-clear.py.erb"
     owner "root"
@@ -138,7 +145,7 @@ file "/etc/cron.d/ckan-tracking-update" do
 end
 
 file "/etc/cron.hourly/ckan-email-notifications" do
-    content "/usr/local/bin/pick-job-server.sh && (echo '{}' | #{virtualenv_dir}/bin/paster post #{config_file} /api/action/send_email_notifications) > /dev/null 2>&1\n"
+    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n"
     mode '0755'
     owner "root"
     group "root"
