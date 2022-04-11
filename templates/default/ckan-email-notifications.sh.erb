@@ -22,5 +22,5 @@ if [ -f "$VIRTUAL_ENV/bin/ckan" ]; then
   fi
 else
   # CKAN <= 2.8
-  echo '{}' | $VIRTUAL_ENV/bin/paster post #{config_file} $EMAIL_NOTIFICATION_API)
+  echo '{}' | $VIRTUAL_ENV/bin/paster post $CKAN_INI $EMAIL_NOTIFICATION_API)
 fi
