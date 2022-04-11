@@ -1,0 +1,26 @@
+#!/bin/sh
+
+VIRTUAL_ENV=${VIRTUAL_ENV:-/usr/lib/ckan/default}
+CKAN_INI=${CKAN_INI:-/etc/ckan/default/production.ini}
+EMAIL_NOTIFICATION_API=/api/action/send_email_notifications
+EMAIL_NOTIFICATION_ENDPOINT=https://<%= @app_url %><%= node['datashades']['ckan_web']['endpoint'] %>$EMAIL_NOTIFICATION_API
+ACCOUNT=<%= @app_name %>
+
+if [ -f "$VIRTUAL_ENV/bin/ckan" ]; then
+  # CKAN >= 2.9
+  if ($VIRTUAL_ENV/bin/ckan_cli notify --help 2>/dev/null |grep 'send_emails' >/dev/null 2>&1); then
+    $VIRTUAL_ENV/bin/ckan_cli notify send_emails
+  else
+    # Create an API token and use that to authenticate our request
+    TOKEN_NAME=email_notification_token_$(date +'%s')
+    TOKEN=$($VIRTUAL_ENV/bin/ckan_cli user token add $ACCOUNT $TOKEN_NAME | tail -1 | tr -d '[:space:]')
+    curl -H "Authorization: $TOKEN" -d '{}' "$EMAIL_NOTIFICATION_ENDPOINT"
+
+    # revoke token afterward since it's not stored anywhere anyway
+    TOKEN_ID=$($VIRTUAL_ENV/bin/ckan_cli user token list $ACCOUNT 2>/dev/null | grep "$TOKEN_NAME" |head -1 |awk '{print $1}' | tr -d '[]')
+    $VIRTUAL_ENV/bin/ckan_cli user token revoke $TOKEN_ID
+  fi
+else
+  # CKAN <= 2.8
+  echo '{}' | $VIRTUAL_ENV/bin/paster post #{config_file} $EMAIL_NOTIFICATION_API)
+fi
