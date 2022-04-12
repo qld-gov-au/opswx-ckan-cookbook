@@ -48,15 +48,26 @@ end
 # Drop Apache modules that we don't need as they're dead weight
 # and points of vulnerability.
 #
+directory "#{httpd_conf_dir}/conf.disabled" do
+    owner 'root'
+    mode '0755'
+    action :create
+end
+
 directory "#{httpd_conf_dir}/conf.modules.disabled" do
     owner 'root'
     mode '0755'
     action :create
 end
 
+execute "Remove unused Apache config" do
+    cwd "#{httpd_conf_dir}/conf.d"
+    command "mv php-* ../conf.disabled/ || echo 'Config already disabled'"
+end
+
 execute "Remove unused Apache modules" do
     cwd "#{httpd_conf_dir}/conf.modules.d"
-    command "mv *-dav.conf *-lua.conf *-php.conf *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
+    command "mv *-dav.conf *-lua.conf *-php.conf* *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
 end
 
 # Enable Apache service
