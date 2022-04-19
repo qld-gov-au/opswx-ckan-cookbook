@@ -34,7 +34,8 @@ function wait_for_replication_success () {
     fi
   done
   if [ "$BACKUP_STATUS" = "unknown" ]; then
-    return 1
+    echo "Backup did not complete within 30 seconds"
+    return 2
   fi
 }
 
@@ -42,7 +43,10 @@ function export_snapshot () {
   # export a snapshot of the index and verify its integrity,
   # then copy to EFS so secondary servers can read it
   curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME" | grep 'status[^a-zA-Z]*OK' || return 1
-  wait_for_replication_success || return 1
+  wait_for_replication_success; REPLICATION_STATUS=$?
+  if [ "REPLICATION_STATUS" != "0"]; then
+    return $REPLICATION_STATUS
+  fi
   sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || return 1
 }
 
@@ -59,7 +63,14 @@ if (/usr/local/bin/pick-solr-master.sh); then
 
   # Export a snapshot of the index.
   # Drop this server from being master if it fails.
-  export_snapshot || (echo "" > $HEARTBEAT_FILE; exit 1) || exit 1
+  export_snapshot; EXPORT_STATUS=$?
+  if [ "$EXPORT_STATUS" != "0" ]; then
+    if [ "$EXPORT_STATUS" != "2" ]; then
+      echo "Export failed; assume server is unhealthy"
+      touch $HEARTBEAT_FILE.start
+    fi
+    exit 1
+  fi
 
   # clean up - remove old snapshots, hourly backup to S3
   for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
