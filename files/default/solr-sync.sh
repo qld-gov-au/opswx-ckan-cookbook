@@ -25,8 +25,11 @@ function wait_for_replication_success () {
   for i in {1..30}; do
     if [ "$BACKUP_STATUS" = "unknown" ]; then
       DETAILS=$(curl "$HOST/$CORE_NAME/replication?command=details")
-      echo "$DETAILS" |grep 'status[^a-zA-Z]*success' && return 0
-      echo "$DETAILS" |grep 'exception.*snapshot' && return 1
+      echo "Backup status: $DETAILS"
+      if (echo "$DETAILS" |grep "$BACKUP_NAME"); then
+        echo "$DETAILS" |grep 'status[^a-zA-Z]*success' && return 0
+        echo "$DETAILS" |grep "exception.*$CORE_NAME" && return 1
+      fi
       sleep 1
     fi
   done
