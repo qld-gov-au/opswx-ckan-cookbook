@@ -20,7 +20,9 @@ function set_dns_primary () {
 }
 
 function wait_for_replication_success () {
-  # wait up to 20 seconds for backup to complete, should only take a second or two
+  # Wait up to 30 seconds for backup to complete.
+  # Should only take a second or two for small indexes,
+  # but larger ones can be slow.
   BACKUP_STATUS=unknown
   for i in {1..30}; do
     if [ "$BACKUP_STATUS" = "unknown" ]; then
