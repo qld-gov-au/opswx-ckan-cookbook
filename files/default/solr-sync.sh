@@ -22,7 +22,7 @@ function set_dns_primary () {
 function wait_for_replication_success () {
   # wait up to 20 seconds for backup to complete, should only take a second or two
   BACKUP_STATUS=unknown
-  for i in {1..20}; do
+  for i in {1..30}; do
     if [ "$BACKUP_STATUS" = "unknown" ]; then
       DETAILS=$(curl "$HOST/$CORE_NAME/replication?command=details")
       echo "$DETAILS" |grep 'status[^a-zA-Z]*success' && return 0
