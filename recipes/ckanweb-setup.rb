@@ -62,7 +62,7 @@ end
 
 execute "Remove unused Apache config" do
     cwd "#{httpd_conf_dir}/conf.d"
-    command "mv php-* ../conf.disabled/ || echo 'Config already disabled'"
+    command "mv php-* php.* ../conf.disabled/ || echo 'Config already disabled'"
 end
 
 execute "Remove unused Apache modules" do
