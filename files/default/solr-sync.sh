@@ -82,7 +82,6 @@ if (/usr/local/bin/pick-solr-master.sh); then
     cd "$LOCAL_DIR"
     tar --force-local -czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
     aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
-    sudo -u solr rm -r snapshot.$CORE_NAME-*
   fi
 else
   # make traffic come to this instance only as a backup option
@@ -95,3 +94,4 @@ else
     curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
   fi
 fi
+sudo -u solr rm -r $(ls -d $LOCAL_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME")
