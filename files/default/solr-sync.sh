@@ -44,7 +44,9 @@ function wait_for_replication_success () {
 function export_snapshot () {
   # export a snapshot of the index and verify its integrity,
   # then copy to EFS so secondary servers can read it
-  curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME" | grep 'status[^a-zA-Z]*OK' || return 1
+  BACKUP_DETAILS=$(curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME")
+  echo "Backup status: $BACKUP_DETAILS"
+  echo "$BACKUP_DETAILS" | grep 'status[^a-zA-Z]*OK' || return 1
   wait_for_replication_success; REPLICATION_STATUS=$?
   if [ "REPLICATION_STATUS" != "0" ]; then
     return $REPLICATION_STATUS
