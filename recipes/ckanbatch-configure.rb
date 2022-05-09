@@ -56,3 +56,7 @@ file "/etc/cron.d/ckan-worker" do
     content "*/5 * * * * root /usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
     mode '0644'
 end
+
+# Make any other instances aware of us
+#
+execute "/usr/local/bin/pick-job-server.sh"
