@@ -3,11 +3,31 @@
 # Identify whether the current server is the one that should run cron jobs.
 # This is simply intended to ensure that jobs are run exactly once.
 
+function is_healthy() {
+  HEALTH_FILE=$1
+  if [ ! -e "$HEALTH_FILE" ]; then
+    return 1
+  fi
+  HEALTH_TIME=$(cat $1 | tr -d '[:space:]')
+  if [ "$HEALTH_TIME" = "" ]; then
+    return 1
+  fi
+  AGE=$(expr $NOW - $HEALTH_TIME)
+  return $(expr $AGE '>' $MAX_AGE)
+}
+
+NOW=$(date +'%s')
+MAX_AGE=600
+
 opsworks_hostname="<%= node['datashades']['hostname'] %>"
-layer_prefix=$(echo "$opsworks_hostname" | tr -d '[0-9]')
-for i in {1..9}; do
-  if [ -e "/data/$layer_prefix$i" ]; then
-    JOB_SERVER="$layer_prefix$i"
+HEALTH_CHECK_PREFIX=/data/batch-healthcheck_
+HEARTBEAT_FILE="${HEALTH_CHECK_PREFIX}$opsworks_hostname"
+echo $NOW > "$HEARTBEAT_FILE"
+
+HEALTH_CHECK_FILES=$(ls -r ${HEALTH_CHECK_PREFIX}* || echo '')
+for health_check_file in $HEALTH_CHECK_FILES; do
+  if is_healthy "$health_check_file"; then
+    SELECTED_SERVER="$health_check_file"
   fi
 done
-exit $([ "$JOB_SERVER" = "$opsworks_hostname" ])
+exit $([ "$SELECTED_SERVER" = "${HEARTBEAT_FILE}" ])
