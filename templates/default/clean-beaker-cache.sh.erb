@@ -9,4 +9,4 @@ if [ "$EXPIRY_DAYS" = "" ]; then
   EXPIRY_DAYS=3
 fi
 
-find $SESSION_CACHE_DIR -type f -mtime +"$EXPIRY_DAYS" -execdir rm '{}' ';'
+find $SESSION_CACHE_DIR -type f -mtime +"$EXPIRY_DAYS" -exec rm '{}' ';'
