@@ -36,6 +36,20 @@ file "/etc/cron.daily/archive-apache-logs-to-s3" do
 	mode "0755"
 end
 
+template '/usr/local/bin/clean-beaker-cache.sh' do
+	source "clean-beaker-cache.sh.erb"
+	mode "0755"
+	owner "root"
+	group "root"
+end
+
+file "/etc/cron.hourly/clean-beaker-cache" do
+	content "/usr/local/bin/clean-beaker-cache.sh >/dev/null 2>&1\n"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 # Re-enable and start in case it was stopped by previous recipe versions and reload if already started
 service 'httpd' do
 	supports :restart => true, :reload => true, :status => true

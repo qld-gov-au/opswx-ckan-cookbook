@@ -25,5 +25,5 @@ include_recipe "datashades::httpd-configure"
 include_recipe "datashades::nginx-configure"
 
 service 'php-fpm-5.5' do
-	action [:restart]
+    action [:restart]
 end

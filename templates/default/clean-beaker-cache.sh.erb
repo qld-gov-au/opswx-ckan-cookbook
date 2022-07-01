@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Remove obsolete Beaker session files.
+# See https://beaker.readthedocs.io/en/latest/sessions.html#removing-expired-old-sessions
+
+SESSION_CACHE_DIR=/tmp/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/sessions
+EXPIRY_DAYS=$1
+if [ "$EXPIRY_DAYS" = "" ]; then
+  EXPIRY_DAYS=3
+fi
+
+find $SESSION_CACHE_DIR -type f -mtime +"$EXPIRY_DAYS" -exec rm '{}' ';'
