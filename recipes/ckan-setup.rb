@@ -115,16 +115,9 @@ directory real_virtualenv_dir do
 	recursive true
 end
 
-bash "Fix VirtualEnv lib issue" do
-	user "ckan"
-	group "ckan"
-	cwd "#{virtualenv_dir}"
-	code <<-EOS
-		mv -f lib/python2.7/site-packages lib64/python2.7/
-		rm -rf lib
-		ln -sf lib64 lib
-	EOS
-	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
+datashades_move_and_link "#{virtualenv_dir}/lib" do
+	target "#{virtualenv_dir}/lib64"
+	owner 'ckan'
 end
 
 #
