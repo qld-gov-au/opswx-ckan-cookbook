@@ -39,7 +39,8 @@ end
 #
 group "ckan" do
 	action :create
-	gid '1000'
+	gid '2000'
+	not_if { ::File.directory? "/home/ckan" }
 end
 
 # Create CKAN User
@@ -49,8 +50,9 @@ user "ckan" do
 	home "/home/ckan"
 	shell "/sbin/nologin"
 	action :create
-	uid '1000'
+	uid '2000'
 	group 'ckan'
+	not_if { ::File.directory? "/home/ckan" }
 end
 
 # Explicitly set permissions on ckan directory so it's readable by Apache
