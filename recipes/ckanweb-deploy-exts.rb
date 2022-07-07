@@ -108,6 +108,10 @@ node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
 
+execute "Install NodeJS 10.x" do
+	command "curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -; yum -y install nodejs"
+end
+
 # Do the actual extension installation using pip
 #
 harvester_data_qld_geoscience_present = false

@@ -42,8 +42,18 @@ end
 
 # Enable RedHat EPEL
 #
-execute "Enable EPEL" do
-    command "sed -i 's/enabled=0/enabled=1/g'  /etc/yum.repos.d/epel.repo"
+
+bash "Enable EPEL" do
+    code <<-EOS
+        # Amazon Linux 2
+        which amazon-linux-extras && amazon-linux-extras install epel
+
+        # Amazon Linux 1
+        EPEL_REPO_FILE=/etc/yum.repos.d/epel.repo
+        if [ -e $EPEL_REPO_FILE ]; then
+            sed -i 's/enabled=0/enabled=1/g' $EPEL_REPO_FILE
+        fi
+    EOS
 end
 
 # Install/remove core packages
@@ -66,6 +76,16 @@ if extra_disk_present then
     datashades_move_and_link('/root/.cache') do
         target real_cache_dir
     end
+end
+
+bash "Link 'pip' if not present" do
+    code <<-EOS
+        which pip && exit 0
+        PIP3=`which pip3`
+        if [ "$PIP3" != "" ]; then
+            ln -s "$PIP3" /usr/bin/pip
+        fi
+    EOS
 end
 
 execute "Update AWS command-line interface" do

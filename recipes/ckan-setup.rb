@@ -24,6 +24,17 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
+# Install packages that have different names on different systems
+node['datashades']['ckan_web']['alternative_packages'].each do |p|
+	bash "Install #{p} if available" do
+		code <<-EOS
+			if (yum info "#{p}"); then
+				yum install -y "#{p}"
+			fi
+		EOS
+	end
+end
+
 # Create CKAN Group
 #
 group "ckan" do
