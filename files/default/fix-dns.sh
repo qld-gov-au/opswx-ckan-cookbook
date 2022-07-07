@@ -2,7 +2,7 @@
 
 dns_ok () {
   # Check if DNS is working
-  /usr/bin/dig example.com +time=1 +tries=1 >/dev/null 2>&1 || return 1
+  dig example.com +time=1 +tries=1 >/dev/null 2>&1 || return 1
 }
 
 dns_ok && exit 0

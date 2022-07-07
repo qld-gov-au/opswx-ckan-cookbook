@@ -99,7 +99,8 @@ end
 
 bash "Create CKAN Default Virtual Environment" do
 	code <<-EOS
-		/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}
+		PATH="$PATH:/usr/local/bin"
+		virtualenv #{real_virtualenv_dir}
 		chown -R ckan:ckan #{real_virtualenv_dir}
 	EOS
 	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }

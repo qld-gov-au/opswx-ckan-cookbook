@@ -64,7 +64,8 @@ end
 bash "Create Virtual Environment" do
 	user "root"
 	code <<-EOS
-		/usr/bin/virtualenv --no-site-packages "#{virtualenv_dir}"
+		PATH="$PATH:/usr/local/bin"
+		virtualenv "#{virtualenv_dir}"
 		chown -R #{service_name}:#{service_name} "#{virtualenv_dir}"
 	EOS
 	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
