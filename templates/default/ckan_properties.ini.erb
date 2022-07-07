@@ -126,7 +126,6 @@ solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']
 #       Add ``resource_proxy`` to enable resorce proxying and get around the
 #       same origin policy
 ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view
-ckan.preview.xml_formats = xml red rdf+xml owl+xml atom rss xsd
 
 trak.display_pageviews = true
 
@@ -167,7 +166,7 @@ ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain a
 
 ckan.views.default_views = text_view image_view recline_view
 ckan.preview.json_formats = json
-ckan.preview.xml_formats = xml rdf rdf+xml owl+xml atom rss
+ckan.preview.xml_formats = xml red rdf rdf+xml owl+xml atom rss xsd
 ckan.preview.text_formats = text plain text/plain
 
 ## resource_proxy
