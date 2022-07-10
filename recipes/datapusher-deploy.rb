@@ -60,8 +60,8 @@ end
 # See https://github.com/dateutil/dateutil/issues/402
 execute "Patch date parser format" do
 	user "#{service_name}"
-	command <<-'SED'.strip + " #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
-		sed -i "s/^\(\s*\)return parser[.]parse(value)/\1for fmt in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:\n\1    try:\n\1        return datetime.datetime.strptime(value, fmt)\n\1    except ValueError:\n\1        pass\n\1return parser.parse(value, dayfirst=True)/"
+	command <<-'SED'.strip + " #{virtualenv_dir}/lib/*/site-packages/messytables/types.py"
+		sed -i "s/^\(\s*\)return parser[.]parse(value)/\1try:\n\1    return parser.isoparse(value)\n\1except ValueError:\n\1    return parser.parse(value, dayfirst=True)/"
 	SED
 end
 
