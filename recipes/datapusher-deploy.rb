@@ -29,30 +29,12 @@ service_name = "datapusher"
 
 app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}-#{service_name}*").first
 virtualenv_dir = "/usr/lib/ckan/#{service_name}"
-pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
-execute "Install app from source" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{pip} install -e 'git+#{app['app_source']['url']}@#{app['app_source']['revision']}#egg=#{service_name}'"
-	not_if { ::File.directory? "#{install_dir}" }
-end
-
-apprevision = app['app_source']['revision']
-execute "Check out selected revision" do
-	user "#{service_name}"
-	group "#{service_name}"
-	cwd "#{install_dir}"
-	# pull if we're checking out a branch, otherwise it doesn't matter
-	command "git fetch; git checkout '#{apprevision}'; git pull || true"
-	not_if apprevision.nil?
-end
-
-execute "Install Python dependencies" do
-	user "#{service_name}"
-	group "#{service_name}"
-	command "#{pip} install -r '#{install_dir}/requirements.txt'"
+datashades_pip_install_app "datapusher" do
+	type app['app_source']['type']
+	revision app['app_source']['revision']
+	url app['app_source']['url']
 end
 
 # The dateparser library defaults to month-first but is configurable.

@@ -71,16 +71,9 @@ bash "Create Virtual Environment" do
 	not_if { ::File.directory? "#{virtualenv_dir}/bin" }
 end
 
-bash "Fix VirtualEnv lib issue" do
-	user "#{service_name}"
-	group "#{service_name}"
-	cwd "#{virtualenv_dir}"
-	code <<-EOS
-	mv -f lib/python2.7/site-packages lib64/python2.7/
-	rm -rf lib
-	ln -sf lib64 lib
-	EOS
-	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
+datashades_move_and_link "#{virtualenv_dir}/lib" do
+	target "#{virtualenv_dir}/lib64"
+	owner 'ckan'
 end
 
 #
