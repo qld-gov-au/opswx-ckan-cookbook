@@ -108,8 +108,14 @@ node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
 
-execute "Install NodeJS 10.x" do
-	command "curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -; yum -y install nodejs"
+bash "Install NPM and NodeJS" do
+	code <<-EOS
+		if ! (yum install -y npm); then
+			# failed to install from standard repo, try a manual setup
+			curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
+			yum -y install nodejs
+		fi
+	EOS
 end
 
 # Do the actual extension installation using pip
