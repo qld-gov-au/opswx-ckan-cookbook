@@ -108,6 +108,16 @@ node['datashades']['ckan_ext']['packages'].each do |p|
 	package p
 end
 
+bash "Install NPM and NodeJS" do
+	code <<-EOS
+		if ! (yum install -y npm); then
+			# failed to install from standard repo, try a manual setup
+			curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
+			yum -y install nodejs
+		fi
+	EOS
+end
+
 # Do the actual extension installation using pip
 #
 harvester_data_qld_geoscience_present = false
@@ -383,8 +393,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		# See https://github.com/dateutil/dateutil/issues/402
 		execute "Patch date parser format" do
 			user "#{account_name}"
-			command <<-'SED'.strip + " #{virtualenv_dir}/lib/python2.7/site-packages/messytables/types.py"
-				sed -i "s/^\(\s*\)return parser[.]parse(value)/\1for fmt in ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z', '%Y-%m-%d %H:%M:%S.%f%z']:\n\1    try:\n\1        return datetime.datetime.strptime(value, fmt)\n\1    except ValueError:\n\1        pass\n\1return parser.parse(value, dayfirst=True)/"
+			command <<-'SED'.strip + " #{virtualenv_dir}/lib/*/site-packages/messytables/types.py"
+				sed -i "s/^\(\s*\)return parser[.]parse(value)/\1try:\n\1    return parser.isoparse(value)\n\1except ValueError:\n\1    return parser.parse(value, dayfirst=True)/"
 			SED
 		end
 	end

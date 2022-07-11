@@ -24,11 +24,23 @@ node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
 
+# Install packages that have different names on different systems
+node['datashades']['ckan_web']['alternative_packages'].each do |p|
+	bash "Install #{p} if available" do
+		code <<-EOS
+			if (yum info "#{p}"); then
+				yum install -y "#{p}"
+			fi
+		EOS
+	end
+end
+
 # Create CKAN Group
 #
 group "ckan" do
 	action :create
-	gid '1000'
+	gid '2000'
+	not_if { ::File.directory? "/home/ckan" }
 end
 
 # Create CKAN User
@@ -38,8 +50,9 @@ user "ckan" do
 	home "/home/ckan"
 	shell "/sbin/nologin"
 	action :create
-	uid '1000'
+	uid '2000'
 	group 'ckan'
+	not_if { ::File.directory? "/home/ckan" }
 end
 
 # Explicitly set permissions on ckan directory so it's readable by Apache
@@ -88,7 +101,8 @@ end
 
 bash "Create CKAN Default Virtual Environment" do
 	code <<-EOS
-		/usr/bin/virtualenv --no-site-packages #{real_virtualenv_dir}
+		PATH="$PATH:/usr/local/bin"
+		virtualenv #{real_virtualenv_dir}
 		chown -R ckan:ckan #{real_virtualenv_dir}
 	EOS
 	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
@@ -101,16 +115,9 @@ directory real_virtualenv_dir do
 	recursive true
 end
 
-bash "Fix VirtualEnv lib issue" do
-	user "ckan"
-	group "ckan"
-	cwd "#{virtualenv_dir}"
-	code <<-EOS
-		mv -f lib/python2.7/site-packages lib64/python2.7/
-		rm -rf lib
-		ln -sf lib64 lib
-	EOS
-	not_if { ::File.symlink? "#{virtualenv_dir}/lib" }
+datashades_move_and_link "#{virtualenv_dir}/lib" do
+	target "#{virtualenv_dir}/lib64"
+	owner 'ckan'
 end
 
 #

@@ -40,11 +40,36 @@ bash "Enable Supervisor file inclusions" do
 	EOS
 end
 
-# Managed processes sometimes don't shut down properly on daemon stop,
-# leaving them 'orphaned' and resulting in duplicates.
-# Work around by issuing a stop command to the children first.
-execute "Stop children on supervisord stop" do
-	command <<-'SED'.strip + " /etc/init.d/supervisord"
-		sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
-	SED
+# Configure either initd or systemd
+if ::File.exist? "/etc/init.d/supervisord" then
+	# Managed processes sometimes don't shut down properly on daemon stop,
+	# leaving them 'orphaned' and resulting in duplicates.
+	# Work around by issuing a stop command to the children first.
+	execute "Stop children on supervisord stop" do
+		command <<-'SED'.strip + " /etc/init.d/supervisord"
+			sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
+		SED
+	end
+else
+	systemd_unit "supervisord.service" do
+		content({
+			Unit: {
+				Description: 'Supervisor process control system for UNIX',
+				Documentation: 'http://supervisord.org',
+				After: 'network.target'
+			},
+			Service: {
+				ExecStart: '/usr/bin/supervisord -n -c /etc/supervisord.conf',
+				ExecStop: 'timeout 10s /usr/bin/supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; /usr/bin/supervisorctl $OPTIONS shutdown',
+				ExecReload: '/usr/bin/supervisorctl $OPTIONS reload',
+				KillMode: 'process',
+				Restart: 'on-failure',
+				RestartSec: '20s'
+			},
+			Install: {
+				WantedBy: 'multi-user.target'
+			}
+		})
+		action [:create, :enable]
+	end
 end
