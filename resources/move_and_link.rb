@@ -2,8 +2,8 @@
 # Moves a directory to a new location and leaves a symlink behind.
 # If the new location already exists, the contents will be merged,
 # with the moved files taking priority.
-# If the old location does not exist, the link will still be created,
-# but will point to nothing.
+# If the old and new locations do not exist, the link will be created at
+# the old location, but will point to nothing.
 #
 # Copyright 2021, Queensland Government
 #

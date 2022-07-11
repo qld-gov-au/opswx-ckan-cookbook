@@ -40,6 +40,7 @@ bash "Enable Supervisor file inclusions" do
 	EOS
 end
 
+# Configure either initd or systemd
 if ::File.exist? "/etc/init.d/supervisord" then
 	# Managed processes sometimes don't shut down properly on daemon stop,
 	# leaving them 'orphaned' and resulting in duplicates.
