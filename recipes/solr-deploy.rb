@@ -22,21 +22,41 @@
 
 service_name = 'solr'
 account_name = service_name
+efs_data_dir = "/data/#{service_name}"
+var_data_dir = "/var/#{service_name}"
+var_log_dir = "/var/#{service_name}/logs"
 
 # Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
 #
 group account_name do
-	action :create
-	gid 1001
+    action :create
+    gid 2001
 end
 
-user account_name do
-	comment "Solr User"
-	home "/home/#{account_name}"
-	shell "/bin/bash"
-	action :create
-	uid 1001
-	gid 1001
+if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
+    execute "Stop Solr processes before modifying account" do
+        command "ps -U solr -o pid |tail -1 |xargs kill; sleep 1"
+    end
+
+    user account_name do
+        comment "Solr User"
+        home "/home/#{account_name}"
+        manage_home true
+        shell "/bin/bash"
+        action :create
+        uid 2001
+        gid 2001
+    end
+end
+
+# Ensure EFS directory ownership is correct
+#
+directory efs_data_dir do
+    owner account_name
+    group account_name
+    mode '0755'
+    action :create
+    recursive true
 end
 
 core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
@@ -98,9 +118,6 @@ end
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
 
-efs_data_dir = "/data/#{service_name}"
-var_data_dir = "/var/#{service_name}"
-var_log_dir = "/var/#{service_name}/logs"
 if extra_disk_present then
     real_data_dir = "#{extra_disk}/#{service_name}_data"
     real_log_dir = "#{extra_disk}/#{service_name}"
@@ -176,10 +193,10 @@ end
 # Solves instance start issue after Solr install when /data doesn't mount fast enough
 #
 cookbook_file '/etc/monit.d/solr.monitrc' do
-	source 'solr.monitrc'
-	owner 'root'
-	group 'root'
-	mode '0755'
+    source 'solr.monitrc'
+    owner 'root'
+    group 'root'
+    mode '0755'
 end
 
 include_recipe "datashades::solr-deploycore"
