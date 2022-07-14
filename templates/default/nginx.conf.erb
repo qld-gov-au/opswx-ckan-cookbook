@@ -94,32 +94,6 @@
                 rewrite ^ /index.php;
         }
 
-        location ~ \.php$
-        {
-        		# error 418 used to rewrite php file URIs from migrated sites.
-				error_page 418 = @rewrite;
-				recursive_error_pages on;
-
-				fastcgi_split_path_info ^[^=](.+\.php)(/.+)$;
-				include fastcgi_params;
-
-				if ( $uri = /index.php )
-				{
-				        break;
-				}
-
-				if (!-e $document_root$fastcgi_script_name)
-				{
-				        return 418;
-				}
-
-                fastcgi_param SCRIPT_FILENAME $request_filename;
-				fastcgi_param PHP_VALUE "upload_max_filesize=<%= node['datashades']['nginx']['maxdl'] %> \n post_max_size=<%= node['datashades']['nginx']['maxdl'] %>";
-                fastcgi_intercept_errors on;
-                fastcgi_pass unix:/tmp/phpfpm.sock;
-				fastcgi_read_timeout 300;
-        }
-
         location ~* \.(js|css|png|jpg|jpeg|gif|ico)$
         {
                 expires max;

@@ -58,6 +58,12 @@ end
 
 # Install/remove core packages
 #
+node['datashades']['core']['unwanted-packages'].each do |p|
+    package p do
+        action :remove
+    end
+end
+
 node['datashades']['core']['packages'].each do |p|
     package p
 end
@@ -91,12 +97,6 @@ end
 
 execute "Update AWS command-line interface" do
     command "pip --cache-dir=/tmp/ install --upgrade awscli"
-end
-
-node['datashades']['core']['unwanted-packages'].each do |p|
-    package p do
-        action :remove
-    end
 end
 
 # real basic stuff needs to go in first so jq available for new stack params that uses jq early on

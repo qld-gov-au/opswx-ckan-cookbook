@@ -25,10 +25,10 @@ node['datashades']['ckan_web']['packages'].each do |p|
     package p
 end
 
-include_recipe "datashades::httpd-efs-setup"
-include_recipe "datashades::ckanweb-efs-setup"
-include_recipe "datashades::nginx-setup"
 include_recipe "datashades::ckan-setup"
+include_recipe "datashades::ckanweb-efs-setup"
+include_recipe "datashades::httpd-efs-setup"
+include_recipe "datashades::nginx-setup"
 
 httpd_conf_dir = "/etc/httpd"
 
@@ -67,7 +67,7 @@ end
 
 execute "Remove unused Apache modules" do
     cwd "#{httpd_conf_dir}/conf.modules.d"
-    command "mv *-dav.conf *-lua.conf *-php.conf* *-proxy.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
+    command "mv *-dav.conf *-lua.conf *-php.conf* *-proxy.conf *-proxy_*.conf ../conf.modules.disabled/ || echo 'Module(s) already disabled'"
 end
 
 # Enable Apache service
