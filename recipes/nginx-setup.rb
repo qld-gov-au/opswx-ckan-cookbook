@@ -3,7 +3,7 @@
 # Cookbook Name:: datashades
 # Recipe:: nginx-setup
 #
-# Installs NGINX and PHP-FPM Web Server Role
+# Installs NGINX Web Server Role
 #
 # Copyright 2016, Link Digital
 #
@@ -30,20 +30,6 @@ end
 
 include_recipe "datashades::nginx-efs-setup"
 
-# Update php and nginx default config files
-#
-bash 'config_php' do
-	code <<-EOH
-		sed -i 's~127.0.0.1:9000~/tmp/phpfpm.sock~g' /etc/php-fpm-5.5.d/www.conf
-		sed -i 's~nobody~/tmp/phpfpm.sock~g' /etc/php-fpm-5.5.d/www.conf
-		sed -i 's~memory_limit = 128M~memory_limit = #{node['datashades']['nginx']['mem_limit']}~g' /etc/php-5.5.ini
-		sed -i "s~post_max_size = 8M~post_max_size = #{node['datashades']['nginx']['maxdl']}~g" /etc/php-5.5.ini
-		sed -i "s~upload_max_filesize = 2M~upload_max_filesize = #{node['datashades']['nginx']['maxdl']}~g" /etc/php-5.5.ini
-		echo -e "listen.owner = nginx\nlisten.group = nginx" >> /etc/php-fpm-5.5.d/www.conf
-		sed -i 's:default_server::g'  /etc/nginx/nginx.conf
-	EOH
-end
-
 # Create self-signed temporary SSL cert for Datashades
 #
 bash 'install ssl certs' do
@@ -56,11 +42,7 @@ end
 
 # Startup services
 #
-services = [ 'php-fpm-5.5', 'nginx']
-
-services.each do |servicename|
-	service servicename do
-		action [:enable, :start]
-	end
+service 'nginx' do
+	action [:enable, :start]
 end
 
