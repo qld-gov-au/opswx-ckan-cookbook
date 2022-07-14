@@ -21,6 +21,6 @@
 # limitations under the License.
 #
 
-default['datashades']['nfs']['packages'] = ['nfs-utils', 'nfs-utils-lib']
+default['datashades']['nfs']['packages'] = []
 default['datashades']['nfs']['exports'] = []
 default['datashades']['nfs']['cidr'] = '172.31.0.0/16'
