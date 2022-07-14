@@ -22,8 +22,14 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'supervisor', 'squid']
-default['datashades']['ckan_web']['alternative_packages'] = ['postgresql94', 'postgresql94-devel', 'postgresql', 'postgresql-devel', 'python27-devel', 'python3-devel', 'python27-pip', 'python3-pip', 'libxslt', 'libxslt-devel', 'mod24_wsgi-python27', 'mod_wsgi']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'supervisor', 'squid']
+default['datashades']['ckan_web']['alternative_packages'] = [
+    ['postgresql94', 'postgresql'],
+    ['postgresql94-devel', 'postgresql-devel'],
+    ['python27-devel', 'python3-devel'],
+    ['python27-pip', 'python3-pip'],
+    ['mod24_wsgi-python27', 'mod_wsgi']
+]
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
 default['datashades']['ckan_web']['dbname'] = 'ckan_default'

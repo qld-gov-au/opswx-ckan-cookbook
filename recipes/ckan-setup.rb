@@ -26,10 +26,12 @@ end
 
 # Install packages that have different names on different systems
 node['datashades']['ckan_web']['alternative_packages'].each do |p|
-	bash "Install #{p} if available" do
+	bash "Install one of #{p}" do
 		code <<-EOS
-			if (yum info "#{p}"); then
-				yum install -y "#{p}"
+			if (yum info "#{p[0]}"); then
+				yum install -y "#{p[0]}"
+			else
+				yum install -y "#{p[1]}"
 			fi
 		EOS
 	end
