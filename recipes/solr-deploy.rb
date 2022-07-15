@@ -25,6 +25,8 @@ account_name = service_name
 efs_data_dir = "/data/#{service_name}"
 var_data_dir = "/var/#{service_name}"
 var_log_dir = "/var/#{service_name}/logs"
+extra_disk = "/mnt/local_data"
+extra_disk_present = ::File.exist? extra_disk
 
 # Create solr group and user so they're allocated a UID and GID clear of OpsWorks managed users
 #
@@ -49,24 +51,20 @@ if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
     end
 end
 
-# Ensure EFS directory ownership is correct
-#
-directory efs_data_dir do
-    owner account_name
-    group account_name
-    mode '0755'
-    action :create
-    recursive true
-end
-
 core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
 solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
-installed_solr_version = "/opt/solr-#{solr_version}"
+solr_path = "/opt/solr"
+installed_solr_version = "#{solr_path}-#{solr_version}"
+solr_environment_file = "/etc/default/solr.in.sh"
 
-unless ::File.identical?(installed_solr_version, "/opt/solr")
+unless ::File.identical?(installed_solr_version, solr_path)
     solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
-    working_dir = "/mnt/local_data/solr_install"
+    if extra_disk_present then
+        working_dir = "#{extra_disk}/solr_install"
+    else
+        working_dir = "/tmp/solr_install"
+    end
 
     directory working_dir do
         mode "0644"
@@ -87,7 +85,7 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 
     # wipe old properties so we can install the right version
-    file "/etc/default/solr.in.sh" do
+    file solr_environment_file do
         action :delete
     end
 
@@ -103,20 +101,21 @@ unless ::File.identical?(installed_solr_version, "/opt/solr")
     end
 end
 
+execute "Ensure EFS directory ownership is correct" do
+    command "chown -R #{account_name}:#{account_name} #{efs_data_dir} #{var_data_dir}/ #{solr_environment_file}"
+end
+
 log4j_version = '2.17.1'
 for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
     log4j_artefact = "log4j-#{jar_type}"
     bash "Patch #{log4j_artefact} to version #{log4j_version}" do
-        cwd "/opt/solr/server/lib/ext"
+        cwd "#{solr_path}/server/lib/ext"
         code <<-EOS
             ls #{log4j_artefact}-*.jar |grep -v '[-]#{log4j_version}.jar' |xargs rm
             curl -O -C - "https://repo1.maven.org/maven2/org/apache/logging/log4j/#{log4j_artefact}/#{log4j_version}/#{log4j_artefact}-#{log4j_version}.jar"
         EOS
     end
 end
-
-extra_disk = "/mnt/local_data"
-extra_disk_present = ::File.exist? extra_disk
 
 if extra_disk_present then
     real_data_dir = "#{extra_disk}/#{service_name}_data"
