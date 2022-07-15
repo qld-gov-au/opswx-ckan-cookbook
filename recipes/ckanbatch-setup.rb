@@ -41,16 +41,7 @@ bash "Enable Supervisor file inclusions" do
 end
 
 # Configure either initd or systemd
-if ::File.exist? "/etc/init.d/supervisord" then
-	# Managed processes sometimes don't shut down properly on daemon stop,
-	# leaving them 'orphaned' and resulting in duplicates.
-	# Work around by issuing a stop command to the children first.
-	execute "Stop children on supervisord stop" do
-		command <<-'SED'.strip + " /etc/init.d/supervisord"
-			sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
-		SED
-	end
-else
+if system('which systemctl')
 	systemd_unit "supervisord.service" do
 		content({
 			Unit: {
@@ -71,5 +62,14 @@ else
 			}
 		})
 		action [:create, :enable]
+	end
+else
+	# Managed processes sometimes don't shut down properly on daemon stop,
+	# leaving them 'orphaned' and resulting in duplicates.
+	# Work around by issuing a stop command to the children first.
+	execute "Stop children on supervisord stop" do
+		command <<-'SED'.strip + " /etc/init.d/supervisord"
+			sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
+		SED
 	end
 end
