@@ -188,14 +188,4 @@ datashades_move_and_link(var_data_dir) do
     owner service_name
 end
 
-# Create Monit config file to restart Solr when port 8983 not available
-# Solves instance start issue after Solr install when /data doesn't mount fast enough
-#
-cookbook_file '/etc/monit.d/solr.monitrc' do
-    source 'solr.monitrc'
-    owner 'root'
-    group 'root'
-    mode '0755'
-end
-
 include_recipe "datashades::solr-deploycore"
