@@ -101,10 +101,6 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 end
 
-execute "Ensure EFS directory ownership is correct" do
-    command "chown -R #{account_name}:#{account_name} #{efs_data_dir} #{var_data_dir}/ #{solr_environment_file}"
-end
-
 log4j_version = '2.17.1'
 for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
     log4j_artefact = "log4j-#{jar_type}"
@@ -186,6 +182,10 @@ datashades_move_and_link(var_data_dir) do
     target real_data_dir
     client_service service_name
     owner service_name
+end
+
+execute "Ensure directory ownership is correct" do
+    command "chown -R #{account_name}:ec2-user #{efs_data_dir} #{real_data_dir} #{solr_environment_file} #{real_log_dir}"
 end
 
 include_recipe "datashades::solr-deploycore"
