@@ -36,8 +36,14 @@ group account_name do
 end
 
 if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
-    execute "Stop Solr processes before modifying account" do
-        command "ps -U solr -o pid |tail -1 |xargs kill; sleep 1"
+    bash "Stop Solr processes before modifying account" do
+        code <<-EOS
+            ps -U solr -o pid |tail -1 |xargs kill
+            for {1..30}; do
+                ps -U solr > /dev/null 2>&1 || break
+                sleep 1
+            done
+        EOS
     end
 
     user account_name do
@@ -99,10 +105,6 @@ unless ::File.identical?(installed_solr_version, solr_path)
         cwd "#{working_dir}/solr-#{solr_version}"
         command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
     end
-end
-
-execute "Ensure EFS directory ownership is correct" do
-    command "chown -R #{account_name}:#{account_name} #{efs_data_dir} #{var_data_dir}/ #{solr_environment_file}"
 end
 
 log4j_version = '2.17.1'
@@ -186,6 +188,10 @@ datashades_move_and_link(var_data_dir) do
     target real_data_dir
     client_service service_name
     owner service_name
+end
+
+execute "Ensure directory ownership is correct" do
+    command "chown -R #{account_name}:ec2-user #{efs_data_dir} #{real_data_dir} #{solr_environment_file} #{real_log_dir}"
 end
 
 include_recipe "datashades::solr-deploycore"
