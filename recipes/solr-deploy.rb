@@ -37,7 +37,7 @@ end
 
 if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
     execute "Stop Solr processes before modifying account" do
-        command "ps -U solr -o pid |tail -1 |xargs kill; sleep 1"
+        command "ps -U solr -o pid |tail -1 |xargs kill; sleep 2"
     end
 
     user account_name do
