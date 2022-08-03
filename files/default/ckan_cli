@@ -19,14 +19,14 @@
 
 # Since the positioning of the CKAN configuration file is central to the
 # differences between 'paster' and 'ckan', this script needs to be aware
-# of the config file location. It will use the CKAN_INI_FILE environment
+# of the config file location. It will use the CKAN_INI environment
 # variable if it exists, or default to /etc/ckan/default/production.ini.
 
 # If 'paster' is being used, the default plugin is 'ckan'. A different
 # plugin can be specified by setting the PASTER_PLUGIN environment
 # variable. This variable is irrelevant if using the 'ckan' command.
 
-CKAN_INI_FILE="${CKAN_INI_FILE:-/etc/ckan/default/production.ini}"
+CKAN_INI="${CKAN_INI:-/etc/ckan/default/production.ini}"
 PASTER_PLUGIN="${PASTER_PLUGIN:-ckan}"
 # First, look for a command alongside this file
 ENV_DIR=$(dirname "$0")
@@ -57,11 +57,18 @@ else
 fi
 
 if [ "$COMMAND" = "ckan" ]; then
-    echo "Using 'ckan' command from $ENV_DIR..." >&2
-    exec $ENV_DIR/ckan -c ${CKAN_INI_FILE} "$@"
+    # adjust args to match ckan expectations
+    COMMAND=$(echo "$1" | sed -e 's/create-test-data/seed/')
+    echo "Using 'ckan' command from $ENV_DIR with config ${CKAN_INI} to run $COMMAND..." >&2
+    shift
+    exec $ENV_DIR/ckan -c ${CKAN_INI} $COMMAND "$@" $CLICK_ARGS
 elif [ "$COMMAND" = "paster" ]; then
-    echo "Using 'paster' command from $ENV_DIR..." >&2
-    exec $ENV_DIR/paster --plugin=$PASTER_PLUGIN "$@" -c ${CKAN_INI_FILE}
+    # adjust args to match paster expectations
+    COMMAND=$1
+    echo "Using 'paster' command from $ENV_DIR with config ${CKAN_INI} to run $COMMAND..." >&2
+    shift
+    if [ "$1" = "show" ]; then shift; fi
+    exec $ENV_DIR/paster --plugin=$PASTER_PLUGIN $COMMAND "$@" -c ${CKAN_INI}
 else
     echo "Unable to locate 'ckan' or 'paster' command in $ENV_DIR" >&2
     exit 1
