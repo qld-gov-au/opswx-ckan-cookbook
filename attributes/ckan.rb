@@ -22,7 +22,14 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'postgresql94-devel', 'postgresql94', 'python27-devel', 'python27-pip', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'mod24_wsgi-python27', 'supervisor', 'squid']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'supervisor', 'squid']
+default['datashades']['ckan_web']['alternative_packages'] = [
+    ['postgresql94', 'postgresql'],
+    ['postgresql94-devel', 'postgresql-devel'],
+    ['python27-devel', 'python3-devel'],
+    ['python27-pip', 'python3-pip'],
+    ['mod24_wsgi-python27', 'mod_wsgi']
+]
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
 default['datashades']['ckan_web']['dbname'] = 'ckan_default'
@@ -57,7 +64,7 @@ default['datashades']['ckan_web']['google']['analytics_id'] = 'UA-7276966-12'
 default['datashades']['ckan_web']['wsgi']['processes'] = '1'
 default['datashades']['ckan_web']['wsgi']['threads'] = '15'
 
-default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64', 'npm']
+default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64']
 
 default['datashades']['postgres']['password'] = ""
 

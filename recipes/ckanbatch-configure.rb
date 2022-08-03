@@ -59,4 +59,4 @@ end
 
 # Make any other instances aware of us
 #
-execute "/usr/local/bin/pick-job-server.sh"
+execute "/usr/local/bin/pick-job-server.sh || true"

@@ -27,7 +27,7 @@ default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64', 'git', 'telnet']
+default['datashades']['core']['packages'] = ['nfs-utils', 'yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64', 'git', 'telnet']
 default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
 default['datashades']['jumpbox']['usergroup'] = ''

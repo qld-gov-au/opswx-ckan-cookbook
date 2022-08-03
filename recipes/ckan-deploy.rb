@@ -70,6 +70,10 @@ end
 # Install selected revision of CKAN core
 #
 
+execute "Pin setuptools version" do
+	command "#{virtualenv_dir}/bin/pip install setuptools==44.1.0"
+end
+
 datashades_pip_install_app "ckan" do
 	type app['app_source']['type']
 	revision app['app_source']['revision']

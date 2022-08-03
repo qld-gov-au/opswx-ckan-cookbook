@@ -23,7 +23,3 @@
 include_recipe "datashades::ckan-configure"
 include_recipe "datashades::httpd-configure"
 include_recipe "datashades::nginx-configure"
-
-service 'php-fpm-5.5' do
-    action [:restart]
-end

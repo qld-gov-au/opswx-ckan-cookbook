@@ -42,12 +42,28 @@ end
 
 # Enable RedHat EPEL
 #
-execute "Enable EPEL" do
-    command "sed -i 's/enabled=0/enabled=1/g'  /etc/yum.repos.d/epel.repo"
+
+bash "Enable EPEL" do
+    code <<-EOS
+        # Amazon Linux 2
+        which amazon-linux-extras && amazon-linux-extras install epel
+
+        # Amazon Linux 1
+        EPEL_REPO_FILE=/etc/yum.repos.d/epel.repo
+        if [ -e $EPEL_REPO_FILE ]; then
+            sed -i 's/enabled=0/enabled=1/g' $EPEL_REPO_FILE
+        fi
+    EOS
 end
 
 # Install/remove core packages
 #
+node['datashades']['core']['unwanted-packages'].each do |p|
+    package p do
+        action :remove
+    end
+end
+
 node['datashades']['core']['packages'].each do |p|
     package p
 end
@@ -68,14 +84,19 @@ if extra_disk_present then
     end
 end
 
-execute "Update AWS command-line interface" do
-    command "pip --cache-dir=/tmp/ install --upgrade awscli"
+bash "Link 'pip' if not present" do
+    code <<-EOS
+        if ! (which pip); then
+            PIP3=`which pip3`
+            if [ "$PIP3" != "" ]; then
+                ln -s "$PIP3" /usr/bin/pip
+            fi
+        fi
+    EOS
 end
 
-node['datashades']['core']['unwanted-packages'].each do |p|
-    package p do
-        action :remove
-    end
+execute "Update AWS command-line interface" do
+    command "pip --cache-dir=/tmp/ install --upgrade awscli"
 end
 
 # real basic stuff needs to go in first so jq available for new stack params that uses jq early on

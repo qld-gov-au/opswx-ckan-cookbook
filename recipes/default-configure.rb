@@ -85,6 +85,11 @@ service 'aws-smtp-relay' do
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions
-service 'sendmail' do
+if system('which postfix') then
+    mailer_daemon = 'postfix'
+else
+    mailer_daemon = 'sendmail'
+end
+service mailer_daemon do
     action [:enable, :start]
 end

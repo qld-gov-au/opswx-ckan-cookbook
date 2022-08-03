@@ -105,7 +105,7 @@ action :create do
         group new_resource.account_name
         cwd install_dir
         code <<-EOS
-            PYTHON_MAJOR_VERSION=$(python -c "import sys; print(sys.version_info.major)")
+            PYTHON_MAJOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
             PY2_REQUIREMENTS_FILE=requirements-py2.txt
             if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f $PY2_REQUIREMENTS_FILE ]; then
                 REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
