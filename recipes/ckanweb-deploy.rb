@@ -100,7 +100,7 @@ end
 # Create Apache config files
 #
 
-template "#{config_dir}/apache.wsgi" do
+template "#{config_dir}/wsgi.py" do
 	source 'apache.wsgi.erb'
 	owner 'root'
 	group 'root'
