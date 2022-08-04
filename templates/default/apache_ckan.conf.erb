@@ -6,13 +6,13 @@
     <% end %>
 
     RewriteEngine on
-    WSGIScriptAlias <%= node['datashades']['ckan_web']['endpoint'] %> /etc/ckan/default/apache.wsgi
+    WSGIScriptAlias <%= node['datashades']['ckan_web']['endpoint'] %> /etc/ckan/default/wsgi.py
 
     # Pass authorization info on (needed for rest api).
     WSGIPassAuthorization On
 
     # Deploy as a daemon (avoids conflicts between CKAN instances).
-    WSGIDaemonProcess ckan_default display-name=ckan_default processes=<%= node['datashades']['ckan_web']['wsgi']['processes'] %> threads=<%= node['datashades']['ckan_web']['wsgi']['threads'] %>
+    WSGIDaemonProcess ckan_default python-home=/usr/lib/ckan/default display-name=ckan_default processes=<%= node['datashades']['ckan_web']['wsgi']['processes'] %> threads=<%= node['datashades']['ckan_web']['wsgi']['threads'] %>
 
     WSGIProcessGroup ckan_default
 
