@@ -97,13 +97,31 @@ execute "Refresh virtualenv ownership" do
 end
 
 #
+# Create uWSGI config files
+#
+
+cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
+	source "ckan-uwsgi.ini"
+	owner service_name
+	group service_name
+	mode "0644"
+end
+
+cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-uwsgi.conf" do
+	source "supervisor-ckan-uwsgi.conf"
+	owner service_name
+	group service_name
+	mode "0644"
+end
+
+#
 # Create Apache config files
 #
 
 template "#{config_dir}/wsgi.py" do
 	source 'apache.wsgi.erb'
-	owner 'root'
-	group 'root'
+	owner service_name
+	group service_name
 	mode '0755'
 end
 

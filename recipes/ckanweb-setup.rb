@@ -30,6 +30,12 @@ include_recipe "datashades::httpd-efs-setup"
 include_recipe "datashades::nginx-setup"
 
 httpd_conf_dir = "/etc/httpd"
+virtualenv_dir = "/usr/lib/ckan/default"
+
+execute "Install uWSGI" do
+    user 'ckan'
+    command "#{virtualenv_dir}/bin/pip install uwsgi"
+end
 
 # Change Apache default port to 8000 and fix access to /
 #
