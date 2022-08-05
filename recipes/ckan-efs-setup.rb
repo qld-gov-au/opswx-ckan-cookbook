@@ -1,9 +1,9 @@
-# Sets up EFS and EBS directories and links for CKAN batch layer.
-# This includes the batch logging directory /var/log/ckan
+# Sets up EFS and EBS directories needed by all layers.
+# This includes creating the logging directory /var/log/ckan
 # and ensuring that /var/shared_content points to the EFS.
 # If possible, it will move logs off the root disk.
 #
-# Copyright 2020, Queensland Government
+# Copyright 2022, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

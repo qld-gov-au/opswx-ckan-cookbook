@@ -23,3 +23,8 @@
 include_recipe "datashades::ckan-configure"
 include_recipe "datashades::httpd-configure"
 include_recipe "datashades::nginx-configure"
+
+service "supervisord start" do
+    service_name "supervisord"
+    action [:start]
+end

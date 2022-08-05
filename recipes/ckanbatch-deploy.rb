@@ -67,11 +67,6 @@ cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
     mode "0644"
 end
 
-service "supervisord enable" do
-    service_name "supervisord"
-    action [:enable]
-end
-
 # Set up maintenance cron jobs
 
 cookbook_file "/usr/local/bin/archive-resource-revisions.sql" do
