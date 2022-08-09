@@ -153,15 +153,44 @@ end
 # So we do both.
 execute "pip --cache-dir=/tmp/ install supervisor"
 
-bash "Enable Supervisor file inclusions" do
+bash "Configure Supervisord" do
 	user "root"
+	cwd "/etc"
 	code <<-EOS
-		SUPERVISOR_CONFIG=/etc/supervisord.conf
-		if [ -f "$SUPERVISOR_CONFIG" ]; then
-			mkdir -p /etc/supervisor/conf.d
-			grep '/etc/supervisor/conf.d/' $SUPERVISOR_CONFIG && exit 0
+		SUPERVISOR_CONFIG=supervisord.conf
+		if ! [ -f "$SUPERVISOR_CONFIG" ]; then
+			exit 0
+		fi
+
+		# configure Unix socket path
+		UNIX_SOCKET=/var/tmp/supervisor.sock
+		DEFAULT_UNIX_SOCKET=/var/run/supervisor/supervisor[.]sock
+		if (grep "$DEFAULT_UNIX_SOCKET" $SUPERVISOR_CONFIG); then
+			# if default config exists, update it
+			sed -i "s|$DEFAULT_UNIX_SOCKET|$UNIX_SOCKET|g" $SUPERVISOR_CONFIG
+		fi
+		if ! (grep "unix_http_server" $SUPERVISOR_CONFIG); then
+			# if no config exists, add it
+			echo '[unix_http_server]' >> $SUPERVISOR_CONFIG
+			echo "file = $UNIX_SOCKET" >> $SUPERVISOR_CONFIG
+		fi
+		if ! (grep "rpcinterface:supervisor" $SUPERVISOR_CONFIG); then
+			echo '[rpcinterface:supervisor]' >> $SUPERVISOR_CONFIG
+			echo 'supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface' >> $SUPERVISOR_CONFIG
+		fi
+
+		# configure file inclusions
+		SUPERVISOR_CONFIG_D=supervisord.d
+		mkdir -p $SUPERVISOR_CONFIG_D
+
+		LEGACY_SUPERVISOR_CONFIG_D="/etc/supervisor/conf.d/[*][.]conf"
+		if (grep "$LEGACY_SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+			# if legacy config exists, update it
+			sed -i "s|$LEGACY_SUPERVISOR_CONFIG_D|$SUPERVISOR_CONFIG_D/*.ini|g" $SUPERVISOR_CONFIG
+		elif ! (grep "$SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+			# if no config exists, add it
 			echo '[include]' >> $SUPERVISOR_CONFIG
-			echo 'files = /etc/supervisor/conf.d/*.conf' >> $SUPERVISOR_CONFIG
+			echo "files = $SUPERVISOR_CONFIG_D/*.ini" >> $SUPERVISOR_CONFIG
 		fi
 	EOS
 end

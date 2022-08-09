@@ -60,11 +60,11 @@ install_dir = "#{virtualenv_dir}/src/#{service_name}"
 # Create job worker config files.
 #
 
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+cookbook_file "/etc/supervisord.d/supervisor-ckan-worker.ini" do
     source "supervisor-ckan-worker.conf"
     owner "root"
     group "root"
-    mode "0644"
+    mode "0744"
 end
 
 # Set up maintenance cron jobs

@@ -114,11 +114,11 @@ cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
 	mode "0644"
 end
 
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-uwsgi.conf" do
+cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
 	source "supervisor-ckan-uwsgi.conf"
 	owner service_name
 	group service_name
-	mode "0644"
+	mode "0744"
 end
 
 #

@@ -224,7 +224,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if batchnode
 			harvest_present = true
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
+			cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
 				source "supervisor-ckan-harvest.conf"
 				mode "0744"
 			end
@@ -274,7 +274,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if batchnode
 			archiver_present = true
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
+			cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
 				source "supervisor-ckan-archiver.conf"
 				mode "0744"
 			end
@@ -402,7 +402,7 @@ end
 
 if not archiver_present then
 	execute "Clean Archiver supervisor config" do
-		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-archiver*.conf"
+		command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
 	end
 
 	execute "Clean Archiver cron" do
@@ -412,7 +412,7 @@ end
 
 if not harvest_present then
 	execute "Clean Harvest supervisor config" do
-		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
 	end
 
 	execute "Clean Harvest cron" do

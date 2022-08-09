@@ -35,16 +35,6 @@ if ::File.directory?(extra_disk) then
     end
 end
 
-service "supervisord stop and start" do
-    service_name "supervisord"
-    action [:stop, :start]
-end
-
-service "httpd stop and disable" do
-    service_name "httpd"
-    action [:stop, :disable]
-end
-
 template "/usr/local/bin/ckan-monitor-job-queue.sh" do
     source 'ckan-monitor-job-queue.sh.erb'
     owner 'root'
