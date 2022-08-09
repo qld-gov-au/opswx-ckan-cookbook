@@ -32,6 +32,8 @@ include_recipe "datashades::nginx-setup"
 httpd_conf_dir = "/etc/httpd"
 virtualenv_dir = "/usr/lib/ckan/default"
 
+# uWSGI is available from the yum repositories,
+# but it's an old and buggy version, so use pip.
 execute "Install uWSGI" do
     user 'ckan'
     command "#{virtualenv_dir}/bin/pip install uwsgi"
