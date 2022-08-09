@@ -132,19 +132,6 @@ template "#{config_dir}/wsgi.py" do
 	mode '0755'
 end
 
-template '/etc/httpd/conf.d/ckan.conf' do
-	source 'apache_ckan.conf.erb'
-	owner 'apache'
-	group 'apache'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
-		:domains => app['domains']
-	})
-	action :create
-end
-
 #
 # Create NGINX Config files
 #
