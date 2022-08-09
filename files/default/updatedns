@@ -36,7 +36,15 @@ function update_dns
 	# We always need a base DNS record even for the failover records to point to, so always create it
 	#
 	if [ "${instance_hostname}" != "${currec}" ]; then
-		route53 change_record ${zone_id} ${dns_name} CNAME ${instance_hostname} 60
+		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
+			{"Changes": [
+				{"Action": "UPSERT", "ResourceRecordSet": {
+					"Name": "$dns_name", "Type": "CNAME", "TTL": 60,
+					"ResourceRecords": [{"Value": "$instance_hostname"}]
+				}}
+			]}
+		EOF
+		)
 	fi
 
 	# Create cluster alias records as applicable
@@ -47,7 +55,19 @@ function update_dns
 		failover_type=SECONDARY
 	fi
 	if [ "$failover_type" != "" ]; then
-		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch "{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"${alias}.${tld}\",\"Type\":\"CNAME\",\"SetIdentifier\":\"${dns_type}\",\"Failover\":\"${failover_type}\",\"AliasTarget\":{\"HostedZoneId\":\"${zone_id}\",\"DNSName\":\"${name}.${tld}\",\"EvaluateTargetHealth\":true}}}]}"
+		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
+			{"Changes": [
+				{"Action": "UPSERT", "ResourceRecordSet": {
+					"Name": "${alias}.${tld}", "Type": "CNAME",
+					"SetIdentifier": "${dns_type}", "Failover": "${failover_type}",
+					"AliasTarget": {
+						"HostedZoneId": "${zone_id}", "DNSName": "${name}.${tld}",
+						"EvaluateTargetHealth":true
+					}
+				}}
+			]}
+		EOF
+		)
 	fi
 
 }

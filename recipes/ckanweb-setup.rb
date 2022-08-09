@@ -26,11 +26,18 @@ node['datashades']['ckan_web']['packages'].each do |p|
 end
 
 include_recipe "datashades::ckan-setup"
-include_recipe "datashades::ckanweb-efs-setup"
 include_recipe "datashades::httpd-efs-setup"
 include_recipe "datashades::nginx-setup"
 
 httpd_conf_dir = "/etc/httpd"
+virtualenv_dir = "/usr/lib/ckan/default"
+
+# uWSGI is available from the yum repositories,
+# but it's an old and buggy version, so use pip.
+execute "Install uWSGI" do
+    user 'ckan'
+    command "#{virtualenv_dir}/bin/pip install uwsgi"
+end
 
 # Change Apache default port to 8000 and fix access to /
 #

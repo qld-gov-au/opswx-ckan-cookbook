@@ -39,16 +39,25 @@ virtualenv_dir = "/usr/lib/ckan/default"
 paths = {
 	"#{shared_fs_dir}/ckan_storage" => 'apache',
 	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/resources" => 'apache'
+	"#{shared_fs_dir}/ckan_storage/resources" => 'apache',
+	"#{shared_fs_dir}/ckan_storage/webassets" => 'apache'
 }
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
-	  owner dir_owner
-	  group "#{service_name}"
-	  recursive true
-	  mode '0775'
-	  action :create
+		owner dir_owner
+		group "#{service_name}"
+		recursive true
+		mode '0775'
+		action :create
+	end
+
+	execute "Ensure files in #{nfs_path} have correct ownership" do
+		command "chown -R #{dir_owner}:#{service_name} #{nfs_path}"
+	end
+
+	execute "Ensure files in #{nfs_path} have correct permissions" do
+		command "chmod -R g+rwX #{nfs_path}"
 	end
 end
 
@@ -91,9 +100,25 @@ include_recipe "datashades::ckanweb-deploy-theme"
 
 # Just in case something created files as root
 execute "Refresh virtualenv ownership" do
-	user "root"
-	group "root"
 	command "chown -R ckan:ckan #{virtualenv_dir}"
+end
+
+#
+# Create uWSGI config files
+#
+
+cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
+	source "ckan-uwsgi.ini"
+	owner service_name
+	group service_name
+	mode "0644"
+end
+
+cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
+	source "supervisor-ckan-uwsgi.conf"
+	owner service_name
+	group service_name
+	mode "0744"
 end
 
 #
@@ -102,8 +127,8 @@ end
 
 template "#{config_dir}/wsgi.py" do
 	source 'apache.wsgi.erb'
-	owner 'root'
-	group 'root'
+	owner service_name
+	group service_name
 	mode '0755'
 end
 
@@ -124,7 +149,7 @@ end
 # Create NGINX Config files
 #
 
-node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
+node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8080; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
 	source 'nginx.conf.erb'

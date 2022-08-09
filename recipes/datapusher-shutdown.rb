@@ -31,6 +31,14 @@ bash "Delete #{service_name} DNS record" do
 		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
 		instance_hostname=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/hostname)
 		dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
-		route53 del_record ${zone_id} ${dns_name} CNAME ${instance_hostname} 60
+		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
+			{"Changes": [
+				{"Action": "DELETE", "ResourceRecordSet": {
+					"Name": "${dns_name}", "Type": "CNAME", "TTL": 60,
+					"ResourceRecords": [{"Value": "$instance_hostname"}]
+				}}
+			]}
+		EOF
+		)
 	EOS
 end
