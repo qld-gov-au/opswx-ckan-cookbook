@@ -42,6 +42,7 @@ end
 group "ckan" do
 	action :create
 	gid '2000'
+	members "ec2-user"
 	not_if { ::File.directory? "/home/ckan" }
 end
 
