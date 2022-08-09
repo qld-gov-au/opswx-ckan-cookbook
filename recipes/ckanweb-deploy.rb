@@ -39,16 +39,25 @@ virtualenv_dir = "/usr/lib/ckan/default"
 paths = {
 	"#{shared_fs_dir}/ckan_storage" => 'apache',
 	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/resources" => 'apache'
+	"#{shared_fs_dir}/ckan_storage/resources" => 'apache',
+	"#{shared_fs_dir}/ckan_storage/webassets" => 'apache'
 }
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
-	  owner dir_owner
-	  group "#{service_name}"
-	  recursive true
-	  mode '0775'
-	  action :create
+		owner dir_owner
+		group "#{service_name}"
+		recursive true
+		mode '0775'
+		action :create
+	end
+
+	execute "Ensure files in #{nfs_path} have correct ownership" do
+		command "chown -R #{dir_owner}:#{service_name} #{nfs_path}"
+	end
+
+	execute "Ensure files in #{nfs_path} have correct permissions" do
+		command "chmod -R g+rwX #{nfs_path}"
 	end
 end
 
@@ -91,8 +100,6 @@ include_recipe "datashades::ckanweb-deploy-theme"
 
 # Just in case something created files as root
 execute "Refresh virtualenv ownership" do
-	user "root"
-	group "root"
 	command "chown -R ckan:ckan #{virtualenv_dir}"
 end
 
