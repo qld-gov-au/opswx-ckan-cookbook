@@ -48,6 +48,7 @@ end
 paths = {
 	"/var/log/#{service_name}" => service_name,
 	shared_fs_dir => service_name,
+	"/var/cache/#{service_name}" => service_name,
 }
 
 paths.each do |nfs_path, dir_owner|
