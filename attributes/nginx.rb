@@ -26,5 +26,3 @@ default['datashades']['nginx']['ssl'] = false
 default['datashades']['nginx']['maxdl'] = '512M'
 default['datashades']['nginx']['mem_limit'] = '256M'
 default['datashades']['nginx']['default_server'] = ''
-default['datashades']['nginx']['locations'] = ''
-default['datashades']['app']['locations'] = ''
