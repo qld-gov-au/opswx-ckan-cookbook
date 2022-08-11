@@ -66,7 +66,6 @@ end
 #
 
 include_recipe "datashades::ckan-deploy"
-include_recipe "datashades::ckanweb-deploy-theme"
 
 # app_url == Domains[0] is used for site_url, email domain defaults to public_tld if email_domain is not injected via attributes/ckan.rb
 # # Update the CKAN site_url with the best public domain name we can find.
