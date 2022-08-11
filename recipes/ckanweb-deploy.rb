@@ -37,10 +37,10 @@ virtualenv_dir = "/usr/lib/ckan/default"
 # Setup Site directories
 #
 paths = {
-	"#{shared_fs_dir}/ckan_storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/resources" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/webassets" => 'apache'
+	"#{shared_fs_dir}/ckan_storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/resources" => service_name,
+	"#{shared_fs_dir}/ckan_storage/webassets" => service_name
 }
 
 paths.each do |nfs_path, dir_owner|
