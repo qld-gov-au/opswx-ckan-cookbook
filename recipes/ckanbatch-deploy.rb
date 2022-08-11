@@ -16,11 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-service "supervisord stop" do
-    service_name "supervisord"
-    action :stop
-end
-
 include_recipe "datashades::stackparams"
 include_recipe "datashades::ckan-deploy"
 
@@ -155,4 +150,9 @@ file "/etc/cron.daily/ckan-revision-archival" do
     mode '0755'
     owner "root"
     group "root"
+end
+
+service "supervisord restart" do
+    service_name "supervisord"
+    action [:stop, :start]
 end
