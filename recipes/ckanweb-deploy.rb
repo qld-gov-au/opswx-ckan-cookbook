@@ -37,10 +37,10 @@ virtualenv_dir = "/usr/lib/ckan/default"
 # Setup Site directories
 #
 paths = {
-	"#{shared_fs_dir}/ckan_storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/resources" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/webassets" => 'apache'
+	"#{shared_fs_dir}/ckan_storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/resources" => service_name,
+	"#{shared_fs_dir}/ckan_storage/webassets" => service_name
 }
 
 paths.each do |nfs_path, dir_owner|
@@ -66,7 +66,6 @@ end
 #
 
 include_recipe "datashades::ckan-deploy"
-include_recipe "datashades::ckanweb-deploy-theme"
 
 # app_url == Domains[0] is used for site_url, email domain defaults to public_tld if email_domain is not injected via attributes/ckan.rb
 # # Update the CKAN site_url with the best public domain name we can find.
@@ -132,24 +131,9 @@ template "#{config_dir}/wsgi.py" do
 	mode '0755'
 end
 
-template '/etc/httpd/conf.d/ckan.conf' do
-	source 'apache_ckan.conf.erb'
-	owner 'apache'
-	group 'apache'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
-		:domains => app['domains']
-	})
-	action :create
-end
-
 #
 # Create NGINX Config files
 #
-
-node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8080; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
 	source 'nginx.conf.erb'
@@ -165,3 +149,8 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
+
+service "supervisord restart" do
+	service_name "supervisord"
+	action [:stop, :start]
+end

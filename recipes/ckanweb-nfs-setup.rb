@@ -22,12 +22,11 @@
 
 # Setup NFS directories
 #
-paths = 
+paths =
 {
-	"/var/shared_content" => 'apache', 
-	"/var/www/sites" => 'apache', 
-	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx', 
-	"/var/log/httpd/#{node['datashades']['sitename']}" => 'apache'
+	"/var/shared_content" => 'apache',
+	"/var/www/sites" => 'apache',
+	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx',
 }
 
 paths.each do |nfs_path, dir_owner|
@@ -41,21 +40,20 @@ paths.each do |nfs_path, dir_owner|
 end
 
 # Mount NFS volumes
-# 
-mounts = 
-{ 
-	"/var/shared_content" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/shared_content",  
+#
+mounts =
+{
+	"/var/shared_content" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/shared_content",
 	"/var/log/nginx/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_nginx",
-	"/var/log/httpd/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_apache"
 }
 
 mounts.each do |mount_point, mount_device|
 	mount mount_point do
-		device mount_device 
+		device mount_device
 		fstype "nfs"
 		options "rw,hard,intr"
 		action [:mount, :enable]
 	end
-end	
+end
 
 
