@@ -37,18 +37,27 @@ virtualenv_dir = "/usr/lib/ckan/default"
 # Setup Site directories
 #
 paths = {
-	"#{shared_fs_dir}/ckan_storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/storage" => 'apache',
-	"#{shared_fs_dir}/ckan_storage/resources" => 'apache'
+	"#{shared_fs_dir}/ckan_storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/storage" => service_name,
+	"#{shared_fs_dir}/ckan_storage/resources" => service_name,
+	"#{shared_fs_dir}/ckan_storage/webassets" => service_name
 }
 
 paths.each do |nfs_path, dir_owner|
 	directory nfs_path do
-	  owner dir_owner
-	  group "#{service_name}"
-	  recursive true
-	  mode '0775'
-	  action :create
+		owner dir_owner
+		group "#{service_name}"
+		recursive true
+		mode '0775'
+		action :create
+	end
+
+	execute "Ensure files in #{nfs_path} have correct ownership" do
+		command "chown -R #{dir_owner}:#{service_name} #{nfs_path}"
+	end
+
+	execute "Ensure files in #{nfs_path} have correct permissions" do
+		command "chmod -R g+rwX #{nfs_path}"
 	end
 end
 
@@ -57,7 +66,6 @@ end
 #
 
 include_recipe "datashades::ckan-deploy"
-include_recipe "datashades::ckanweb-deploy-theme"
 
 # app_url == Domains[0] is used for site_url, email domain defaults to public_tld if email_domain is not injected via attributes/ckan.rb
 # # Update the CKAN site_url with the best public domain name we can find.
@@ -91,40 +99,41 @@ include_recipe "datashades::ckanweb-deploy-theme"
 
 # Just in case something created files as root
 execute "Refresh virtualenv ownership" do
-	user "root"
-	group "root"
 	command "chown -R ckan:ckan #{virtualenv_dir}"
+end
+
+#
+# Create uWSGI config files
+#
+
+cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
+	source "ckan-uwsgi.ini"
+	owner service_name
+	group service_name
+	mode "0644"
+end
+
+cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
+	source "supervisor-ckan-uwsgi.conf"
+	owner service_name
+	group service_name
+	mode "0744"
 end
 
 #
 # Create Apache config files
 #
 
-template "#{config_dir}/apache.wsgi" do
+template "#{config_dir}/wsgi.py" do
 	source 'apache.wsgi.erb'
-	owner 'root'
-	group 'root'
+	owner service_name
+	group service_name
 	mode '0755'
-end
-
-template '/etc/httpd/conf.d/ckan.conf' do
-	source 'apache_ckan.conf.erb'
-	owner 'apache'
-	group 'apache'
-	mode '0755'
-	variables({
-		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
-		:domains => app['domains']
-	})
-	action :create
 end
 
 #
 # Create NGINX Config files
 #
-
-node.override['datashades']['app']['locations'] = "location ~ ^#{node['datashades']['ckan_web']['endpoint']} { proxy_pass http://localhost:8000; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }"
 
 template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
 	source 'nginx.conf.erb'
@@ -140,3 +149,8 @@ template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
+
+service "supervisord restart" do
+	service_name "supervisord"
+	action [:stop, :start]
+end

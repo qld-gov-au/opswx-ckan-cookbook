@@ -85,7 +85,6 @@ extextras =
 #
 extordering =
 {
-	'data_qld_theme' => 10,
 	'odi_certificates' => 20,
 	'dcat structured_data' => 30,
 	'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting' => 40,
@@ -224,7 +223,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if batchnode
 			harvest_present = true
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-harvest.conf" do
+			cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
 				source "supervisor-ckan-harvest.conf"
 				mode "0744"
 			end
@@ -274,7 +273,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		if batchnode
 			archiver_present = true
 
-			cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-archiver.conf" do
+			cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
 				source "supervisor-ckan-archiver.conf"
 				mode "0744"
 			end
@@ -314,31 +313,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			command "sed -i 's/repoze[.]who[.]plugins[.]friendlyform:FriendlyFormPlugin/ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin/g' #{config_dir}/who.ini"
 		end
-	end
-
-	bash "#{pluginname}: Provide custom Bootstrap version" do
-		user "#{account_name}"
-		group "#{account_name}"
-		cwd "#{virtualenv_dir}/src/ckan/ckan/public/base/vendor/bootstrap/js/"
-		code <<-EOS
-			BOOTSTRAP_VERSION_PATTERN="\\bv[0-9]+\\.[0-9]\\.[0-9]\\b"
-			CORE_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" bootstrap.min.js)
-			CUSTOM_BOOTSTRAP=#{virtualenv_dir}/src/ckanext-data-qld-theme/ckanext/data_qld_theme/bootstrap/
-			CUSTOM_BOOTSTRAP_VERSION=$(grep -Eo "$BOOTSTRAP_VERSION_PATTERN" $CUSTOM_BOOTSTRAP/bootstrap.min.js)
-			if [ "$CUSTOM_BOOTSTRAP_VERSION" != "" ]; then
-				cp $CUSTOM_BOOTSTRAP/bootstrap.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js
-				cp $CUSTOM_BOOTSTRAP/bootstrap.min.js bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js
-				if [ -L bootstrap.js ]; then
-					rm bootstrap.js bootstrap.min.js
-				else
-					mv bootstrap.js bootstrap-$CORE_BOOTSTRAP_VERSION.js
-					mv bootstrap.min.js bootstrap-$CORE_BOOTSTRAP_VERSION.min.js
-				fi
-				ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.js bootstrap.js
-				ln -sf bootstrap-$CUSTOM_BOOTSTRAP_VERSION.min.js bootstrap.min.js
-			fi
-		EOS
-		only_if { "#{pluginname}".eql? 'data-qld-theme' }
 	end
 
 	# Viewhelpers is a special case because stats needs to be loaded before it
@@ -402,7 +376,7 @@ end
 
 if not archiver_present then
 	execute "Clean Archiver supervisor config" do
-		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-archiver*.conf"
+		command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
 	end
 
 	execute "Clean Archiver cron" do
@@ -412,7 +386,7 @@ end
 
 if not harvest_present then
 	execute "Clean Harvest supervisor config" do
-		command "rm -f /etc/supervisor/conf.d/supervisor-ckan-harvest*.conf"
+		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
 	end
 
 	execute "Clean Harvest cron" do

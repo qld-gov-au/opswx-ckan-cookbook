@@ -42,6 +42,7 @@ end
 group "ckan" do
 	action :create
 	gid '2000'
+	members "ec2-user"
 	not_if { ::File.directory? "/home/ckan" }
 end
 
@@ -77,7 +78,7 @@ end
 
 # Set up shared directories
 #
-include_recipe "datashades::efs-setup"
+include_recipe "datashades::ckan-efs-setup"
 
 #
 # Set up Python virtual environment
@@ -145,4 +146,85 @@ end
 link "/etc/ckan/default" do
 	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
+end
+
+# Installing Supervisor via yum gives initd integration, but has import problems.
+# Installing via pip fixes the import problems, but doesn't provide the integration.
+# So we do both.
+execute "pip --cache-dir=/tmp/ install supervisor"
+
+bash "Configure Supervisord" do
+	user "root"
+	cwd "/etc"
+	code <<-EOS
+		SUPERVISOR_CONFIG=supervisord.conf
+		if ! [ -f "$SUPERVISOR_CONFIG" ]; then
+			exit 0
+		fi
+
+		# configure Unix socket path
+		UNIX_SOCKET=/var/tmp/supervisor.sock
+		DEFAULT_UNIX_SOCKET=/var/run/supervisor/supervisor[.]sock
+		if (grep "$DEFAULT_UNIX_SOCKET" $SUPERVISOR_CONFIG); then
+			# if default config exists, update it
+			sed -i "s|$DEFAULT_UNIX_SOCKET|$UNIX_SOCKET|g" $SUPERVISOR_CONFIG
+		fi
+		if ! (grep "unix_http_server" $SUPERVISOR_CONFIG); then
+			# if no config exists, add it
+			echo '[unix_http_server]' >> $SUPERVISOR_CONFIG
+			echo "file = $UNIX_SOCKET" >> $SUPERVISOR_CONFIG
+		fi
+		if ! (grep "rpcinterface:supervisor" $SUPERVISOR_CONFIG); then
+			echo '[rpcinterface:supervisor]' >> $SUPERVISOR_CONFIG
+			echo 'supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface' >> $SUPERVISOR_CONFIG
+		fi
+
+		# configure file inclusions
+		SUPERVISOR_CONFIG_D=supervisord.d
+		mkdir -p $SUPERVISOR_CONFIG_D
+
+		LEGACY_SUPERVISOR_CONFIG_D="/etc/supervisor/conf.d/[*][.]conf"
+		if (grep "$LEGACY_SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+			# if legacy config exists, update it
+			sed -i "s|$LEGACY_SUPERVISOR_CONFIG_D|$SUPERVISOR_CONFIG_D/*.ini|g" $SUPERVISOR_CONFIG
+		elif ! (grep "$SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+			# if no config exists, add it
+			echo '[include]' >> $SUPERVISOR_CONFIG
+			echo "files = $SUPERVISOR_CONFIG_D/*.ini" >> $SUPERVISOR_CONFIG
+		fi
+	EOS
+end
+
+# Configure either initd or systemd
+if system('which systemctl')
+	systemd_unit "supervisord.service" do
+		content({
+			Unit: {
+				Description: 'Supervisor process control system for UNIX',
+				Documentation: 'http://supervisord.org',
+				After: 'network.target'
+			},
+			Service: {
+				ExecStart: '/usr/bin/supervisord -n -c /etc/supervisord.conf',
+				ExecStop: 'timeout 10s /usr/bin/supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; /usr/bin/supervisorctl $OPTIONS shutdown',
+				ExecReload: '/usr/bin/supervisorctl $OPTIONS reload',
+				KillMode: 'process',
+				Restart: 'on-failure',
+				RestartSec: '20s'
+			},
+			Install: {
+				WantedBy: 'multi-user.target'
+			}
+		})
+		action [:create, :enable]
+	end
+else
+	# Managed processes sometimes don't shut down properly on daemon stop,
+	# leaving them 'orphaned' and resulting in duplicates.
+	# Work around by issuing a stop command to the children first.
+	execute "Stop children on supervisord stop" do
+		command <<-'SED'.strip + " /etc/init.d/supervisord"
+			sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
+		SED
+	end
 end

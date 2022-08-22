@@ -48,6 +48,7 @@ end
 paths = {
 	"/var/log/#{service_name}" => service_name,
 	shared_fs_dir => service_name,
+	"/var/cache/#{service_name}" => service_name,
 }
 
 paths.each do |nfs_path, dir_owner|
@@ -169,4 +170,9 @@ execute "Compile locale translation" do
 	group service_name
 	cwd install_dir
 	command "#{virtualenv_dir}/bin/python setup.py compile_catalog -f --locale en_AU"
+end
+
+service "supervisord enable" do
+	service_name "supervisord"
+	action [:enable]
 end

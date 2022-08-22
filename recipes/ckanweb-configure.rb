@@ -21,5 +21,4 @@
 # limitations under the License.
 
 include_recipe "datashades::ckan-configure"
-include_recipe "datashades::httpd-configure"
 include_recipe "datashades::nginx-configure"

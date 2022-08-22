@@ -1,12 +1,11 @@
+# encoding: utf-8
+
 import os
 from logging.config import fileConfig as loggingFileConfig
 
 config_filepath = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'production.ini')
 loggingFileConfig(config_filepath)
-
-activate_this = os.path.join('/usr/lib/ckan/default/bin/activate_this.py')
-execfile(activate_this, dict(__file__=activate_this))
 
 try:
     from ckan.config.middleware import make_app

@@ -16,11 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-service "supervisord stop" do
-    service_name "supervisord"
-    action :stop
-end
-
 include_recipe "datashades::stackparams"
 include_recipe "datashades::ckan-deploy"
 
@@ -60,16 +55,11 @@ install_dir = "#{virtualenv_dir}/src/#{service_name}"
 # Create job worker config files.
 #
 
-cookbook_file "/etc/supervisor/conf.d/supervisor-ckan-worker.conf" do
+cookbook_file "/etc/supervisord.d/supervisor-ckan-worker.ini" do
     source "supervisor-ckan-worker.conf"
     owner "root"
     group "root"
-    mode "0644"
-end
-
-service "supervisord enable" do
-    service_name "supervisord"
-    action [:enable]
+    mode "0744"
 end
 
 # Set up maintenance cron jobs
@@ -160,4 +150,9 @@ file "/etc/cron.daily/ckan-revision-archival" do
     mode '0755'
     owner "root"
     group "root"
+end
+
+service "supervisord restart" do
+    service_name "supervisord"
+    action [:stop, :start]
 end

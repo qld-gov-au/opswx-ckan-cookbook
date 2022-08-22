@@ -28,7 +28,6 @@ default['datashades']['ckan_web']['alternative_packages'] = [
     ['postgresql94-devel', 'postgresql-devel'],
     ['python27-devel', 'python3-devel'],
     ['python27-pip', 'python3-pip'],
-    ['mod24_wsgi-python27', 'mod_wsgi']
 ]
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
