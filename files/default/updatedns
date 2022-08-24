@@ -24,16 +24,16 @@ function update_dns
     local dns_name=$1
 	local dns_type=$2
 
-    local currec=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '${dns_name}')].ResourceRecords[0].Value" | jq '.[0]' | tr -d '"')
+	# Retrieve the canonical hostname from EC2 metadata.
+	# Eg ip-1.2.3.4.us-east-1.compute.internal
 	local instance_hostname=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/hostname)
 
-	# Create a cluster node Alias record based on record type
-	#
-	name=`echo ${dns_name} | cut -d'.' -f 1`
-	alias=`printf '%s\n' "${dns_name//[[:digit:]]/}" | cut -d'.' -f 1`
-	tld=`echo ${dns_name} | cut -d'.' -f 2-`
+	# Retrieve the base DNS record value for this instance, if any.
+	# This should match the instance hostname (if not, we'll change it).
+	local currec=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '${dns_name}')].ResourceRecords[0].Value" | jq '.[0]' | tr -d '"')
 
-	# We always need a base DNS record even for the failover records to point to, so always create it
+	# We always need a base DNS record for the failover records to point to, so always create it.
+	# Eg foo1.dev.ckan.internal pointing to ip-1.2.3.4.us-east-1.compute.internal
 	#
 	if [ "${instance_hostname}" != "${currec}" ]; then
 		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
@@ -47,27 +47,37 @@ function update_dns
 		)
 	fi
 
-	# Create cluster alias records as applicable
+	# Create a cluster node Alias record based on record type.
+	# Eg foo.dev.ckan.internal PRIMARY foo1.dev.ckan.internal
+	# SECONDARY foo2.dev.ckan.internal
 	#
+	name=`echo ${dns_name} | cut -d'.' -f 1`
+	alias=`printf '%s\n' "${dns_name//[[:digit:]]/}" | cut -d'.' -f 1`
+	tld=`echo ${dns_name} | cut -d'.' -f 2-`
+
 	if [[ "${dns_type}" == *"_master"*  ]]; then
 		failover_type=PRIMARY
 	elif [[ "${dns_type}" == *"_slave"*  ]]; then
 		failover_type=SECONDARY
 	fi
 	if [ "$failover_type" != "" ]; then
-		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
-			{"Changes": [
-				{"Action": "UPSERT", "ResourceRecordSet": {
-					"Name": "${alias}.${tld}", "Type": "CNAME",
-					"SetIdentifier": "${dns_type}", "Failover": "${failover_type}",
-					"AliasTarget": {
-						"HostedZoneId": "${zone_id}", "DNSName": "${name}.${tld}",
-						"EvaluateTargetHealth":true
-					}
-				}}
-			]}
-		EOF
-		)
+		# check whether the alias record is already correct
+		local alias_rec=$(aws route53 list-resource-record-sets --hosted-zone-id ${zone_id} --query "ResourceRecordSets[?contains(Name, '${alias}.${tld}') && contains(Failover, '${failover_type}')][AliasTarget.DNSName][0]" | jq '.[0]' | tr -d '"' | sed 's/[.]$//')
+		if [ "${name}.${tld}" != "${alias_rec}" ]; then
+			aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
+				{"Changes": [
+					{"Action": "UPSERT", "ResourceRecordSet": {
+						"Name": "${alias}.${tld}", "Type": "CNAME",
+						"SetIdentifier": "${dns_type}", "Failover": "${failover_type}",
+						"AliasTarget": {
+							"HostedZoneId": "${zone_id}", "DNSName": "${name}.${tld}",
+							"EvaluateTargetHealth":true
+						}
+					}}
+				]}
+			EOF
+			)
+		fi
 	fi
 
 }
