@@ -207,9 +207,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		user "#{account_name}"
 		code <<-EOS
 			export PASTER_PLUGIN=ckanext-ytp-comments
-			#{ckan_cli} initdb || echo 'Ignoring expected error'
-			#{ckan_cli} init_notifications_db || echo 'Ignoring expected error'
-			#{ckan_cli} updatedb || echo 'Ignoring expected error'
+			#{ckan_cli} comments initdb || echo 'Ignoring expected error'
+			#{ckan_cli} comments init_notifications_db || echo 'Ignoring expected error'
+			#{ckan_cli} comments updatedb || echo 'Ignoring expected error'
 		EOS
 		only_if { "#{pluginname}".eql? 'ytp-comments' }
 	end
