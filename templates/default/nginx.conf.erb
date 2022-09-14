@@ -48,7 +48,7 @@
 
         location ~ ^<%= node['datashades']['ckan_web']['endpoint'] %> {
             # API calls with significant side effects should not respect auth_tkt cookies, they should require the API key.
-            location ~ [/]api[/](?!([0-9][/])?(storage|action[/](package_resource_reorder|resource_view_reorder|user_activity_list_html|[-_a-zA-Z0-9]*follow)|util[/][a-z]+[/](format_)?autocomplete)) {
+            location ~ [/]api[/](?!([0-9][/])?(storage|action[/](package_resource_reorder|resource_view_reorder|user_activity_list_html|[-_a-zA-Z0-9]*follow|datastore_search)|util[/][a-z]+[/](format_)?autocomplete)) {
                 proxy_set_header Cookie "";
                 add_header Strict-Transport-Security "max-age=31536000" always;
 
