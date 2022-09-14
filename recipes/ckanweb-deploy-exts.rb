@@ -236,7 +236,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
-    if "#{pluginname}".eql? 'ckanext-harvester-data-qld-geoscience'
+    if "#{pluginname}".eql? 'harvester-data-qld-geoscience'
         harvester_data_qld_geoscience_present = true
         #Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
         bash "Inject geoscience_dataset if missing" do
