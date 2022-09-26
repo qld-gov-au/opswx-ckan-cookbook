@@ -247,7 +247,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cwd "#{config_dir}"
 			code <<-EOS
 				if [ -z "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
-					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json$/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
+					# scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json
+					sed -i "s/ckanext.data_qld:ckan_dataset.json/ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
 				fi
 			EOS
 		end
@@ -259,7 +260,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cwd "#{config_dir}"
 			code <<-EOS
 				if [ -z "$(grep 'ckanext.resource_visibility:schema/presets.json' production.ini)" ]; then
-					sed -i "s/scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json$/scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json/g" production.ini;
+					# scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json
+					sed -i "s/ckanext.data_qld:presets.json/ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json/g" production.ini;
 				fi
 			EOS
 		end
