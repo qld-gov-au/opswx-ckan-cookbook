@@ -87,6 +87,7 @@ extordering =
 {
 	'odi_certificates' => 20,
 	'dcat structured_data' => 30,
+	'resource-visibility' => 35,
 	'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting' => 40,
 	'qgovext' => 45,
 	'datarequests' => 46,
@@ -96,7 +97,9 @@ extordering =
 	'archiver' => 70,
 	'report' => 80,
 	'harvester_data_qld_geoscience' => 85,
-	'harvest' => 90
+	'harvest' => 90,
+	'validation-schema-generator' => 95,
+
 }
 
 installed_ordered_exts = Set[]
@@ -244,7 +247,21 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			cwd "#{config_dir}"
 			code <<-EOS
 				if [ -z "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
-					sed -i "s/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json$/scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
+					# scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json
+					sed -i "s/ckanext.data_qld:ckan_dataset.json/ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
+				fi
+			EOS
+		end
+    end
+
+    if "#{pluginname}".eql? 'resource_visibility'
+        bash "Inject resource_visibility scheming preset if missing" do
+			user "#{account_name}"
+			cwd "#{config_dir}"
+			code <<-EOS
+				if [ -z "$(grep 'ckanext.resource_visibility:schema/presets.json' production.ini)" ]; then
+					# scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json
+					sed -i "s/ckanext.data_qld:presets.json/ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json/g" production.ini;
 				fi
 			EOS
 		end
