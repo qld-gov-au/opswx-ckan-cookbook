@@ -328,7 +328,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		csrf_present = true
 		execute "set CSRF plugin in Repoze config" do
 			user "#{account_name}"
-			command "sed -i 's/repoze[.]who[.]plugins[.]friendlyform:FriendlyFormPlugin/ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin/g' #{config_dir}/who.ini"
+			command "sed -i 's|^\\(use\s*=\\)\\(.*:FriendlyFormPlugin\\)|#\\1\\2\\n\\1 ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin|g' #{config_dir}/who.ini"
 		end
 	end
 
@@ -425,9 +425,12 @@ end
 # end
 
 if not csrf_present then
-	execute "revert CSRF plugin from Repoze config" do
+	bash "revert CSRF plugin from Repoze config" do
 		user "#{account_name}"
-		command "sed -i 's/ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin/repoze.who.plugins.friendlyform:FriendlyFormPlugin/g' #{config_dir}/who.ini"
+		code <<-EOS
+			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
+			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' #{config_dir}/who.ini"
+		EOS
 	end
 end
 
