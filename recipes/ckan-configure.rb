@@ -41,3 +41,11 @@ end
 execute "Update supervisor workers if needed" do
     command "supervisorctl update"
 end
+
+if not system("grep 'alias git=' ~/.bash_profile")
+    execute "Add CKAN Git alias to Bash" do
+        command <<-EOS
+            echo "alias git='sudo -u ckan git'" >> ~/.bash_profile
+        EOS
+    end
+end
