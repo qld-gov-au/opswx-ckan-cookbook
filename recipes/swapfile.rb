@@ -3,7 +3,7 @@
 # Cookbook Name:: datashades
 # Recipe:: swapfile
 #
-# Sets up a 1GB swapfile on the extra EBS, if available.
+# Sets up a swapfile on the extra EBS, if available.
 # Since this isn't on the root filesystem and may not be instantly
 # available on startup, it's not added to /etc/fstab.
 #
@@ -24,10 +24,10 @@
 
 extra_disk = "/mnt/local_data"
 if ::File.directory?(extra_disk) then
-    swap_file = "#{extra_disk}/swapfile_1g"
+    swap_file = "#{extra_disk}/swapfile_2g"
     bash "Add swap disk" do
         code <<-EOS
-            dd if=/dev/zero of=#{swap_file} bs=1024 count=1M
+            dd if=/dev/zero of=#{swap_file} bs=1024 count=2M
             chmod 0600 #{swap_file}
             mkswap #{swap_file}
         EOS
