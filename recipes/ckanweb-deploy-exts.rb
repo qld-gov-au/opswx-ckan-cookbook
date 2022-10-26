@@ -261,7 +261,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			code <<-EOS
 				if [ -z "$(grep 'ckanext.resource_visibility:schema/presets.json' production.ini)" ]; then
 					# scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json
-					sed -i "s/ckanext.data_qld:presets.json/ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json/g" production.ini;
+					sed -i "s|ckanext.data_qld:presets.json|ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json|g" production.ini;
 				fi
 			EOS
 		end
