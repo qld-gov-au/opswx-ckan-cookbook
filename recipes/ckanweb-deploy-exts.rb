@@ -254,8 +254,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
     end
 
-    if "#{pluginname}".eql? 'resource_visibility'
-        bash "Inject resource_visibility scheming preset if missing" do
+    if "#{pluginname}".eql? 'resource-visibility'
+        bash "Inject resource-visibility scheming preset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
