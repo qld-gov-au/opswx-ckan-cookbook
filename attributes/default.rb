@@ -23,6 +23,10 @@
 
 # default['datashades']['timezone'] = 'Australia/Brisbane' using Queensland due to pythong 2 not having Brisbane
 default['datashades']['timezone'] = 'Australia/Queensland'
+default["datashades"]["swapfile_name"] = "/var/swapfile4g"
+# 4gb x 1024 * 1024 = 4194304
+default["datashades"]["swapfile_size"] = "4194304"
+
 default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
