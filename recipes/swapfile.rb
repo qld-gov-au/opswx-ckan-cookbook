@@ -7,7 +7,7 @@
 # Setup another swap on external disk for more speed if it is used during normal operations
 # Since extra disk is attached on stage one chef, it is dynamically added on opsworks setup
 #
-# Ensure root disk is bigger than 8gb else issues will happen down the line, i.e. 100gb per below:
+# Ensure root disk is bigger than 8gb else issues will happen down the line, e.g. 100gb per below:
 #   OpsWorksInstance:
 #    Type: AWS::OpsWorks::Instance
 #    Properties:
