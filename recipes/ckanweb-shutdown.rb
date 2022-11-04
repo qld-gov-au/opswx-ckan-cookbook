@@ -19,12 +19,12 @@
 # Hide this instance from others
 #
 file "/data/#{node['datashades']['hostname']}" do
-    ignore_failure true # just in case it does not exist
+	ignore_failure true # just in case it does not exist
 	action :delete
 end
 
 bash "Archive remaining logs" do
-    ignore_failure true # just in case it does not exist
+	ignore_failure true # just in case it does not exist
 	user "root"
 	cwd "/"
 	code <<-EOS

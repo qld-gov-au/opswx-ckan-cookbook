@@ -19,6 +19,7 @@
 # Hide this instance from others
 #
 file "/data/#{node['datashades']['hostname']}" do
+	ignore_failure true # just in case it does not exist
 	action :delete
 end
 
