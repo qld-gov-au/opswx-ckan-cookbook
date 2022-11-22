@@ -252,13 +252,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				fi
 			EOS
 		end
-
-        #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-        execute "Lock numpy version until issue 14012 is fixed" do
-            user "#{account_name}"
-            command "#{pip} install pyOpenSSL>=22.1.0"
-        end
-
     end
 
     if "#{pluginname}".eql? 'resource-visibility'
@@ -471,4 +464,12 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 			sed -i "s/^\(\s\{4\}\)\(result = logic.get_action('datastore_search')({}, data)\)/\1import ckan.plugins as p\n\1try:\n\1\1\2\n\1except p.toolkit.ObjectNotFound:\n\1\1return []/"
 		SED
 	end
+end
+
+#pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+bash "Min pyOpenSSL for python3" do
+    user "#{account_name}"
+    code <<-EOS
+            #{pip} install pyOpenSSL>=22.1.0
+    EOS
 end
