@@ -253,8 +253,12 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			EOS
 		end
 
-        #22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-		pip install pyOpenSSL>=22.1.0
+        #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+        execute "Lock numpy version until issue 14012 is fixed" do
+            user "#{account_name}"
+            command "#{pip} install pyOpenSSL>=22.1.0"
+        end
+
     end
 
     if "#{pluginname}".eql? 'resource-visibility'
