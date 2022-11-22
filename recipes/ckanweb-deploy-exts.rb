@@ -252,6 +252,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				fi
 			EOS
 		end
+
+        #22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+		pip install pyOpenSSL>=22.1.0
     end
 
     if "#{pluginname}".eql? 'resource-visibility'
