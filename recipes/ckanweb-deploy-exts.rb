@@ -466,10 +466,10 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 	end
 end
 
-#pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-bash "Min pyOpenSSL for python3" do
-    user "#{account_name}"
-    code <<-EOS
-            #{pip} install pyOpenSSL>=22.1.0
-    EOS
-end
+# #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+# bash "Min pyOpenSSL for python3" do
+#     user "#{account_name}"
+#     code <<-EOS
+#             #{pip} install pyOpenSSL>=22.1.0
+#     EOS
+# end
