@@ -287,6 +287,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
                 group "root"
             end
         end
+    end
 
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
