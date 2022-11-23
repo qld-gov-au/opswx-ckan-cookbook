@@ -233,7 +233,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
 			file "/etc/cron.hourly/ckan-harvest-run" do
-				content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run > /dev/null 2>&1\n"
+				content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run >> /var/log/ckan/ckan-harvest-run.log 2>&1\n"
 				mode "0755"
 			end
 		end
@@ -265,21 +265,28 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				fi
 			EOS
 		end
+		if batchnode
+            # Run dataset require updates notifications at 7am and 7:15am on batch
+            file "/etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments" do
+                content "00 7 * * MON-FRI root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=resource_visibility #{ckan_cli} resource_visibility notify_privacy_assessments >> /var/log/ckan/ckan-dataset-resource-visibility-notify-privacy-assessments.log 2>&1\n"
+                mode '0644'
+                owner "root"
+                group "root"
+            end
+        end
     end
 
 	if "#{pluginname}".eql? 'data-qld'
 		if batchnode
         	# Run dataset require updates notifications at 7am and 7:15am on batch
             file "/etc/cron.d/ckan-dataset-notification-due" do
-                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
-                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
                 mode '0644'
                 owner "root"
                 group "root"
             end
         end
-	end
-
 
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
@@ -304,7 +311,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			#Trigger at 6:30am twice a month
 			file "/etc/cron.d/ckan-archiverTriggerAll" do
-				content "30 6 1,15 * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+				content "30 6 1,15 * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh  >> /var/log/ckan/ckan-archiverTriggerAll.log 2>&1\n"
 				mode '0644'
 			end
 		end
