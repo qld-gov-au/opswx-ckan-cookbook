@@ -124,6 +124,7 @@ end
 #
 harvester_data_qld_geoscience_present = false
 archiver_present = false
+resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
@@ -266,15 +267,16 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			EOS
 		end
 		if batchnode
-            # Run dataset require updates notifications at 7am and 7:15am on batch
-            file "/etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments" do
-                content "00 7 * * MON-FRI root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=resource_visibility #{ckan_cli} resource_visibility notify_privacy_assessments >> /var/log/ckan/ckan-dataset-resource-visibility-notify-privacy-assessments.log 2>&1\n"
-                mode '0644'
-                owner "root"
-                group "root"
-            end
-        end
-    end
+			resource_visibility_present = true
+			# Run dataset require updates notifications at 7am and 7:15am on batch
+			file "/etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments" do
+				content "00 7 * * MON-FRI root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=resource_visibility #{ckan_cli} resource_visibility notify_privacy_assessments >> /var/log/ckan/ckan-dataset-resource-visibility-notify-privacy-assessments.log 2>&1\n"
+				mode '0644'
+				owner "root"
+				group "root"
+			end
+		end
+	end
 
 	if "#{pluginname}".eql? 'data-qld'
 		if batchnode
@@ -409,6 +411,12 @@ if not archiver_present then
 	end
 end
 
+if not resource_visibility_present then
+   execute "Clean Resource Visibility cron" do
+        command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
+   end
+end
+
 if not harvest_present then
 	execute "Clean Harvest supervisor config" do
 		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
@@ -475,9 +483,10 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 end
 
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-# bash "Min pyOpenSSL for python3" do
-#     user "#{account_name}"
-#     code <<-EOS
-#             #{pip} install pyOpenSSL>=22.1.0
-#     EOS
-# end
+# #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
+bash "Min pyOpenSSL for python3" do
+    user "#{account_name}"
+    code <<-EOS
+            #{pip} install pyOpenSSL>=23.0.0
+    EOS
+end
