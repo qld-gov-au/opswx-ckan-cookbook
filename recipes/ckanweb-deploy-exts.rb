@@ -485,12 +485,3 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 		SED
 	end
 end
-
-# #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-# #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
-bash "Min pyOpenSSL for python3" do
-    user "#{account_name}"
-    code <<-EOS
-            #{pip} install pyOpenSSL>=23.0.0
-    EOS
-end
