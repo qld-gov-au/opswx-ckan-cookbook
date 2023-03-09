@@ -100,7 +100,7 @@ extordering =
 	'ytp_comments' =>59,
 	'datarequests' => 60,
 	'csrf_filter' => 63,
-	'ssm_config' => 93
+	'ssm_config' => 93,
 	'odi_certificates' => 94,
 	'resource-visibility' => 95
 }
