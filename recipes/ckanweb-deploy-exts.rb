@@ -85,11 +85,15 @@ extextras =
 #
 extordering =
 {
+    'xloader' => 10,
+    'datastore' => 15,
 	'validation' => 20,
-	'data-qld data_qld_integration data_qld_google_analytics' => 25,
+	'data_qld' => 25,
+	'data_qld_integration' => 26,
+	'data_qld_google_analytics' => 27,
 	'scheming_datasets' => 30,
 	'resource_type_validation' => 33,
-	'validation-schema-generator' => 36,
+	'validation_schema_generator' => 36,
 	'dcat structured_data' => 40,
 	'qa' => 43,
 	'archiver' => 46,
@@ -102,9 +106,8 @@ extordering =
 	'csrf_filter' => 63,
 	'ssm_config' => 93,
 	'odi_certificates' => 94,
-	'resource-visibility' => 95
+	'resource_visibility' => 95
 }
-
 
 installed_ordered_exts = Set[]
 
