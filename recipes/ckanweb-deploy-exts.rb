@@ -48,7 +48,7 @@ extnames =
 	'qgov' => 'qgovext',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
-	'data-qld' => 'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting',
+	'data-qld' => 'data_qld data_qld_integration data_qld_google_analytics',
 	'publications-qld' => 'data_qld_resources',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
@@ -85,22 +85,26 @@ extextras =
 #
 extordering =
 {
-	'odi_certificates' => 20,
-	'dcat structured_data' => 30,
-	'resource-visibility' => 35,
-	'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting' => 40,
-	'qgovext' => 45,
-	'datarequests' => 46,
-	'ytp_comments' => 47,
-	'scheming_datasets' => 50,
-	'qa' => 60,
-	'archiver' => 70,
-	'report' => 80,
-	'harvester_data_qld_geoscience' => 85,
-	'harvest' => 90,
-	'validation-schema-generator' => 95,
-
+	'validation' => 20,
+	'data-qld data_qld_integration data_qld_google_analytics' => 25,
+	'scheming_datasets' => 30,
+	'resource_type_validation' => 33,
+	'validation-schema-generator' => 36,
+	'dcat structured_data' => 40,
+	'qa' => 43,
+	'archiver' => 46,
+	'report' => 49,
+	'harvester_data_qld_geoscience' => 50,
+	'harvest' => 53,
+	'qgovext' => 56,
+	'ytp_comments' =>59,
+	'datarequests' => 60,
+	'csrf_filter' => 63,
+	'ssm_config' => 93
+	'odi_certificates' => 94,
+	'resource-visibility' => 95
 }
+
 
 installed_ordered_exts = Set[]
 
