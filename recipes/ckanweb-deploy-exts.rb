@@ -48,7 +48,7 @@ extnames =
 	'qgov' => 'qgovext',
 	'dcat' => 'dcat structured_data',
 	'scheming' => 'scheming_datasets',
-	'data-qld' => 'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting',
+	'data-qld' => 'data_qld data_qld_google_analytics',
 	'publications-qld' => 'data_qld_resources',
 	'officedocs' => 'officedocs_view',
 	'cesiumpreview' => 'cesium_viewer',
@@ -85,21 +85,28 @@ extextras =
 #
 extordering =
 {
-	'odi_certificates' => 20,
-	'dcat structured_data' => 30,
-	'resource-visibility' => 35,
-	'data_qld_resources data_qld_integration data_qld_google_analytics data_qld_reporting' => 40,
-	'qgovext' => 45,
-	'datarequests' => 46,
-	'ytp_comments' => 47,
-	'scheming_datasets' => 50,
-	'qa' => 60,
-	'archiver' => 70,
-	'report' => 80,
-	'harvester_data_qld_geoscience' => 85,
-	'harvest' => 90,
-	'validation-schema-generator' => 95,
-
+    'xloader' => 10,
+    'datastore' => 15,
+	'validation' => 20,
+	'data_qld' => 25,
+	'data_qld_integration' => 26,
+	'data_qld_google_analytics' => 27,
+	'scheming_datasets' => 30,
+	'resource_type_validation' => 33,
+	'validation_schema_generator' => 36,
+	'dcat structured_data' => 40,
+	'qa' => 43,
+	'archiver' => 46,
+	'report' => 49,
+	'harvester_data_qld_geoscience' => 50,
+	'harvest' => 53,
+	'qgovext' => 56,
+	'ytp_comments' =>59,
+	'datarequests' => 60,
+	'csrf_filter' => 63,
+	'ssm_config' => 93,
+	'odi_certificates' => 94,
+	'resource_visibility' => 95
 }
 
 installed_ordered_exts = Set[]
@@ -124,6 +131,7 @@ end
 #
 harvester_data_qld_geoscience_present = false
 archiver_present = false
+resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
@@ -233,7 +241,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
 			file "/etc/cron.hourly/ckan-harvest-run" do
-				content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run > /dev/null 2>&1\n"
+				content "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-harvest #{ckan_cli} harvester run >> /var/log/ckan/ckan-harvest-run.log 2>&1\n"
 				mode "0755"
 			end
 		end
@@ -265,21 +273,30 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 				fi
 			EOS
 		end
-    end
+		if batchnode
+			resource_visibility_present = true
+			# Run dataset require updates notifications at 7am and 7:15am on batch
+			file "/etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments" do
+				content "00 7 * * MON-FRI root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=resource_visibility #{ckan_cli} resource_visibility notify_privacy_assessments >> /var/log/ckan/ckan-dataset-resource-visibility-notify-privacy-assessments.log 2>&1\n"
+				mode '0644'
+				owner "root"
+				group "root"
+			end
+		end
+	end
 
 	if "#{pluginname}".eql? 'data-qld'
 		if batchnode
         	# Run dataset require updates notifications at 7am and 7:15am on batch
             file "/etc/cron.d/ckan-dataset-notification-due" do
-                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >/dev/null 2>&1\n"\
-                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >/dev/null 2>&1\n"
+                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
                 mode '0644'
                 owner "root"
                 group "root"
             end
         end
-	end
-
+    end
 
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
@@ -304,7 +321,7 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 
 			#Trigger at 6:30am twice a month
 			file "/etc/cron.d/ckan-archiverTriggerAll" do
-				content "30 6 1,15 * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh >/dev/null 2>&1\n"
+				content "30 6 1,15 * * ckan /usr/local/bin/pick-job-server.sh && /usr/local/bin/archiverTriggerAll.sh  >> /var/log/ckan/ckan-archiverTriggerAll.log 2>&1\n"
 				mode '0644'
 			end
 		end
@@ -399,6 +416,12 @@ if not archiver_present then
 	execute "Clean Archiver cron" do
 		command "rm -f /etc/cron.*/ckan-archiver*"
 	end
+end
+
+if not resource_visibility_present then
+   execute "Clean Resource Visibility cron" do
+        command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
+   end
 end
 
 if not harvest_present then
