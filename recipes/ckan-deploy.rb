@@ -72,7 +72,7 @@ end
 #
 
 execute "Pin setuptools version" do
-	command "#{virtualenv_dir}/bin/pip install setuptools>=44.1.0"
+	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0'"
 end
 
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
