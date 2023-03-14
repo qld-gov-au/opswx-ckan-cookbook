@@ -72,11 +72,13 @@ end
 #
 
 execute "Pin setuptools version" do
-	command "#{virtualenv_dir}/bin/pip install setuptools==44.1.0"
+	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0'"
 end
 
+# #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+# #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
 execute "Pin pyOpenSSL version" do
-	command "#{virtualenv_dir}/bin/pip install pyOpenSSL==21.0.0"
+	command "#{virtualenv_dir}/bin/pip install 'pyOpenSSL>=23.0.0'"
 end
 
 datashades_pip_install_app "ckan" do

@@ -1,5 +1,6 @@
 #
 # Installs an OpsWorks app's source via pip, including dependencies.
+# datashades_pip_install_app
 #
 # Copyright 2021, Queensland Government
 #
@@ -85,7 +86,7 @@ action :create do
         cwd install_dir
         code <<-EOS
             # retrieve latest branch metadata
-            git fetch --tags origin '#{version}' || exit 1
+            git fetch --tags -f origin '#{version}' || exit 1
             # make versioned files pristine
             git clean -f
             git reset --hard
