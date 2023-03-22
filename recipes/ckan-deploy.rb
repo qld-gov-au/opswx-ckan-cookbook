@@ -167,7 +167,7 @@ end
 execute "Create front-end resources" do
 	user service_name
 	group service_name
-	command "#{ckan_cli} front-end-build"
+	command "#{ckan_cli} front-end-build --help && #{ckan_cli} front-end-build"
 end
 
 # Ensure our translation is compiled even if it's fuzzy
