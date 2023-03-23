@@ -164,10 +164,14 @@ end
 
 # Prepare front-end CSS and JavaScript
 # This needs to be after any extensions since they may affect the result.
-execute "Create front-end resources" do
+bash "Create front-end resources" do
 	user service_name
 	group service_name
-	command "#{ckan_cli} front-end-build --help && #{ckan_cli} front-end-build"
+	code <<-EOS
+		if (#{ckan_cli} front-end-build --help) then
+			#{ckan_cli} front-end-build
+		fi
+	EOS
 end
 
 # Ensure our translation is compiled even if it's fuzzy
