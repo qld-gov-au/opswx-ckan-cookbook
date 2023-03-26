@@ -103,10 +103,10 @@ extordering =
 	'harvest' => 52,
 	'harvester_data_qld_geoscience' => 53,
 	'odi_certificates' => 60,
-	'resource_visibility' => 70
+	'resource_visibility' => 70,
 	'ssm_config' => 80,
 	'xloader' => 85,
-	'datastore' => 80,
+	'datastore' => 80
 }
 
 installed_ordered_exts = Set[]
