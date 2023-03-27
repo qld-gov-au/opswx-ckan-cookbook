@@ -85,19 +85,17 @@ extextras =
 #
 extordering =
 {
-	'dcat structured_data' => 5,
+	'dcat' => 5,
 	'validation' => 10,
-	'data_qld' => 15,
-	'data_qld_integration' => 16,
-	'data_qld_google_analytics' => 17,
+	'data-qld' => 15,
 	'resource_type_validation' => 20,
 	'validation_schema_generator' => 21,
-	'qgovext' => 25,
+	'qgov' => 25,
 	'report' => 30,
 	'datarequests' => 31,
 	'ytp_comments' =>35,
 	'csrf_filter' => 40,
-	'scheming_datasets' => 45,
+	'scheming' => 45,
 	'qa' => 50,
 	'archiver' => 51,
 	'harvest' => 52,
