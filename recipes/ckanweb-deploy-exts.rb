@@ -488,3 +488,13 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 		SED
 	end
 end
+
+bash "Enable Activity Streams extension on CKAN 2.10+" do
+	user "#{account_name}"
+	cwd "#{config_dir}"
+	code <<-EOS
+		if [ -d "#{virtualenv_dir}/src/ckan/ckanext/activity" ]; then
+			sed -i "/^ckan.plugins/ s/$/ activity /" production.ini
+		fi
+	EOS
+end
