@@ -82,23 +82,27 @@ extextras =
 
 # Ordering constraints for plugins.
 # This affects template overrides.
+# Keys must match what will actually be injected into the config, so:
+# - Plugins that appear in the 'extnames' hash must use the value of
+#   that hash, eg 'scheming_datasets' instead of just 'scheming'.
+# - Hyphens should be replaced with underscores.
 #
 extordering =
 {
-	'dcat' => 5,
+	'dcat structured_data' => 5,
 	'validation' => 10,
-	'data-qld' => 15,
+	'data_qld data_qld_google_analytics' => 15,
 	'resource_type_validation' => 20,
 	'validation_schema_generator' => 21,
-	'qgov' => 25,
+	'qgovext' => 25,
 	'report' => 30,
 	'datarequests' => 31,
 	'ytp_comments' =>35,
 	'csrf_filter' => 40,
-	'scheming' => 45,
+	'scheming_datasets' => 45,
 	'qa' => 50,
 	'archiver' => 51,
-	'harvest' => 52,
+	'harvest ckan_harvester' => 52,
 	'harvester_data_qld_geoscience' => 53,
 	'odi_certificates' => 60,
 	'resource_visibility' => 70,
