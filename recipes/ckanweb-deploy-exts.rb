@@ -82,31 +82,33 @@ extextras =
 
 # Ordering constraints for plugins.
 # This affects template overrides.
+# Keys must match what will actually be injected into the config, so:
+# - Plugins that appear in the 'extnames' hash must use the value of
+#   that hash, eg 'scheming_datasets' instead of just 'scheming'.
+# - Hyphens should be replaced with underscores.
 #
 extordering =
 {
-    'xloader' => 10,
-    'datastore' => 15,
-	'validation' => 20,
-	'data_qld' => 25,
-	'data_qld_integration' => 26,
-	'data_qld_google_analytics' => 27,
-	'scheming_datasets' => 30,
-	'resource_type_validation' => 33,
-	'validation_schema_generator' => 36,
-	'dcat structured_data' => 40,
-	'qa' => 43,
-	'archiver' => 46,
-	'report' => 49,
-	'harvester_data_qld_geoscience' => 50,
-	'harvest' => 53,
-	'qgovext' => 56,
-	'ytp_comments' =>59,
-	'datarequests' => 60,
-	'csrf_filter' => 63,
-	'ssm_config' => 93,
-	'odi_certificates' => 94,
-	'resource_visibility' => 95
+	'dcat structured_data' => 5,
+	'validation' => 10,
+	'data_qld data_qld_google_analytics' => 15,
+	'resource_type_validation' => 20,
+	'validation_schema_generator' => 21,
+	'qgovext' => 25,
+	'report' => 30,
+	'datarequests' => 31,
+	'ytp_comments' =>35,
+	'csrf_filter' => 40,
+	'scheming_datasets' => 45,
+	'qa' => 50,
+	'archiver' => 51,
+	'harvest ckan_harvester' => 52,
+	'harvester_data_qld_geoscience' => 53,
+	'odi_certificates' => 60,
+	'resource_visibility' => 70,
+	'ssm_config' => 80,
+	'xloader' => 85,
+	'datastore' => 80
 }
 
 installed_ordered_exts = Set[]
@@ -487,4 +489,14 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 			sed -i "s/^\(\s\{4\}\)\(result = logic.get_action('datastore_search')({}, data)\)/\1import ckan.plugins as p\n\1try:\n\1\1\2\n\1except p.toolkit.ObjectNotFound:\n\1\1return []/"
 		SED
 	end
+end
+
+bash "Enable Activity Streams extension on CKAN 2.10+" do
+	user "#{account_name}"
+	cwd "#{config_dir}"
+	code <<-EOS
+		if [ -d "#{virtualenv_dir}/src/ckan/ckanext/activity" ]; then
+			sed -i "/^ckan.plugins/ s/$/ activity /" production.ini
+		fi
+	EOS
 end

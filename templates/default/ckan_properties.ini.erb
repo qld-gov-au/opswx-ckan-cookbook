@@ -124,7 +124,8 @@ ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node
 #       Add ``pdf_preview`` to enable the resource preview for PDFs
 #       Add ``resource_proxy`` to enable resource proxying and get around the
 #       same origin policy
-ckan.plugins = stats resource_proxy text_preview recline_preview text_view webpage_view recline_grid_view image_view recline_view recline_graph_view recline_map_view
+
+ckan.plugins = stats resource_proxy text_view webpage_view recline_grid_view image_view audio_view video_view recline_view recline_graph_view recline_map_view datatables_view
 
 trak.display_pageviews = true
 
@@ -217,6 +218,8 @@ ckanext.validation.run_on_update_sync = False
 ##By default validation will be run against the following formats: CSV, XLSX and XLS. You can modify these formats using the following option:
 
 ckanext.validation.formats = csv xlsx xls
+
+ckanext.validation.show_badges_after_last_modified_date = 2023-03-22
 
 ## Internationalisation Settings
 ckan.locale_default = en_AU
