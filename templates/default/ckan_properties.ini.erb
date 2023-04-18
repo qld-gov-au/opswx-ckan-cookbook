@@ -296,7 +296,11 @@ ckan.group_and_organization_list_all_fields_max = 100
 #ckan.datapusher.formats =
 ckan.datapusher.url = http://<%= node['datashades']['app_id'] %>datapusher.<%= node['datashades']['tld'] %>:8800/
 
+# Set both old and new versions of this flag
+ckanext.xloader.use_type_guessing = True
+# Deprecated, remove after upgrading XLoader to 0.12+
 ckanext.xloader.just_load_with_messytables = True
+ckanext.xloader.api_token = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/job_token}
 
 ## Activity Streams Settings
 
