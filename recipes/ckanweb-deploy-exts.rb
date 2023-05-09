@@ -349,6 +349,16 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			command "sed -i 's|^\\(use\s*=\\)\\(.*:FriendlyFormPlugin\\)|#\\1\\2\\n\\1 ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin|g' #{config_dir}/who.ini"
 		end
+
+		bash "Disable built-in CKAN CSRF filter" do
+			user "#{account_name}"
+			cwd "#{config_dir}"
+			code <<-EOS
+				if [ -z "$(grep 'WTF_CSRF_ENABLED' production.ini)" ]; then
+					echo "WTF_CSRF_ENABLED = False" >> production.ini
+				fi
+			EOS
+		end
 	end
 
 	# Viewhelpers is a special case because stats needs to be loaded before it
