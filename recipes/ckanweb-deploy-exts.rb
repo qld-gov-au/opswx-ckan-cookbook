@@ -40,6 +40,7 @@ python = "#{virtualenv_dir}/bin/python"
 pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 config_dir = "/etc/ckan/default"
+config_file = "production.ini"
 
 # Hash to map extname to pluginname
 #
@@ -178,8 +179,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-					sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" production.ini
+				if [ -z  "$(grep 'ckan.plugins.*#{extname} #{config_file}')" ]; then
+					sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" #{config_file}
 				fi
 			EOS
 		end
@@ -188,8 +189,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z  "$(grep 'ckan.plugins.*#{extname} production.ini')" ]; then
-					sed -i "/^ckan.plugins/ s/$/ #{extname} /" production.ini
+				if [ -z  "$(grep 'ckan.plugins.*#{extname} #{config_file}')" ]; then
+					sed -i "/^ckan.plugins/ s/$/ #{extname} /" #{config_file}
 				fi
 			EOS
 		end
@@ -203,8 +204,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' production.ini)" ]; then
-					sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" production.ini
+				if [ -z  "$(grep 'ckan.views.default_views.*#{extname}' #{config_file})" ]; then
+					sed -i "/^ckan.views.default_views/ s/$/ #{viewname}/" #{config_file}
 				fi
 			EOS
 		end
@@ -256,9 +257,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
+				if [ -z "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' #{config_file})" ]; then
 					# scheming.dataset_schemas = ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json
-					sed -i "s/ckanext.data_qld:ckan_dataset.json/ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" production.ini;
+					sed -i "s/ckanext.data_qld:ckan_dataset.json/ckanext.data_qld:ckan_dataset.json ckanext.harvester_data_qld_geoscience:geoscience_dataset.json/g" #{config_file};
 				fi
 			EOS
 		end
@@ -269,9 +270,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z "$(grep 'ckanext.resource_visibility:schema/presets.json' production.ini)" ]; then
+				if [ -z "$(grep 'ckanext.resource_visibility:schema/presets.json' #{config_file})" ]; then
 					# scheming.presets = ckanext.scheming:presets.json ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json
-					sed -i "s|ckanext.data_qld:presets.json|ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json|g" production.ini;
+					sed -i "s|ckanext.data_qld:presets.json|ckanext.data_qld:presets.json ckanext.resource_visibility:schema/presets.json|g" #{config_file};
 				fi
 			EOS
 		end
@@ -354,8 +355,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ -z "$(grep 'WTF_CSRF_ENABLED' production.ini)" ]; then
-					echo "WTF_CSRF_ENABLED = False" >> production.ini
+				if [ -z "$(grep 'WTF_CSRF_ENABLED' #{config_file})" ]; then
+					echo "WTF_CSRF_ENABLED = False" >> #{config_file}
 				fi
 			EOS
 		end
@@ -368,9 +369,9 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
-				if [ ! -z "$(grep 'viewhelpers' production.ini)" ] && [ -z "$(grep 'stats viewhelpers' production.ini)" ]; then
-					sed -i "s/viewhelpers/ /g" production.ini;
-					sed -i "s/stats/stats viewhelpers/g" production.ini;
+				if [ ! -z "$(grep 'viewhelpers' #{config_file})" ] && [ -z "$(grep 'stats viewhelpers' #{config_file})" ]; then
+					sed -i "s/viewhelpers/ /g" #{config_file};
+					sed -i "s/stats/stats viewhelpers/g" #{config_file};
 				fi
 			EOS
 		end
@@ -452,8 +453,8 @@ end
 #         user "#{account_name}"
 #         cwd "#{config_dir}"
 #         code <<-EOS
-#             if [ -n "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' production.ini)" ]; then
-#                 sed -i "s/ ckanext.harvester_data_qld_geoscience:geoscience_dataset.json//g" production.ini;
+#             if [ -n "$(grep 'ckanext.harvester_data_qld_geoscience:geoscience_dataset.json' #{config_file})" ]; then
+#                 sed -i "s/ ckanext.harvester_data_qld_geoscience:geoscience_dataset.json//g" #{config_file};
 #             fi
 #         EOS
 #     end
@@ -476,8 +477,8 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 		user "ckan"
 		cwd "#{config_dir}"
 		code <<-EOS
-			if [ -z  "$(grep 'ckan.plugins.*datastore' production.ini)" ]; then
-				sed -i "/^ckan.plugins/ s/$/ datastore/" production.ini
+			if [ -z  "$(grep 'ckan.plugins.*datastore' #{config_file})" ]; then
+				sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
 			fi
 		EOS
 	end
@@ -506,7 +507,7 @@ bash "Enable Activity Streams extension on CKAN 2.10+" do
 	cwd "#{config_dir}"
 	code <<-EOS
 		if [ -d "#{virtualenv_dir}/src/ckan/ckanext/activity" ]; then
-			sed -i "/^ckan.plugins/ s/$/ activity /" production.ini
+			sed -i "/^ckan.plugins/ s/$/ activity /" #{config_file}
 		fi
 	EOS
 end
