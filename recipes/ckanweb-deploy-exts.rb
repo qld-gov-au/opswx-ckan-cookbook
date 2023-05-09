@@ -82,6 +82,10 @@ extextras =
 
 # Ordering constraints for plugins.
 # This affects template overrides.
+# Keys must match what will actually be injected into the config, so:
+# - Plugins that appear in the 'extnames' hash must use the value of
+#   that hash, eg 'scheming_datasets' instead of just 'scheming'.
+# - Hyphens should be replaced with underscores.
 #
 extordering =
 {
