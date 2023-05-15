@@ -20,11 +20,12 @@ function set_dns_primary () {
 }
 
 function wait_for_replication_success () {
-  # Wait up to 30 seconds for backup to complete.
+  # Wait for backup to complete.
   # Should only take a second or two for small indexes,
   # but larger ones can be slow.
   BACKUP_STATUS=unknown
-  for i in {1..30}; do
+  MAX_BACKUP_WAIT=120
+  for i in $(eval echo "{1..$MAX_BACKUP_WAIT}"); do
     if [ "$BACKUP_STATUS" = "unknown" ]; then
       DETAILS=$(curl "$HOST/$CORE_NAME/replication?command=details")
       echo "Backup status: $DETAILS"
@@ -36,7 +37,7 @@ function wait_for_replication_success () {
     fi
   done
   if [ "$BACKUP_STATUS" = "unknown" ]; then
-    echo "Backup did not complete within 30 seconds"
+    echo "Backup did not complete within $MAX_BACKUP_WAIT seconds"
     return 2
   fi
 }
