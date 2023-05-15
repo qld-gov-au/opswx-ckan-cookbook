@@ -66,9 +66,13 @@ if (/usr/local/bin/pick-solr-master.sh); then
   # point traffic to this instance
   set_dns_primary true
 
-  # Export a snapshot of the index.
-  # Drop this server from being master if it fails.
+  # Export a snapshot of the index
   export_snapshot; EXPORT_STATUS=$?
+  # Remove old snapshots
+  for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
+    sudo -u solr rm -r "$old_snapshot"
+  done
+  # Drop this server from being master if export failed
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
       echo "Export failed; assume server is unhealthy"
@@ -77,10 +81,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
     exit 1
   fi
 
-  # clean up - remove old snapshots, hourly backup to S3
-  for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
-    sudo -u solr rm -r "$old_snapshot"
-  done
+  # Hourly backup to S3
   if [ "$MINUTE" = "00" ]; then
     cd "$LOCAL_DIR"
     tar --force-local -czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
