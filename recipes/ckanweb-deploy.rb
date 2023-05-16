@@ -37,10 +37,12 @@ virtualenv_dir = "/usr/lib/ckan/default"
 # Setup Site directories
 #
 storage_root = "#{shared_fs_dir}/ckan_storage"
+resource_cache = "#{shared_fs_dir}/resource_cache"
 paths = {
 	"#{storage_root}/storage" => service_name,
 	"#{storage_root}/resources" => service_name,
-	"#{storage_root}/webassets" => service_name
+	"#{storage_root}/webassets" => service_name,
+	"#{resource_cache}" => service_name
 }
 
 paths.each do |nfs_path, dir_owner|
@@ -55,11 +57,11 @@ paths.each do |nfs_path, dir_owner|
 end
 
 execute "Ensure files in storage have correct ownership" do
-	command "chown -R #{service_name}:#{service_name} #{storage_root}"
+	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -user #{service_name} -o '!' -group #{service_name} -execdir chown -R #{service_name}:#{service_name} '{}'"
 end
 
 execute "Ensure files in storage have correct permissions" do
-	command "chmod -R g+rwX #{storage_root}"
+	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -perm /g+rwX -execdir chmod -R g+rwX '{}'"
 end
 
 #
