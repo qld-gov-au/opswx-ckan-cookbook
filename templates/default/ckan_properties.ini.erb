@@ -300,6 +300,7 @@ ckan.datapusher.url = http://<%= node['datashades']['app_id'] %>datapusher.<%= n
 ckanext.xloader.use_type_guessing = True
 # Deprecated, remove after upgrading XLoader to 0.12+
 ckanext.xloader.just_load_with_messytables = True
+ckanext.xloader.api_token = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/job_token}
 
 ## Activity Streams Settings
 
