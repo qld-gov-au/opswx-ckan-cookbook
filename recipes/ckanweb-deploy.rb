@@ -57,11 +57,11 @@ paths.each do |nfs_path, dir_owner|
 end
 
 execute "Ensure files in storage have correct ownership" do
-	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -user #{service_name} -o '!' -group #{service_name} -execdir chown -R #{service_name}:#{service_name} '{}' ;"
+	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -user #{service_name} -o '!' -group #{service_name} -execdir chown -R #{service_name}:#{service_name} '{}' ';'"
 end
 
 execute "Ensure files in storage have correct permissions" do
-	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -perm /g+rwX -execdir chmod -R g+rwX '{}' ;"
+	command "find #{storage_root} #{resource_cache} -maxdepth 2 '!' -perm /g+rwX -execdir chmod -R g+rwX '{}' ';'"
 end
 
 #
