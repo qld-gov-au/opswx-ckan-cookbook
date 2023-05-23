@@ -344,6 +344,19 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 		end
 	end
 
+	if "#{pluginname}".eql? 'datarequests'
+		bash "Data Requests database init" do
+			user "#{account_name}"
+			code <<-EOS
+				# initialise database tables if this version has CLI support
+				if (#{ckan_cli} datarequests --help); then
+					#{ckan_cli} datarequests init-db
+					#{ckan_cli} datarequests update-db
+				fi
+			EOS
+		end
+	end
+
 	if "#{pluginname}".eql? 'csrf-filter'
 		csrf_present = true
 		execute "set CSRF plugin in Repoze config" do
