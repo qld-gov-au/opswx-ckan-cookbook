@@ -111,15 +111,15 @@ end
 
 cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
 	source "ckan-uwsgi.ini"
-	owner service_name
-	group service_name
-	mode "0644"
+	owner 'ec2-user'
+	group 'ec2-user'
+	mode "0744"
 end
 
 cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
 	source "supervisor-ckan-uwsgi.conf"
-	owner service_name
-	group service_name
+	owner 'root'
+	group 'root'
 	mode "0744"
 end
 
