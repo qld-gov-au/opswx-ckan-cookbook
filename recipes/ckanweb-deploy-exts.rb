@@ -350,8 +350,8 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			code <<-EOS
 				# initialise database tables if this version has CLI support
 				if (#{ckan_cli} datarequests --help); then
-					#{ckan_cli} datarequests init_db
-					#{ckan_cli} datarequests update_db
+					#{ckan_cli} datarequests init-db
+					#{ckan_cli} datarequests update-db
 				fi
 			EOS
 		end
