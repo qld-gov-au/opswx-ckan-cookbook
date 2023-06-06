@@ -107,11 +107,17 @@ action :create do
         cwd install_dir
         code <<-EOS
             PYTHON_MAJOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
-            PY2_REQUIREMENTS_FILE=requirements-py2.txt
-            if [ "$PYTHON_MAJOR_VERSION" = "2" ] && [ -f $PY2_REQUIREMENTS_FILE ]; then
-                REQUIREMENTS_FILE=$PY2_REQUIREMENTS_FILE
+            PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
+            if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
+                REQUIREMENTS_FILE=$PYTHON_REQUIREMENTS_FILE
             else
-                REQUIREMENTS_FILE=requirements.txt
+                CKAN_MINOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
+                CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
+                if [ -f "$CKAN_REQUIREMENTS_FILE" ]; then
+                    REQUIREMENTS_FILE=$CKAN_REQUIREMENTS_FILE
+                else
+                    REQUIREMENTS_FILE=requirements.txt
+                fi
             fi
             if [ -f "$REQUIREMENTS_FILE" ]; then
                 #{pip} install -r $REQUIREMENTS_FILE
