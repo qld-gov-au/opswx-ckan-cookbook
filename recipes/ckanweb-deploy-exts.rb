@@ -90,9 +90,9 @@ extextras =
 #
 extordering =
 {
+	'data_qld data_qld_google_analytics' => 1,
 	'dcat structured_data' => 5,
 	'validation' => 10,
-	'data_qld data_qld_google_analytics' => 15,
 	'resource_type_validation' => 20,
 	'validation_schema_generator' => 21,
 	'qgovext' => 25,
