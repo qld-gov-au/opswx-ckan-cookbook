@@ -18,7 +18,7 @@ if [ -f "$VIRTUAL_ENV/bin/ckan" ]; then
 
     # revoke token afterward since it's not stored anywhere anyway
     TOKEN_ID=$($VIRTUAL_ENV/bin/ckan_cli user token list $ACCOUNT 2>/dev/null | grep "$TOKEN_NAME" |head -1 |awk '{print $1}' | tr -d '[]')
-    $VIRTUAL_ENV/bin/ckan_cli user token revoke $TOKEN_ID
+    $VIRTUAL_ENV/bin/ckan_cli user token revoke -- $TOKEN_ID
   fi
 else
   # CKAN <= 2.8
