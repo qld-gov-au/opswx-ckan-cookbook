@@ -106,6 +106,7 @@ action :create do
         group new_resource.account_name
         cwd install_dir
         code <<-EOS
+            #{pip} install -e .
             PYTHON_MAJOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
             PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
             if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
