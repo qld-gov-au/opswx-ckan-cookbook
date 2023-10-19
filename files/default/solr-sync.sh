@@ -49,7 +49,7 @@ function export_snapshot () {
   echo "Backup status: $BACKUP_DETAILS"
   echo "$BACKUP_DETAILS" | grep 'status[^a-zA-Z]*OK' || return 1
   wait_for_replication_success; REPLICATION_STATUS=$?
-  if [ "REPLICATION_STATUS" != "0" ]; then
+  if [ "$REPLICATION_STATUS" != "0" ]; then
     return $REPLICATION_STATUS
   fi
   sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || return 1
