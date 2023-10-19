@@ -52,7 +52,7 @@ function export_snapshot () {
   if [ "$REPLICATION_STATUS" != "0" ]; then
     return $REPLICATION_STATUS
   fi
-  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete '$LOCAL_SNAPSHOT' '$SYNC_SNAPSHOT'" || return 1
+  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete $LOCAL_SNAPSHOT $SYNC_SNAPSHOT" || return 1
 }
 
 # we can't perform any replication operations if Solr is stopped
