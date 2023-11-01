@@ -61,6 +61,7 @@ function import_snapshot () {
     if [ -f "$SYNC_SNAPSHOT/write.lock" ]; then
       sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
       sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT/" "$LOCAL_SNAPSHOT/" || exit 1
+      rm $LOCAL_SNAPSHOT/write.lock
       curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
       return 1
     else
