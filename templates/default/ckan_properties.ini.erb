@@ -187,6 +187,8 @@ ckan.datarequests.show_datarequests_badge = true
 ckan.datarequests.description_required = true
 ckan.datarequests.default_organisation = open-data-administration-data-requests
 ckan.datarequests.enable_closing_circumstances = True
+ckanext.datarequests.notify_all_members = False
+ckanext.datarequests.notify_on_update = True
 
 ckan.odi_certificates.certificate_base_url = https://certificates.theodi.org/en/datasets?
 ckan.odi_certificates.certificate_img_query_parameters = {"datasetUrl":"", "format":"png", "type":"badge"}
@@ -302,6 +304,15 @@ ckanext.xloader.api_token = ${ssm:/config/CKAN/<%= node['datashades']['version']
 ckanext.xloader.use_type_guessing = True
 # Deprecated, remove after upgrading XLoader to 0.12+
 ckanext.xloader.just_load_with_messytables = True
+
+
+#ckanext-validation-schema-generator
+# If the resource is remote or private, we could pass an API key inside headers
+# This option defines should we pass API key or not
+# (optional, default: True).
+ckanext.validation_schema_generator.pass_api_key = True
+# API key that is going to be passed for `Authorization`
+ckanext.validation_schema_generator.api_key = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/job_token}
 
 ## Activity Streams Settings
 
