@@ -56,7 +56,7 @@ paths.each do |nfs_path, dir_owner|
 		owner dir_owner
 		group service_name
 		recursive true
-		mode '0775'
+		mode '0755'
 		action :create
 	end
 end
