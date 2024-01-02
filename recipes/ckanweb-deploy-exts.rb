@@ -514,3 +514,14 @@ bash "Enable Activity Streams extension on CKAN 2.10+" do
 		fi
 	EOS
 end
+
+# 'click' version 7.1.2 does not match goodtables' claimed requirements,
+# but it does work in practice.
+bash "Pin 'click' version to make Goodtables and Frictionless coexist" do
+	user "#{account_name}"
+	code <<-EOS
+		if (#{pip} show click |grep 'Version: [1-6][.]') then
+			#{pip} install click==7.1.2
+		fi
+	EOS
+end
