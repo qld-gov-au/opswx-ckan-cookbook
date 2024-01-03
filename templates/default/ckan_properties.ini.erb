@@ -232,6 +232,11 @@ ckan.locales_filtered_out =
 ckan.display_timezone = <%= node['datashades']['timezone'] %>
 ckan.datastore.default_fts_lang=simple
 
+## Spatial
+ckanext.spatial.common_map.type = custom
+ckanext.spatial.common_map.custom.url = https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Basemaps/QldBase_Grey/MapServer/tile/{z}/{y}/{x}
+ckanext.spatial.common_map.attribution = Tiles courtesy of the <a href="https://qldglobe.information.qld.gov.au/">State of Queensland (Department of Resources)</a>
+
 ## Feeds Settings
 
 ckan.feeds.authority_name =
