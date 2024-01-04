@@ -190,8 +190,10 @@ datashades_move_and_link(var_data_dir) do
     owner service_name
 end
 
+# Use find+exec instead of chown's recursive -R flag,
+# so that we can exclude temporary snapshots.
 execute "Ensure directory ownership is correct" do
-    command "chown -R #{account_name}:ec2-user #{efs_data_dir} #{real_data_dir} #{solr_environment_file} #{real_log_dir}"
+    command "find #{efs_data_dir} #{real_data_dir} #{solr_environment_file} #{real_log_dir} -not -path data/*/snapshot* -execdir chown #{account_name}:ec2-user {} +"
 end
 
 include_recipe "datashades::solr-deploycore"
