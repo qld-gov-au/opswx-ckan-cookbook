@@ -58,17 +58,23 @@ fi
 
 if [ "$COMMAND" = "ckan" ]; then
     # adjust args to match ckan expectations
-    COMMAND=$(echo "$1" | sed -e 's/create-test-data/seed/')
-    echo "Using 'ckan' command from $ENV_DIR with config ${CKAN_INI} to run $COMMAND..." >&2
+    ENTRYPOINT=$(echo "$1" | sed -e 's/create-test-data/seed/')
     shift
-    exec $ENV_DIR/ckan -c ${CKAN_INI} $COMMAND "$@" $CLICK_ARGS
+    CLICK_COMMAND=$1
+    if [ "$CLICK_COMMAND" != "" ]; then
+        # handle change of expectations from underscore to hyphen in Click 7+
+        $ENV_DIR/ckan -c ${CKAN_INI} $ENTRYPOINT $CLICK_COMMAND --help 2>&1 >/dev/null || CLICK_COMMAND=$(echo $CLICK_COMMAND | sed 's/_/-/g');
+        shift
+    fi
+    echo "Using 'ckan' command from $ENV_DIR with config ${CKAN_INI} to run $ENTRYPOINT $CLICK_COMMAND $1..." >&2
+    exec $ENV_DIR/ckan -c ${CKAN_INI} $ENTRYPOINT $CLICK_COMMAND "$@" $CLICK_ARGS
 elif [ "$COMMAND" = "paster" ]; then
     # adjust args to match paster expectations
-    COMMAND=$1
-    echo "Using 'paster' command from $ENV_DIR with config ${CKAN_INI} to run $COMMAND..." >&2
+    ENTRYPOINT=$1
     shift
+    echo "Using 'paster' command from $ENV_DIR with config ${CKAN_INI} to run $ENTRYPOINT $1..." >&2
     if [ "$1" = "show" ]; then shift; fi
-    exec $ENV_DIR/paster --plugin=$PASTER_PLUGIN $COMMAND "$@" -c ${CKAN_INI}
+    exec $ENV_DIR/paster --plugin=$PASTER_PLUGIN $ENTRYPOINT "$@" -c ${CKAN_INI}
 else
     echo "Unable to locate 'ckan' or 'paster' command in $ENV_DIR" >&2
     exit 1
