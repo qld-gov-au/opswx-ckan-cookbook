@@ -63,7 +63,7 @@ if [ "$COMMAND" = "ckan" ]; then
     CLICK_COMMAND=$1
     if [ "$CLICK_COMMAND" != "" ]; then
         # handle change of expectations from underscore to hyphen in Click 7+
-        $ENV_DIR/ckan -c ${CKAN_INI} $ENTRYPOINT $CLICK_COMMAND --help 2>&1 >/dev/null || CLICK_COMMAND=$(echo $CLICK_COMMAND | sed 's/_/-/g');
+        $ENV_DIR/ckan -c ${CKAN_INI} $ENTRYPOINT $CLICK_COMMAND --help >/dev/null 2>&1 || CLICK_COMMAND=$(echo $CLICK_COMMAND | sed 's/_/-/g');
         shift
     fi
     echo "Using 'ckan' command from $ENV_DIR with config ${CKAN_INI} to run $ENTRYPOINT $CLICK_COMMAND $1..." >&2
