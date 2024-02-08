@@ -81,7 +81,7 @@ file '/etc/cron.daily/manageadmins' do
 end
 
 file "/etc/cron.daily/clamav-tmp-file-cleanup" do
-	content "rm -r /var/lib/clamav/tmp.* >/dev/null 2>&1"
+	content "rm -r /var/lib/clamav/tmp.* >/dev/null 2>&1\n"
 	owner "root"
 	group "root"
 	mode "0755"
