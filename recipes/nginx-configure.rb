@@ -26,7 +26,7 @@ execute "Extend Nginx log rotation" do
 	cwd "/etc/logrotate.d"
 	# this replacement needs to be idempotent; the result must not match the original pattern
 	# use single quotes so we don't have to double our backslashes
-	command 'sed -i "s|\(/var/log/nginx/\*log\) {|\1\n/var/log/nginx/*/*log {|" nginx'
+	command 'sed -i "s|\(/var/log/nginx/[*][.]\?log\) {|\1\n/var/log/nginx/*/*.log {|" nginx'
 end
 
 file "/etc/cron.daily/archive-nginx-logs-to-s3" do
