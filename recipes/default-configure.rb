@@ -80,6 +80,13 @@ file '/etc/cron.daily/manageadmins' do
     action :delete
 end
 
+file "/etc/cron.daily/clamav-tmp-file-cleanup" do
+	content "rm -r /var/lib/clamav/tmp.* >/dev/null 2>&1"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 service 'aws-smtp-relay' do
     action [:enable, :restart]
 end
