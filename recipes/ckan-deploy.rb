@@ -109,7 +109,7 @@ template config_file do
 	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
+		:app_url => node['datashades']['ckan_web']['site_domain'],
 		:src_dir => "#{virtualenv_dir}/src",
 		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
