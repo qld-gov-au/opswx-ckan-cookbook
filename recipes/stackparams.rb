@@ -22,23 +22,23 @@
 
 # Obtain some stack attributes for the recipes to use
 #
-stack = search("aws_opsworks_stack", "name:#{node['datashades']['app_id']}_#{node['datashades']['version']}*").first
-if not stack
-	stack = search("aws_opsworks_stack", "name:*_#{node['datashades']['version']}*").first
-end
-node.default['datashades']['sitename'] = stack['name']
-node.default['datashades']['region'] = stack['region']
-vpc_id = stack['vpc_id']
+metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token`
+node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
+node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
+node.default['datashades']['app_id'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Layer' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=opsworks:instance' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['sitename'] = node['datashades']['app_id'] + "_" + node['datashades']['version']
 
 # Get the VPC CIDR for NFS services
 #
 bash "Get VPC CIDR" do
 	user "root"
 	code <<-EOS
-		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
-		placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
-		region=$(echo ${placement%?})
-		aws ec2 describe-vpcs --region ${region} --vpc-ids "#{vpc_id}" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
+		mac_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+		vpc_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
+		aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
 	EOS
 end
 
@@ -49,10 +49,3 @@ ruby_block "Override NFS CIDR attribute" do
 		node.override['datashades']['nfs']['cidr'] = File.read("/etc/vpccidr").delete!("\n")
 	end
 end
-
-# Get some details about what instance we're running on for recipes
-#
-instance = search("aws_opsworks_instance", "self:true").first
-node.default['datashades']['instid'] = instance['ec2_instance_id']
-node.default['datashades']['hostname'] = instance['hostname']
-

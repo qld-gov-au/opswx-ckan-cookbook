@@ -20,19 +20,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-instance = search("aws_opsworks_instance", "self:true").first
-
 # Batch nodes only need a limited set of extensions for harvesting
 # Ascertain whether or not the instance deploying is a batch node
 #
-batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-batch").first
-if not batchlayer
-	batchlayer = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}-batch").first
-end
-batchnode = false
-unless batchlayer.nil?
-	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
-end
+batchnode = node['datashades']['layer'] == 'batch'
 
 account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
