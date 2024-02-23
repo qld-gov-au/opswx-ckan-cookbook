@@ -22,14 +22,11 @@
 
 include_recipe "datashades::stackparams"
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
-end
+ckan_app_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 
 ckan_cli = "/usr/lib/ckan/default/bin/ckan_cli"
 config_file = "/etc/ckan/default/production.ini"
-shared_fs_dir = "/var/shared_content/#{app['shortname']}"
+shared_fs_dir = "/var/shared_content/#{ckan_app_name}"
 
 # Update tracking data
 #

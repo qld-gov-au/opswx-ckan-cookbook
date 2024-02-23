@@ -20,19 +20,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-instance = search("aws_opsworks_instance", "self:true").first
-
 # Batch nodes only need a limited set of extensions for harvesting
 # Ascertain whether or not the instance deploying is a batch node
 #
-batchlayer = search("aws_opsworks_layer", "shortname:#{node['datashades']['app_id']}-batch").first
-if not batchlayer
-	batchlayer = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}-batch").first
-end
-batchnode = false
-unless batchlayer.nil?
-	batchnode = instance['layer_ids'].include?(batchlayer['layer_id'])
-end
+batchnode = node['datashades']['layer'] == 'batch'
 
 account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
@@ -473,8 +464,7 @@ if not csrf_present then
 	end
 end
 
-# Enable DataStore and DataPusher extensions if desired
-# No installation necessary in CKAN 2.2+
+# Enable DataStore extension if desired
 if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 	bash "Enable DataStore-related extensions" do
 		user "ckan"
@@ -491,17 +481,6 @@ if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
 		owner "#{account_name}"
 		group "#{account_name}"
 		mode "0755"
-	end
-
-	# There is a race condition when uploading a resource; the page tries
-	# to display it, while the DataPusher tries to delete and recreate it.
-	# Thus, the resource may not exist when the page loads.
-	# See https://github.com/ckan/ckan/issues/3980
-	execute "Patch upload race condition" do
-		user "#{account_name}"
-		command <<-'SED'.strip + " #{virtualenv_dir}/src/ckan/ckan/lib/helpers.py"
-			sed -i "s/^\(\s\{4\}\)\(result = logic.get_action('datastore_search')({}, data)\)/\1import ckan.plugins as p\n\1try:\n\1\1\2\n\1except p.toolkit.ObjectNotFound:\n\1\1return []/"
-		SED
 	end
 end
 
