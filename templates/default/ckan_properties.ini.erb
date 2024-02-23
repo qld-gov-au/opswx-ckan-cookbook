@@ -121,7 +121,6 @@ ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node
 ## Plugins Settings
 
 # Note: Add ``datastore`` to enable the CKAN DataStore
-#       Add ``datapusher`` to enable DataPusher
 #       Add ``pdf_preview`` to enable the resource preview for PDFs
 #       Add ``resource_proxy`` to enable resource proxying and get around the
 #       same origin policy
@@ -297,12 +296,9 @@ ckan.use_pylons_response_cleanup_middleware = true
 # Group/organisation list is computation-intensive, so it is truncated
 ckan.group_and_organization_list_all_fields_max = 100
 
-## Datapusher settings
+## XLoader settings
 
 # Make sure you have set up the DataStore
-
-#ckan.datapusher.formats =
-ckan.datapusher.url = http://<%= node['datashades']['app_id'] %>datapusher.<%= node['datashades']['tld'] %>:8800/
 
 ckanext.xloader.parse_dates_dayfirst = True
 ckanext.xloader.api_token = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/job_token}
