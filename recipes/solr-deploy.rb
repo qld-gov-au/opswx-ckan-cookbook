@@ -58,7 +58,11 @@ if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
 end
 
 core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
-app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
+if node['datashades'].key?('solr_app') then
+    app = node['datashades']['solr_app']
+else
+    app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
+end
 solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
 solr_path = "/opt/solr"
 installed_solr_version = "#{solr_path}-#{solr_version}"
