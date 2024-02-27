@@ -23,9 +23,13 @@ include_recipe "datashades::stackparams"
 
 service_name = "ckan"
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-	app = search("aws_opsworks_app", "shortname:#{service_name}-#{node['datashades']['version']}*").first
+if node['datashades']['ckan_web'].key?('ckan_app') then
+	app = node['datashades']['ckan_web']['ckan_app']
+else
+	app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
+	if not app
+		app = search("aws_opsworks_app", "shortname:#{service_name}-#{node['datashades']['version']}*").first
+	end
 end
 
 config_dir = "/etc/ckan/default"
@@ -109,7 +113,7 @@ template config_file do
 	mode "0755"
 	variables({
 		:app_name =>  app['shortname'],
-		:app_url => app['domains'][0],
+		:app_url => node['datashades']['ckan_web']['site_domain'],
 		:src_dir => "#{virtualenv_dir}/src",
 		:email_domain => node['datashades']['ckan_web']['email_domain']
 	})
