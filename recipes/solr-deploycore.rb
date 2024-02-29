@@ -20,9 +20,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ckan_app_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
+ckan = node['datashades']['ckan_app']
 
-solr_core_dir="/var/solr/data/#{ckan_app_name}"
+solr_core_dir="/var/solr/data/#{ckan['shortname']}"
 
 # Create Solr core directory
 #
@@ -42,7 +42,7 @@ template "#{solr_core_dir}/core.properties" do
 	group 'solr'
 	mode '0755'
 	variables({
-		:app_name =>  ckan_app_name
+		:app_name =>  ckan['shortname']
 	})
 end
 

@@ -24,11 +24,11 @@ include_recipe "datashades::stackparams"
 
 service_name = "ckan"
 
-ckan_app_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
+app = node['datashades']['ckan_app']
 
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
-shared_fs_dir = "/var/shared_content/#{ckan_app_name}"
+shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
 
 # Setup Site directories
@@ -109,20 +109,20 @@ end
 # Create NGINX Config files
 #
 
-template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{ckan_app_name}.conf" do
+template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
 	source 'nginx.conf.erb'
 	owner 'root'
 	group 'root'
 	mode '0755'
 	variables({
-		:app_name => ckan_app_name,
+		:app_name => app['shortname'],
 		:app_url => node['datashades']['ckan_web']['site_domain']
 		})
 	not_if { node['datashades']['ckan_web']['endpoint'] != "/" }
 	action :create
 end
 
-node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{ckan_app_name}.conf")
+node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
 
 service "supervisord restart" do
 	service_name "supervisord"

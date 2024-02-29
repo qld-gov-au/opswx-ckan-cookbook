@@ -58,11 +58,7 @@ if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
 end
 
 core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
-if node['datashades'].key?('solr_app') then
-    app = node['datashades']['solr_app']
-else
-    app = search("aws_opsworks_app", "shortname:#{core_name}-solr*").first
-end
+app = node['datashades']['solr_app']
 solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
 solr_path = "/opt/solr"
 installed_solr_version = "#{solr_path}-#{solr_version}"
@@ -197,7 +193,7 @@ end
 # Use find+exec instead of chown's recursive -R flag,
 # so that we can exclude temporary snapshots.
 execute "Ensure directory ownership is correct" do
-    command "find #{efs_data_dir} #{real_data_dir} #{solr_environment_file} #{real_log_dir} -not -path */data/*/snapshot* -execdir chown #{account_name}:ec2-user {} +"
+    command "find #{efs_data_dir}/data/#{core_name} #{real_data_dir}/data/#{core_name} #{solr_environment_file} #{real_log_dir} -not -path */snapshot* -execdir chown #{account_name}:ec2-user {} +"
 end
 
 include_recipe "datashades::solr-deploycore"

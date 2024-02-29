@@ -20,11 +20,11 @@ include_recipe "datashades::stackparams"
 include_recipe "datashades::ckan-deploy"
 
 service_name = "ckan"
-ckan_app_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
+app = node['datashades']['ckan_app']
 
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
-shared_fs_dir = "/var/shared_content/#{ckan_app_name}"
+shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
 pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
@@ -87,7 +87,7 @@ template "/usr/local/bin/ckan-email-notifications.sh" do
     group "root"
     mode "0755"
     variables({
-        :app_name => ckan_app_name,
+        :app_name => app['shortname'],
         :app_url => node['datashades']['ckan_web']['site_domain']
     })
 end

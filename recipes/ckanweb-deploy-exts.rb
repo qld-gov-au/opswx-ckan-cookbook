@@ -129,13 +129,7 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
-if node['datashades']['ckan_web'].key?('plugin_apps') then
-	apps = node['datashades']['ckan_web']['plugin_apps']
-else
-	apps = search("aws_opsworks_app", 'shortname:*ckanext*')
-end
-
-apps.each do |app|
+node['datashades']['ckan_web']['plugin_apps'].each do |app|
 
 	egg_name = app['shortname']
 
