@@ -36,6 +36,7 @@ action :create do
     is_git = new_resource.type.casecmp("git") == 0
 
     apprelease = new_resource.url
+    apprelease = apprelease.dup if apprelease.frozen?
 
     # Get the version number from the app revision, by preference,
     # or from the app URL if revision is not defined.
