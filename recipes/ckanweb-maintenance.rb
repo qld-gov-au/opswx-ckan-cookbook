@@ -22,7 +22,7 @@
 
 include_recipe "datashades::stackparams"
 
-app = node['datashades']['ckan_app']
+app = node['datashades']['ckan_web']['ckan_app']
 
 ckan_cli = "/usr/lib/ckan/default/bin/ckan_cli"
 config_file = "/etc/ckan/default/production.ini"

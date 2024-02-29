@@ -24,7 +24,7 @@ include_recipe "datashades::stackparams"
 
 service_name = "ckan"
 
-app = node['datashades']['ckan_app']
+app = node['datashades']['ckan_web']['ckan_app']
 
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
