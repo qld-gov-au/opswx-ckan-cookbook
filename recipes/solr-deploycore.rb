@@ -20,7 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ckan = node['datashades']['ckan_app']
+ckan = node['datashades']['ckan_web']['ckan_app']
 
 solr_core_dir="/var/solr/data/#{ckan['shortname']}"
 
