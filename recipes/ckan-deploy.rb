@@ -23,20 +23,6 @@ include_recipe "datashades::stackparams"
 
 service_name = "ckan"
 
-# Look up attributes from SSM Parameter Store
-datashades_ssm_lookup "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_email" do
-	chef_path = ['datashades', 'ckanweb', 'adminemail']
-end
-datashades_ssm_lookup "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_password" do
-	chef_path = ['datashades', 'ckanweb', 'adminpw']
-end
-datashades_ssm_lookup "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/beaker_secret" do
-	chef_path = ['datashades', 'ckanweb', 'beaker_secret']
-end
-datashades_ssm_lookup "/config/CKAN/#{node['datashades']['version']}/db/#{node['datashades']['app_id']}_password" do
-	chef_path = ['datashades', 'postgres', 'password']
-end
-
 app = node['datashades']['ckan_web']['ckan_app']
 
 config_dir = "/etc/ckan/default"
