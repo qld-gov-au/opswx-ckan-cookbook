@@ -32,13 +32,20 @@ node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{met
 node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Layer' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=opsworks:instance' --query 'Tags[].Value' --output text`.strip
-node.default['datashades']['sitename'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip + "_" + node['datashades']['version']
+node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
 
 # Retrieve attributes from SSM Parameter Store
 node.default['datashades']['ckan_web']['adminemail'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_email" --query "Parameter.Value" --with-decryption --output text`.strip
 node.default['datashades']['ckan_web']['adminpw'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_password" --query "Parameter.Value" --with-decryption --output text`.strip
 node.default['datashades']['ckan_web']['beaker_secret'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/beaker_secret" --query "Parameter.Value" --with-decryption --output text`.strip
+node.default['datashades']['ckan_web']['dbuser'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/db/#{node['datashades']['app_id']}_user" --query "Parameter.Value" --with-decryption --output text`.strip
 node.default['datashades']['postgres']['password'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/db/#{node['datashades']['app_id']}_password" --query "Parameter.Value" --with-decryption --output text`.strip
+
+# Derive defaults from other values
+node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbname']}_#{node['datashades']['version']}"
+node.default['datashades']['ckan_web']['ckan_app']['name'] = "#{node['datashades']['ckan_web']['dbname']}-#{node['datashades']['version']}"
+node.default['datashades']['ckan_web']['dsname'] = "#{node['datashades']['ckan_web']['dbname']}_datastore"
+node.default['datashades']['ckan_web']['dsuser'] = "#{node['datashades']['ckan_web']['dbuser']}_datastore"
 
 # Get the VPC CIDR for NFS services
 #
