@@ -35,6 +35,8 @@ node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node[
 node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
 
 # Retrieve attributes from SSM Parameter Store
+node.default['datashades']['ckan_web']['google']['analytics_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GaId" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['google']['gtm_container_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GtmId" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['adminemail'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_email" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['adminpw'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_password" --query "Parameter.Value" --with-decryption --output text`.strip
