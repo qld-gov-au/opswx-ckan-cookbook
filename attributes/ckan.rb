@@ -65,9 +65,11 @@ default['datashades']['ckan_web']['wsgi']['threads'] = '15'
 
 default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64']
 
-default['datashades']['postgres']['password'] = ""
+default['datashades']['redis']['hostname'] = 'localhost'
+default['datashades']['redis']['port'] = '6379'
 
 # Postgres settings
+default['datashades']['postgres']['password'] = ''
 default['datashades']['postgres']['rds'] = 'true'
 default['datashades']['postgres']['packages'] = ['postgresql95-server', 'postgresql95', 'postgresql95-devel', 'libtool', 'libxml2-devel', 'geos-devel', 'postgis']
 default['datashades']['postgres']['version'] = '95'
