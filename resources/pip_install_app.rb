@@ -36,6 +36,7 @@ action :create do
     is_git = new_resource.type.casecmp("git") == 0
 
     apprelease = new_resource.url
+    apprelease = apprelease.dup if apprelease.frozen?
 
     # Get the version number from the app revision, by preference,
     # or from the app URL if revision is not defined.
@@ -107,12 +108,12 @@ action :create do
         cwd install_dir
         code <<-EOS
             #{pip} install -e .
-            PYTHON_MAJOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
+            PYTHON_MAJOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
             PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
             if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
                 REQUIREMENTS_FILE=$PYTHON_REQUIREMENTS_FILE
             else
-                CKAN_MINOR_VERSION=$(#{virtualenv_dir}/bin/python -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
+                CKAN_MINOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
                 CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
                 if [ -f "$CKAN_REQUIREMENTS_FILE" ]; then
                     REQUIREMENTS_FILE=$CKAN_REQUIREMENTS_FILE

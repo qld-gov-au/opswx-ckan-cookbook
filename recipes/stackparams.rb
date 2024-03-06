@@ -22,23 +22,44 @@
 
 # Obtain some stack attributes for the recipes to use
 #
-stack = search("aws_opsworks_stack", "name:#{node['datashades']['app_id']}_#{node['datashades']['version']}*").first
-if not stack
-	stack = search("aws_opsworks_stack", "name:*_#{node['datashades']['version']}*").first
-end
-node.default['datashades']['sitename'] = stack['name']
-node.default['datashades']['region'] = stack['region']
-vpc_id = stack['vpc_id']
+
+# Retrieve attributes from instance metadata
+metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token`
+node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
+node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
+
+# Retrieve attributes from instance tags
+node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Layer' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=opsworks:instance' --query 'Tags[].Value' --output text`.strip
+node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
+
+# Retrieve attributes from SSM Parameter Store
+node.default['datashades']['log_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/s3LogsBucket" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['google']['analytics_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GaId" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['google']['gtm_container_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GtmId" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['attachments_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/s3AttachmentBucket" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['adminemail'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_email" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['adminpw'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/admin_password" --query "Parameter.Value" --with-decryption --output text`.strip
+node.default['datashades']['ckan_web']['beaker_secret'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/beaker_secret" --query "Parameter.Value" --with-decryption --output text`.strip
+node.default['datashades']['ckan_web']['dbuser'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/db/#{node['datashades']['app_id']}_user" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['postgres']['password'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/db/#{node['datashades']['app_id']}_password" --query "Parameter.Value" --with-decryption --output text`.strip
+
+# Derive defaults from other values
+node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbname']}_#{node['datashades']['version']}"
+node.default['datashades']['ckan_web']['ckan_app']['name'] = "#{node['datashades']['ckan_web']['dbname']}-#{node['datashades']['version']}"
+node.default['datashades']['ckan_web']['dsname'] = "#{node['datashades']['ckan_web']['dbname']}_datastore"
+node.default['datashades']['ckan_web']['dsuser'] = "#{node['datashades']['ckan_web']['dbuser']}_datastore"
 
 # Get the VPC CIDR for NFS services
 #
 bash "Get VPC CIDR" do
 	user "root"
 	code <<-EOS
-		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
-		placement=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/placement/availability-zone)
-		region=$(echo ${placement%?})
-		aws ec2 describe-vpcs --region ${region} --vpc-ids "#{vpc_id}" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
+		mac_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+		vpc_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
+		aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
 	EOS
 end
 
@@ -49,10 +70,3 @@ ruby_block "Override NFS CIDR attribute" do
 		node.override['datashades']['nfs']['cidr'] = File.read("/etc/vpccidr").delete!("\n")
 	end
 end
-
-# Get some details about what instance we're running on for recipes
-#
-instance = search("aws_opsworks_instance", "self:true").first
-node.default['datashades']['instid'] = instance['ec2_instance_id']
-node.default['datashades']['hostname'] = instance['hostname']
-

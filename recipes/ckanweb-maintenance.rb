@@ -22,10 +22,7 @@
 
 include_recipe "datashades::stackparams"
 
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-	app = search("aws_opsworks_app", "shortname:ckan-#{node['datashades']['version']}*").first
-end
+app = node['datashades']['ckan_web']['ckan_app']
 
 ckan_cli = "/usr/lib/ckan/default/bin/ckan_cli"
 config_file = "/etc/ckan/default/production.ini"

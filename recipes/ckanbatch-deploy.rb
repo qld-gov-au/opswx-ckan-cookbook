@@ -20,11 +20,7 @@ include_recipe "datashades::stackparams"
 include_recipe "datashades::ckan-deploy"
 
 service_name = "ckan"
-
-app = search("aws_opsworks_app", "shortname:#{node['datashades']['app_id']}-#{node['datashades']['version']}*").first
-if not app
-    app = search("aws_opsworks_app", "shortname:#{service_name}-#{node['datashades']['version']}*").first
-end
+app = node['datashades']['ckan_web']['ckan_app']
 
 config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
@@ -91,8 +87,8 @@ template "/usr/local/bin/ckan-email-notifications.sh" do
     group "root"
     mode "0755"
     variables({
-        :app_name =>  app['shortname'],
-        :app_url => app['domains'][0]
+        :app_name => app['shortname'],
+        :app_url => node['datashades']['ckan_web']['site_domain']
     })
 end
 
