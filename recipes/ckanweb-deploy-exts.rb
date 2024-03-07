@@ -466,7 +466,7 @@ if not csrf_present then
 end
 
 # Enable DataStore extension if desired
-if "yes".eql? node['datashades']['ckan_web']['dsenable'] then
+if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
 	bash "Enable DataStore-related extensions" do
 		user "ckan"
 		cwd "#{config_dir}"
