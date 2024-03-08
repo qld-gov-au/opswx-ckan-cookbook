@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::stackparams"
+include_recipe "datashades::ckanparams"
 
 service_name = "ckan"
 
