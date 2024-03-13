@@ -115,7 +115,7 @@ bash "Install NPM and NodeJS" do
 	code <<-EOS
 		if ! (yum install -y npm); then
 			# failed to install from standard repo, try a manual setup
-			curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
+			curl --silent --location https://rpm.nodesource.com/setup_20.x | bash -
 			yum -y install nodejs
 		fi
 	EOS
