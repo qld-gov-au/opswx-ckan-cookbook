@@ -64,7 +64,7 @@ who.log_file = %(cache_dir)s/who_log.ini
 ## Database Settings
 sqlalchemy.url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
-<% if node['datashades']['ckan_web']['dsenable'] == 'yes' -%>
+<% if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase -%>
 ckan.datastore.write_url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
 ckan.datastore.read_url = postgresql://<%= node['datashades']['ckan_web']['dsuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dsname'] %>
 
