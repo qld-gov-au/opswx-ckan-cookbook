@@ -17,6 +17,7 @@
 # limitations under the License.
 
 include_recipe "datashades::default"
+include_recipe "datashades::ckanparams"
 
 # Install CKAN services and dependencies
 #
