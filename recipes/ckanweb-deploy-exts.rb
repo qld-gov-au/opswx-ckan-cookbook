@@ -123,9 +123,9 @@ end
 bash "Install NPM and NodeJS" do
 	code <<-EOS
 		if ! (yum install -y npm); then
-			# failed to install from standard repo, try a manual setup
-			curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
-			yum -y install nodejs
+			# TODO stop ignoring broken packages
+			# once we're away from OpsWorks and on a recent AMI
+			yum -y install nodejs --skip-broken
 		fi
 	EOS
 end
