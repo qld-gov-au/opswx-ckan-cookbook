@@ -52,9 +52,10 @@ cookbook_file "#{Chef::Config[:file_cache_path]}/solr_core_config.zip" do
 	source "ckan_solr_conf.zip"
 end
 
-service "solr stop" do
-    service_name "solr"
-	action [:stop]
+execute "solr stop" do
+	user 'root'
+	# Try both initd and systemd styles
+	command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop)"
 end
 
 execute 'Unzip Core Config' do
