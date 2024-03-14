@@ -411,16 +411,6 @@ search("aws_opsworks_app", 'shortname:*ckanext*').each do |app|
 			user "#{account_name}"
 			command "#{pip} install numpy==1.15.4"
 		end
-
-		# The dateparser library defaults to month-first but is configurable.
-		# Unfortunately, simply toggling the day-first flag breaks ISO dates.
-		# See https://github.com/dateutil/dateutil/issues/402
-		execute "Patch date parser format" do
-			user "#{account_name}"
-			command <<-'SED'.strip + " #{virtualenv_dir}/lib/*/site-packages/messytables/types.py"
-				sed -i "s/^\(\s*\)return parser[.]parse(value)/\1try:\n\1    return parser.isoparse(value)\n\1except ValueError:\n\1    return parser.parse(value, dayfirst=True)/"
-			SED
-		end
 	end
 end
 
