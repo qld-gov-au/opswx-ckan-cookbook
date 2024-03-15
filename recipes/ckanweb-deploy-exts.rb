@@ -114,9 +114,9 @@ end
 bash "Install NPM and NodeJS" do
 	code <<-EOS
 		if ! (yum install -y npm); then
-			# failed to install from standard repo, try a manual setup
-			curl --silent --location https://rpm.nodesource.com/setup_10.x | bash -
-			yum -y install nodejs
+			# TODO stop ignoring broken packages
+			# once we're away from OpsWorks and on a recent AMI
+			yum -y install nodejs --skip-broken
 		fi
 	EOS
 end
@@ -402,16 +402,6 @@ node['datashades']['ckan_web']['plugin_apps'].each do |app|
 		execute "Lock numpy version until issue 14012 is fixed" do
 			user "#{account_name}"
 			command "#{pip} install numpy==1.15.4"
-		end
-
-		# The dateparser library defaults to month-first but is configurable.
-		# Unfortunately, simply toggling the day-first flag breaks ISO dates.
-		# See https://github.com/dateutil/dateutil/issues/402
-		execute "Patch date parser format" do
-			user "#{account_name}"
-			command <<-'SED'.strip + " #{virtualenv_dir}/lib/*/site-packages/messytables/types.py"
-				sed -i "s/^\(\s*\)return parser[.]parse(value)/\1try:\n\1    return parser.isoparse(value)\n\1except ValueError:\n\1    return parser.parse(value, dayfirst=True)/"
-			SED
 		end
 	end
 end
