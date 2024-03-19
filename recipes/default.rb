@@ -103,10 +103,6 @@ end
 #
 include_recipe "datashades::stackparams"
 
-# Install Icinga2 package
-#
-include_recipe "datashades::icinga-setup"
-
 # Enable yum-cron so updates are downloaded on running nodes
 #
 service "yum-cron" do
