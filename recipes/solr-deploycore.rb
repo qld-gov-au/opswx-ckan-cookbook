@@ -55,7 +55,7 @@ end
 execute "solr stop" do
 	user 'root'
 	# Try both initd and systemd styles
-	command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop)"
+	command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
 end
 
 execute 'Unzip Core Config' do
