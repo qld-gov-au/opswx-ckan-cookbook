@@ -164,7 +164,7 @@ ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
 
-ckan.views.default_views = text_view image_view recline_view
+ckan.views.default_views = text_view image_view datatables_view
 ckan.preview.json_formats = json
 ckan.preview.xml_formats = xml red rdf rdf+xml owl+xml atom rss xsd
 ckan.preview.text_formats = text plain text/plain
@@ -181,6 +181,9 @@ ckan.recaptcha.publickey = ${ssm:/config/CKAN/<%= node['datashades']['version'] 
 ckan.recaptcha.privatekey = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/recaptcha.privatekey}
 #licenses_group_url = http://licenses.opendefinition.org/licenses/groups/ckan.json
 # ckan.template_footer_end =
+
+# Exclude AJAX from CSRF protection as it's not state-changing
+ckanext.csrf_filter.exempt_rules = [ "^/datatables/ajax/.*" ]
 
 ckan.datarequests.comments = true
 ckan.datarequests.show_datarequests_badge = true
