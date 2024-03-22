@@ -65,6 +65,11 @@ end
 
 execute "solr start" do
 	user 'root'
-	# Try both initd and systemd styles
-	command "(systemctl status solr >/dev/null 2>&1 || service solr status >/dev/null 2>&1) || systemctl start solr"
+	# Use initd script to check status, but systemctl to start.
+	# This is because the initd script detects any running instance,
+	# so 'service solr status' is the most reliable check for "Is it running?"
+	# but systemctl only knows about instances started by itself,
+	# so we need to start via systemctl if we want the option to later
+	# manage via systemctl.
+	command "service solr status >/dev/null 2>&1 || systemctl start solr"
 end
