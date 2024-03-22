@@ -63,7 +63,13 @@ execute 'Unzip Core Config' do
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
 end
 
-service "solr start" do
-    service_name "solr"
-	action [:start]
+execute "solr start" do
+	user 'root'
+	# Use initd script to check status, but systemctl to start.
+	# This is because the initd script detects any running instance,
+	# so 'service solr status' is the most reliable check for "Is it running?"
+	# but systemctl only knows about instances started by itself,
+	# so we need to start via systemctl if we want the option to later
+	# manage via systemctl.
+	command "service solr status >/dev/null 2>&1 || systemctl start solr"
 end
