@@ -40,7 +40,6 @@ default['datashades']['ckan_web']['adminemail'] = 'admin@nowhere.com'
 default['datashades']['ckan_web']['feedback_recipients'] = ''
 default['datashades']['ckan_web']['feedback_redirection'] = '/article/thanks'
 default['datashades']['ckan_web']['title'] = 'CKAN'
-default['datashades']['ckan_web']['email_domain'] = node['datashades']['public_tld']
 
 default['datashades']['ckan_web']['sentryurl'] = ''
 
