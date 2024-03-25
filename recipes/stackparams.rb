@@ -38,6 +38,9 @@ node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --regi
 node.default['datashades']['log_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/s3LogsBucket" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
 
+# Derive defaults from other values
+node.default['datashades']['app_id'] = node['datashades']['ckan_web']['dbname'].downcase
+
 # Get the VPC CIDR for NFS services
 #
 bash "Get VPC CIDR" do
