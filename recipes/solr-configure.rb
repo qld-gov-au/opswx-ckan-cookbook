@@ -113,7 +113,3 @@ cookbook_file '/bin/updatedns' do
 	group 'root'
 	mode '0755'
 end
-
-service "solr" do
-	action [:enable, :start]
-end

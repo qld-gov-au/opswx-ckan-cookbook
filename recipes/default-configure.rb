@@ -91,6 +91,11 @@ service 'aws-smtp-relay' do
     action [:enable, :restart]
 end
 
+service "supervisord start" do
+    service_name "supervisord"
+    action [:enable,:start]
+end
+
 # Re-enable and start in case it was stopped by previous recipe versions
 if system('which postfix') then
     mailer_daemon = 'postfix'
