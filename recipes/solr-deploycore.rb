@@ -63,7 +63,9 @@ execute 'Unzip Core Config' do
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
 end
 
-service "solr start" do
-    service_name "solr"
-	action [:start]
+execute "solr start" do
+	user 'root'
+	# Use initd directly rather than managing Solr via a 'service' resource,
+	# because the Systemd interactions have timeout issues
+	command "service solr status >/dev/null 2>&1 || service solr start"
 end
