@@ -115,5 +115,12 @@ cookbook_file '/bin/updatedns' do
 end
 
 service "solr" do
-	action [:enable, :start]
+	action [:enable]
+end
+
+execute "solr start" do
+	user 'root'
+	# Use initd directly rather than managing Solr via a 'service' resource,
+	# because the Systemd interactions have timeout issues
+	command "service solr status >/dev/null 2>&1 || service solr start"
 end

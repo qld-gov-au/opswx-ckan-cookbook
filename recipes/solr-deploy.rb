@@ -86,8 +86,10 @@ unless ::File.identical?(installed_solr_version, solr_path)
         command "unzip -u -q #{solr_artefact} -d #{working_dir}"
     end
 
-    service "solr" do
-        action [:stop]
+    execute "solr stop before install" do
+        user 'root'
+        # Try both initd and systemd styles
+        command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
     end
 
     # wipe old properties so we can install the right version
