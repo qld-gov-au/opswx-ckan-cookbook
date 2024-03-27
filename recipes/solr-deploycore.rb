@@ -54,18 +54,11 @@ end
 
 execute "solr stop before deploying core" do
 	user 'root'
-	# Try both initd and systemd styles
-	command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
+	# Try multiple styles
+	command "(supervisorctl status 'solr:*' && supervisorctl stop 'solr:*') || (systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
 end
 
 execute 'Unzip Core Config' do
 	user 'root'
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
-end
-
-execute "solr start core" do
-	user 'root'
-	# Use initd directly rather than managing Solr via a 'service' resource,
-	# because the Systemd interactions have timeout issues
-	command "service solr status >/dev/null 2>&1 || service solr start"
 end

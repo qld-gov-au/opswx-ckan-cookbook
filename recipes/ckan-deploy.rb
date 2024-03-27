@@ -178,8 +178,3 @@ execute "Compile locale translation" do
 	cwd install_dir
 	command "#{virtualenv_dir}/bin/python setup.py compile_catalog -f --locale en_AU"
 end
-
-service "supervisord enable" do
-	service_name "supervisord"
-	action [:enable]
-end

@@ -33,11 +33,6 @@ cookbook_file "/etc/logrotate.d/ckan" do
     source "ckan-logrotate"
 end
 
-service "supervisord start" do
-    service_name "supervisord"
-    action [:start]
-end
-
 execute "Update supervisor workers if needed" do
     command "supervisorctl update"
 end
