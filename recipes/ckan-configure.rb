@@ -33,10 +33,6 @@ cookbook_file "/etc/logrotate.d/ckan" do
     source "ckan-logrotate"
 end
 
-execute "Update supervisor workers if needed" do
-    command "supervisorctl update"
-end
-
 if not system("grep 'alias git=' ~/.bash_profile")
     execute "Add CKAN Git alias to Bash" do
         command <<-EOS
