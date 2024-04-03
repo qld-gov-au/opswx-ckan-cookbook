@@ -86,8 +86,10 @@ unless ::File.identical?(installed_solr_version, solr_path)
         command "unzip -u -q #{solr_artefact} -d #{working_dir}"
     end
 
-    service "solr" do
-        action [:stop]
+    execute "solr stop before install" do
+        user 'root'
+        # Try multiple styles
+        command "(supervisorctl status 'solr:*' && supervisorctl stop 'solr:*') || (systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
     end
 
     # wipe old properties so we can install the right version
@@ -105,6 +107,18 @@ unless ::File.identical?(installed_solr_version, solr_path)
         cwd "#{working_dir}/solr-#{solr_version}"
         command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
     end
+end
+
+# Replace legacy initd integration with supervisord
+service "solr" do
+    action [:disable]
+end
+
+cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
+    source "supervisor-solr.conf"
+    owner "root"
+    group "root"
+    mode "0744"
 end
 
 log4j_version = '2.17.1'
@@ -197,3 +211,8 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
+
+service "supervisord restart" do
+    service_name "supervisord"
+    action [:stop, :start]
+end

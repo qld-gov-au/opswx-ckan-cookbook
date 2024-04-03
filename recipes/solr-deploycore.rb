@@ -52,18 +52,13 @@ cookbook_file "#{Chef::Config[:file_cache_path]}/solr_core_config.zip" do
 	source "ckan_solr_conf.zip"
 end
 
-execute "solr stop" do
+execute "solr stop before deploying core" do
 	user 'root'
-	# Try both initd and systemd styles
-	command "(systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
+	# Try multiple styles
+	command "(supervisorctl status 'solr:*' && supervisorctl stop 'solr:*') || (systemctl status solr >/dev/null 2>&1 && systemctl stop solr) || (service solr status >/dev/null 2>&1 && service solr stop) || echo 'Unable to stop Solr, already stopped?'"
 end
 
 execute 'Unzip Core Config' do
 	user 'root'
 	command "unzip -u -q -o #{Chef::Config[:file_cache_path]}/solr_core_config.zip -d #{solr_core_dir}"
-end
-
-service "solr start" do
-    service_name "solr"
-	action [:start]
 end

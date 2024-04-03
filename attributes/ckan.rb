@@ -22,7 +22,7 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'supervisor', 'squid']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'squid']
 default['datashades']['ckan_web']['alternative_packages'] = [
     ['postgresql94', 'postgresql'],
     ['postgresql94-devel', 'postgresql-devel'],
@@ -40,7 +40,6 @@ default['datashades']['ckan_web']['adminemail'] = 'admin@nowhere.com'
 default['datashades']['ckan_web']['feedback_recipients'] = ''
 default['datashades']['ckan_web']['feedback_redirection'] = '/article/thanks'
 default['datashades']['ckan_web']['title'] = 'CKAN'
-default['datashades']['ckan_web']['email_domain'] = node['datashades']['public_tld']
 
 default['datashades']['ckan_web']['sentryurl'] = ''
 
