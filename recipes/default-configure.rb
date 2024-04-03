@@ -96,6 +96,10 @@ service "supervisord start" do
     action [:enable,:start]
 end
 
+execute "Update supervisor workers if needed" do
+    command "supervisorctl update"
+end
+
 # Re-enable and start in case it was stopped by previous recipe versions
 if system('which postfix') then
     mailer_daemon = 'postfix'
