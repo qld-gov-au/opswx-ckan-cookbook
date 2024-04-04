@@ -492,6 +492,7 @@ bash "Pin 'click' version to make Goodtables and Frictionless coexist" do
 	code <<-EOS
 		if (#{pip} show click |grep 'Version: [1-6][.]') then
 			#{pip} install click==7.1.2
+			#{pip} install typer<0.12
 		fi
 	EOS
 end
