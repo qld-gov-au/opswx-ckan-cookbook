@@ -129,17 +129,17 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
-node['datashades']['ckan_web']['plugin_apps'].each do |app|
+node['datashades']['ckan_web']['plugin_app_names'].each do |app|
 
-	egg_name = app['shortname']
+	egg_name = node['datashades']['ckan_web']['plugin_apps'][app]['shortname']
 
 	# Install Extension
 	#
 
 	datashades_pip_install_app egg_name do
-		type app['app_source']['type']
-		revision app['app_source']['revision']
-		url app['app_source']['url']
+		type node['datashades']['ckan_web']['plugin_apps'][app]['app_source']['type']
+		revision node['datashades']['ckan_web']['plugin_apps'][app]['app_source']['revision']
+		url node['datashades']['ckan_web']['plugin_apps'][app]['app_source']['url']
 	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
