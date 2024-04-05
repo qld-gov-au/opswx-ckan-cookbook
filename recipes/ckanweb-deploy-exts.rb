@@ -450,7 +450,7 @@ if not csrf_present then
 		user "#{account_name}"
 		code <<-EOS
 			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
-			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' #{config_dir}/who.ini"
+			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' "#{config_dir}/who.ini"
 		EOS
 	end
 end
