@@ -23,6 +23,8 @@
 # Obtain some stack attributes for the recipes to use
 #
 
+require 'json'
+
 include_recipe "datashades::stackparams"
 
 # Retrieve attributes from SSM Parameter Store
@@ -41,11 +43,7 @@ node.default['datashades']['postgres']['password'] = `aws ssm get-parameter --re
 
 node.default['datashades']['ckan_web']['plugin_app_names'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_app_names" --query "Parameter.Value" --output text`.strip.split(',')
 for plugin in node['datashades']['ckan_web']['plugin_app_names'] do
-    node.default['datashades']['ckan_web']['plugin_apps'][plugin]['name'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/name" --query "Parameter.Value" --output text`.strip
-    node.default['datashades']['ckan_web']['plugin_apps'][plugin]['shortname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
-    node.default['datashades']['ckan_web']['plugin_apps'][plugin]['app_source']['type'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-    node.default['datashades']['ckan_web']['plugin_apps'][plugin]['app_source']['url'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
-    node.default['datashades']['ckan_web']['plugin_apps'][plugin]['app_source']['revision'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+    node.default['datashades']['ckan_web']['plugin_apps'][plugin] = JSON.parse(`aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}" --query "Parameter.Value" --output text`)
 end
 
 # Derive defaults from other values
