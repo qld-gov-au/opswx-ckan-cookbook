@@ -34,12 +34,18 @@ node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['da
 node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=opsworks:instance' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
 
+# Derive defaults from other values
+node.default['datashades']['app_id'] = node['datashades']['ckan_web']['dbname'].downcase
+
 # Retrieve attributes from SSM Parameter Store
 node.default['datashades']['log_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/s3LogsBucket" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
 
-# Derive defaults from other values
-node.default['datashades']['app_id'] = node['datashades']['ckan_web']['dbname'].downcase
+node.default['datashades']['ckan_web']['ckan_app']['name'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ckan_app/name" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['ckan_app']['shortname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ckan_app/shortname" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['ckan_app']['app_source']['type'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ckan_app/app_source/type" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['ckan_app']['app_source']['url'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ckan_app/app_source/url" --query "Parameter.Value" --output text`.strip
+node.default['datashades']['ckan_web']['ckan_app']['app_source']['revision'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ckan_app/app_source/revision" --query "Parameter.Value" --output text`.strip
 
 node.default['datashades']['solr_app']['name'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/name" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['solr_app']['shortname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/shortname" --query "Parameter.Value" --output text`.strip
