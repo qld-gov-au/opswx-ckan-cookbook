@@ -37,7 +37,7 @@ group account_name do
     gid 2001
 end
 
-if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
+if not system("grep '^#{account_name}:x:2001' /etc/passwd > /dev/null") then
     bash "Stop Solr processes before modifying account" do
         code <<-EOS
             ps -U solr -o pid= |xargs kill
