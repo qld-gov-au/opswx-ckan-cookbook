@@ -30,7 +30,6 @@ node.default['datashades']['ckan_web']['google']['analytics_id'] = `aws ssm get-
 node.default['datashades']['ckan_web']['google']['gtm_container_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GtmId" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['attachments_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/s3AttachmentBucket" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['public_tld'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/public_tld" --query "Parameter.Value" --output text`.strip
-node.default['datashades']['tld'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/tld" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['title'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/title" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['site_domain'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/site_domain" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['ckan_web']['dsenable'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/ds_enable" --query "Parameter.Value" --output text`.strip
@@ -50,7 +49,6 @@ for plugin in node['datashades']['ckan_web']['plugin_app_names'] do
 end
 
 # Derive defaults from other values
-node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbname']}_#{node['datashades']['version']}"
 node.default['datashades']['ckan_web']['dsname'] = "#{node['datashades']['ckan_web']['dbname']}_datastore"
 node.default['datashades']['ckan_web']['dsuser'] = "#{node['datashades']['ckan_web']['dbuser']}_datastore"
 node.default['datashades']['ckan_web']['email_domain'] = node['datashades']['ckan_web']['public_tld']
