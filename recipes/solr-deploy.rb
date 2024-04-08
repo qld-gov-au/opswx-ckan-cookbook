@@ -20,6 +20,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
+
 service_name = 'solr'
 account_name = service_name
 efs_data_dir = "/data/#{service_name}"
@@ -58,8 +60,8 @@ if not system("grep '^#{account_name}:x:2001' /etc/passwd") then
 end
 
 core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
-app = node['datashades']['solr_app']
-solr_version = app['app_source']['url'][/\/solr-([^\/]+)[.]zip$/, 1]
+solr_source = node['datashades']['solr_app']['app_source']['url']
+solr_version = solr_source[/\/solr-([^\/]+)[.]zip$/, 1]
 solr_path = "/opt/solr"
 installed_solr_version = "#{solr_path}-#{solr_version}"
 solr_environment_file = "/etc/default/solr.in.sh"
@@ -78,7 +80,7 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 
     remote_file "#{solr_artefact}" do
-        source app['app_source']['url']
+        source solr_source
     end
 
     # Would use archive_file but Chef client is not new enough
