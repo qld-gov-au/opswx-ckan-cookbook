@@ -138,8 +138,8 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
 	datashades_pip_install_app egg_name do
 		type `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
-		url `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+		url `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
 	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
