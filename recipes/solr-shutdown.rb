@@ -20,6 +20,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe "datashades::stackparams"
+
 service_name = 'solr'
 
 file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
