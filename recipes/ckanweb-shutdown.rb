@@ -18,6 +18,8 @@
 
 # Hide this instance from others
 #
+include_recipe "datashades::stackparams"
+
 file "/data/#{node['datashades']['hostname']}" do
 	ignore_failure true # just in case it does not exist
 	action :delete

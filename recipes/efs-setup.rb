@@ -22,6 +22,9 @@
 
 # Create and mount EFS Data directory
 #
+
+include_recipe "datashades::stackparams"
+
 directory '/mnt/efs' do
   action :create
 end

@@ -129,17 +129,17 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
-node['datashades']['ckan_web']['plugin_apps'].each do |app|
+node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
-	egg_name = app['shortname']
+	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
 
 	# Install Extension
 	#
 
 	datashades_pip_install_app egg_name do
-		type app['app_source']['type']
-		revision app['app_source']['revision']
-		url app['app_source']['url']
+		type `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
+		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+		url `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
 	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
@@ -450,7 +450,7 @@ if not csrf_present then
 		user "#{account_name}"
 		code <<-EOS
 			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
-			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' #{config_dir}/who.ini"
+			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' "#{config_dir}/who.ini"
 		EOS
 	end
 end
