@@ -31,12 +31,12 @@ node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{met
 # Retrieve attributes from instance tags
 node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Layer' --query 'Tags[].Value' --output text`.strip
-node.default['datashades']['hostname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=opsworks:instance' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['ckan_web']['dbname'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Service' --query 'Tags[].Value' --output text`.strip
 
 # Derive defaults from other values
 node.default['datashades']['app_id'] = node['datashades']['ckan_web']['dbname'].downcase
 node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbname']}_#{node['datashades']['version']}"
+node.default['datashades']['hostname'] = "#{node['datashades']['app_id']}-#{node['datashades']['instid']}"
 
 # Retrieve attributes from SSM Parameter Store
 node.default['datashades']['tld'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/tld" --query "Parameter.Value" --output text`.strip
