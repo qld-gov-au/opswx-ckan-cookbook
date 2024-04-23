@@ -1,0 +1,10 @@
+[Unit]
+Description=Archive logs before shutdown
+After=network.target
+
+[Service]
+RemainAfterExit=yes
+ExecStop=/usr/sbin/logrotate /etc/logrotate.conf --force
+
+[Install]
+WantedBy=multi-user.target
