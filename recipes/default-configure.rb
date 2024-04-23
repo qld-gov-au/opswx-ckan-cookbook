@@ -44,6 +44,14 @@ file "/etc/cron.daily/archive-system-logs-to-s3" do
     mode "0755"
 end
 
+# Archive logs on system shutdown
+cookbook_file "/etc/systemd/system/logrotate-shutdown.service" do
+    source "logrotate-shutdown.service"
+    owner "root"
+    group "root"
+    mode "0744"
+end
+
 # Run updateDNS script
 #
 execute 'update dns' do

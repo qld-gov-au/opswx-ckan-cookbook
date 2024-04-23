@@ -24,12 +24,3 @@ file "/data/#{node['datashades']['hostname']}" do
 	ignore_failure true # just in case it does not exist
 	action :delete
 end
-
-bash "Archive remaining logs" do
-	user "root"
-	cwd "/"
-	code <<-EOS
-		/etc/cron.daily/logrotate
-		/usr/local/bin/archive-logs.sh ckan
-	EOS
-end

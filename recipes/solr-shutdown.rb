@@ -50,20 +50,3 @@ bash "Delete #{service_name} DNS record" do
 		)
 	EOS
 end
-
-service "#{service_name}" do
-	action [:stop]
-end
-
-bash "Archive remaining logs" do
-	user "solr"
-	cwd "/"
-	code <<-EOS
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/solr/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/bin/archive-logs.sh solr
-	EOS
-end

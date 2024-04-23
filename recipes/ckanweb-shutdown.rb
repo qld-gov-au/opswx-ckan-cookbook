@@ -24,18 +24,3 @@ file "/data/#{node['datashades']['hostname']}" do
 	ignore_failure true # just in case it does not exist
 	action :delete
 end
-
-bash "Archive remaining logs" do
-	ignore_failure true # just in case it does not exist
-	user "root"
-	cwd "/"
-	code <<-EOS
-		/etc/cron.daily/logrotate
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/nginx/*log /var/log/nginx/*/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/bin/archive-logs.sh nginx
-	EOS
-end
