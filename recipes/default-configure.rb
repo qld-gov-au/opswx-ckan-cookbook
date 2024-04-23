@@ -52,6 +52,11 @@ cookbook_file "/etc/systemd/system/logrotate-shutdown.service" do
     mode "0744"
 end
 
+# Run custom actions on system shutdown
+file "/etc/rc0.d/S01heartbeat" do
+    content "rm /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system"
+end
+
 # Run updateDNS script
 #
 execute 'update dns' do

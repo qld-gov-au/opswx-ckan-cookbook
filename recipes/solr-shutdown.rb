@@ -24,11 +24,6 @@ include_recipe "datashades::stackparams"
 
 service_name = 'solr'
 
-file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
-	ignore_failure true # just in case it does not exist
-	action :delete
-end
-
 # Remove DNS records to stop requests to this host
 #
 bash "Delete #{service_name} DNS record" do

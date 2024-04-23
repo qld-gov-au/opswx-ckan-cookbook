@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 RemainAfterExit=yes
-ExecStop=/usr/sbin/logrotate /etc/logrotate.conf --force; /usr/local/bin/archive-logs.sh system
+ExecStop=/usr/sbin/logrotate /etc/logrotate.conf --force
 
 [Install]
 WantedBy=multi-user.target
