@@ -24,11 +24,6 @@ include_recipe "datashades::stackparams"
 
 service_name = 'solr'
 
-file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
-	ignore_failure true # just in case it does not exist
-	action :delete
-end
-
 # Remove DNS records to stop requests to this host
 #
 bash "Delete #{service_name} DNS record" do
@@ -48,22 +43,5 @@ bash "Delete #{service_name} DNS record" do
 			]}
 		EOF
 		)
-	EOS
-end
-
-service "#{service_name}" do
-	action [:stop]
-end
-
-bash "Archive remaining logs" do
-	user "solr"
-	cwd "/"
-	code <<-EOS
-		TIMESTAMP=`date +'%s'`
-		for logfile in `ls -d /var/log/solr/*log`; do
-			mv "$logfile" "$logfile.$TIMESTAMP"
-			gzip "$logfile.$TIMESTAMP"
-		done
-		/usr/local/bin/archive-logs.sh solr
 	EOS
 end

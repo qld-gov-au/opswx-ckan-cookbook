@@ -6,6 +6,7 @@
     rotate 10
     dateext
     dateformat -%Y-%m-%d-%s
+    compress
     sharedscripts
     postrotate
         /usr/local/bin/archive-logs.sh solr

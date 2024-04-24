@@ -59,13 +59,6 @@ cookbook_file "/usr/local/bin/solr-sync.sh" do
 	mode "0755"
 end
 
-file "/etc/cron.daily/archive-solr-logs-to-s3" do
-	content "/usr/local/bin/archive-logs.sh #{service_name} >/dev/null 2>&1\n"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
 file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
 	action :touch
 end

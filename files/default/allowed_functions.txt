@@ -282,3 +282,4 @@ xmlconcat
 xpath
 xpath_exists
 ictdashboards_tables
+grants_tables

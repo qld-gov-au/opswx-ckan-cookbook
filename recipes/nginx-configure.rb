@@ -21,19 +21,11 @@
 
 include_recipe "datashades::default-configure"
 
-execute "Extend Nginx log rotation" do
-	user "root"
-	cwd "/etc/logrotate.d"
-	# this replacement needs to be idempotent; the result must not match the original pattern
-	# use single quotes so we don't have to double our backslashes
-	command 'sed -i "s|\(/var/log/nginx/[*][.]\?log\) {|\1\n/var/log/nginx/*/*.log {|" nginx'
-end
-
-file "/etc/cron.daily/archive-nginx-logs-to-s3" do
-	content "/usr/local/bin/archive-logs.sh nginx >/dev/null 2>&1\n"
+cookbook_file "/etc/logrotate.d/nginx" do
+	source "nginx-logrotate"
 	owner "root"
 	group "root"
-	mode "0755"
+	mode "0744"
 end
 
 service 'nginx' do
