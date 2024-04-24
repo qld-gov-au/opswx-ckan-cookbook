@@ -52,6 +52,10 @@ cookbook_file "/etc/systemd/system/logrotate-shutdown.service" do
     mode "0744"
 end
 
+service "logrotate-shutdown" do
+    action [:enable,:start]
+end
+
 # Run custom actions on system shutdown
 file "/etc/rc0.d/S01heartbeat" do
     content "rm /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system"
