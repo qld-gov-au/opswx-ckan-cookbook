@@ -109,7 +109,13 @@ end
 # Create NGINX Config files
 #
 
-template "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf" do
+# Handle old filename
+nginx_config_file = "/etc/nginx/conf.d/#{node['datashades']['app_id']}.conf"
+legacy_nginx_config = "/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf"
+if (File.exist? legacy_nginx_config) then
+	execute "mv #{legacy_nginx_config} #{nginx_config_file}"
+end
+template "#{nginx_config_file}" do
 	source 'nginx.conf.erb'
 	owner 'root'
 	group 'root'
