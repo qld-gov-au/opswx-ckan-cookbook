@@ -129,7 +129,7 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
-node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
+node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
 
 	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
 
