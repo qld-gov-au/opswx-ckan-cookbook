@@ -376,15 +376,9 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 	#
 	if extextras.has_key? pluginname
 		pip_packages = extextras[pluginname]
-		bash "Install extra PIP packages for #{pluginname}" do
+		execute "Install extra PIP packages for #{pluginname}" do
 			user "#{account_name}"
-			code <<-EOS
-				read -r -a packages <<< "#{pip_packages}"
-				for package in "${packages[@]}"
-				do
-					#{pip} install ${package}
-				done
-			EOS
+			command "#{pip} install #{pip_packages}"
 		end
 	end
 
@@ -394,14 +388,6 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 		execute "Cesium Preview CKAN ext config" do
 			user "root"
 			command "npm install --save geojson-extent"
-		end
-	end
-
-	# Work around https://github.com/numpy/numpy/issues/14012
-	if "#{pluginname}".eql? 'xloader' then
-		execute "Lock numpy version until issue 14012 is fixed" do
-			user "#{account_name}"
-			command "#{pip} install numpy==1.15.4"
 		end
 	end
 end
@@ -491,8 +477,7 @@ bash "Pin 'click' version to make Goodtables and Frictionless coexist" do
 	user "#{account_name}"
 	code <<-EOS
 		if (#{pip} show click |grep 'Version: [1-6][.]') then
-			#{pip} install 'click==7.1.2'
-			#{pip} install 'typer<0.12'
+			#{pip} install 'click==7.1.2' 'typer<0.12'
 		fi
 	EOS
 end

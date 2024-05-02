@@ -68,14 +68,10 @@ end
 # Install selected revision of CKAN core
 #
 
-execute "Pin setuptools version" do
-	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0'"
-end
-
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
 # #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
-execute "Pin pyOpenSSL version" do
-	command "#{virtualenv_dir}/bin/pip install 'pyOpenSSL>=23.0.0'"
+execute "Pin pip versions" do
+	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0' 'pyOpenSSL>=23.0.0'"
 end
 
 datashades_pip_install_app "ckan" do
@@ -87,12 +83,6 @@ end
 # Just in case something created files as root
 execute "Refresh virtualenv ownership" do
 	command "chown -RH ckan:ckan #{virtualenv_dir}"
-end
-
-execute "Install Raven Sentry client" do
-	user service_name
-	group service_name
-	command "#{pip} install --upgrade raven"
 end
 
 #

@@ -195,11 +195,6 @@ template "/etc/init.d/aws-smtp-relay" do
     mode "0755"
 end
 
-# Installing Supervisor via yum gives initd integration, but has import problems.
-# Installing via pip fixes the import problems, but doesn't provide the integration.
-# So we do both.
-execute "pip --cache-dir=/tmp/ install supervisor"
-
 bash "Configure Supervisord" do
     user "root"
     cwd "/etc"

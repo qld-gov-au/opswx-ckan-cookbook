@@ -107,7 +107,6 @@ action :create do
         group new_resource.account_name
         cwd install_dir
         code <<-EOS
-            #{pip} install -e .
             PYTHON_MAJOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
             PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
             if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
@@ -122,12 +121,13 @@ action :create do
                 fi
             fi
             if [ -f "$REQUIREMENTS_FILE" ]; then
-                #{pip} install -r $REQUIREMENTS_FILE
+                REQUIREMENTS_FILES="-r $REQUIREMENTS_FILE"
             fi
             # ckanext-harvest uses this filename
             if [ -f "pip-requirements.txt" ]; then
-                #{pip} install -r "pip-requirements.txt"
+                REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r pip-requirements.txt"
             fi
+            #{pip} install . $REQUIREMENTS_FILES
         EOS
     end
 end
