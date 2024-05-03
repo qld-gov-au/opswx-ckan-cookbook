@@ -25,7 +25,9 @@ include_recipe "datashades::stackparams"
 # Install NGINX packages
 #
 log "Installing packages required for Nginx"
-package node['datashades']['nginx']['packages']
+node['datashades']['nginx']['packages'].each do |p|
+	package p
+end
 
 log "Creating directories required for Nginx"
 include_recipe "datashades::nginx-efs-setup"

@@ -22,7 +22,10 @@ include_recipe "datashades::ckanparams"
 # Install CKAN services and dependencies
 #
 log "Installing packages required for CKAN"
-package ['datashades']['ckan_web']['packages']
+node['datashades']['ckan_web']['packages'].each do |p|
+	package p
+end
+
 
 # Install packages that have different names on different systems
 node['datashades']['ckan_web']['alternative_packages'].each do |p|
