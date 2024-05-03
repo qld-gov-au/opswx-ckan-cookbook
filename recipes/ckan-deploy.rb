@@ -19,6 +19,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'date'
+
 include_recipe "datashades::ckanparams"
 
 service_name = "ckan"
@@ -32,6 +34,8 @@ virtualenv_dir = "/usr/lib/ckan/default"
 pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
+
+log "#{DateTime.now}: Creating files and directories for CKAN"
 
 cookbook_file "#{virtualenv_dir}/bin/ckan_cli" do
 	source 'ckan_cli'
@@ -68,12 +72,15 @@ end
 # Install selected revision of CKAN core
 #
 
+log "#{DateTime.now}: Installing pinned dependencies for CKAN"
+
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
 # #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
 execute "Pin pip versions" do
 	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0' 'pyOpenSSL>=23.0.0'"
 end
 
+log "#{DateTime.now}: Installing CKAN source"
 datashades_pip_install_app "ckan" do
 	type app['app_source']['type']
 	revision app['app_source']['revision']
@@ -121,6 +128,7 @@ end
 # Initialise data
 #
 
+log "#{DateTime.now}: Initialising CKAN database"
 execute "Init CKAN DB" do
 	user "root"
 	command "#{ckan_cli} db init 2>&1 >> '#{shared_fs_dir}/private/ckan_db_init.log.tmp' && mv '#{shared_fs_dir}/private/ckan_db_init.log.tmp' '#{shared_fs_dir}/private/ckan_db_init.log'"
