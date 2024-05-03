@@ -24,10 +24,10 @@ include_recipe "datashades::stackparams"
 
 # Install NGINX packages
 #
-node['datashades']['nginx']['packages'].each do |p|
-  package p
-end
+log "Installing packages required for Nginx"
+package node['datashades']['nginx']['packages']
 
+log "Creating directories required for Nginx"
 include_recipe "datashades::nginx-efs-setup"
 
 # Create self-signed temporary SSL cert for Datashades

@@ -21,9 +21,8 @@ include_recipe "datashades::ckanparams"
 
 # Install CKAN services and dependencies
 #
-node['datashades']['ckan_web']['packages'].each do |p|
-	package p
-end
+log "Installing packages required for CKAN"
+package ['datashades']['ckan_web']['packages']
 
 # Install packages that have different names on different systems
 node['datashades']['ckan_web']['alternative_packages'].each do |p|
@@ -37,6 +36,8 @@ node['datashades']['ckan_web']['alternative_packages'].each do |p|
 		EOS
 	end
 end
+
+log "Creating accounts and directories for CKAN"
 
 # Create CKAN Group
 #
@@ -85,6 +86,7 @@ include_recipe "datashades::ckan-efs-setup"
 # Set up Python virtual environment
 #
 
+log "Creating Python virtual environment for CKAN"
 execute "Install Python Virtual Environment" do
 	command "pip --cache-dir=/tmp/ install virtualenv"
 end
