@@ -24,6 +24,7 @@
 # Ascertain whether or not the instance deploying is a batch node
 #
 require 'date'
+require 'json'
 
 batchnode = node['datashades']['layer'] == 'batch'
 
@@ -131,20 +132,27 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
-log "#{DateTime.now}: Installing CKAN plugins"
-node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
+plugin_names = {}
+plugin_urls = []
+node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
-	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
+	JSON.parse(
+		`aws ssm get-parameters --region "#{node['datashades']['region']}" --names "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" /config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameters"`
+	).each do |parameter|
+		if parameter['Name'].end_with? "/shortname" then
+			egg_name = parameter['Value']
+		elsif parameter['Name'].end_with? "/type" then
+			type = parameter['Value']
+		elsif parameter['Name'].end_with? "/revision" then
+			revision = parameter['Value']
+		else
+			url = parameter['Value'].sub(/@(.*)/, '')
+		end
+		plugin_urls.push("#{type}+#{url}@#{revision}#egg=#{egg_name}")
+	end
 
 	# Install Extension
 	#
-
-	log "#{DateTime.now}: Installing Python egg #{egg_name}"
-	datashades_pip_install_app egg_name do
-		type `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
-		url `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
-	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
 	#
@@ -153,44 +161,7 @@ node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
 	if extnames.has_key? pluginname
 		extname = extnames[pluginname]
 	end
-
-	# Add the extension to production.ini
-	# Go as close to the end as possible while respecting the ordering constraints if any
-	insert_before = nil
-	if extordering.has_key? extname
-		min_ordering = extordering[extname]
-		max_ordering = 9999
-		installed_ordered_exts.each do |prefix|
-			installed_ordering = extordering[prefix]
-			if installed_ordering > min_ordering and installed_ordering < max_ordering
-				insert_before = prefix
-				max_ordering = installed_ordering
-			end
-		end
-		installed_ordered_exts.add extname
-	end
-
-	if insert_before
-		bash "Enable #{egg_name} plugin before #{insert_before}" do
-			user "#{account_name}"
-			cwd "#{config_dir}"
-			code <<-EOS
-				if [ -z  "$(grep 'ckan.plugins.*#{extname} #{config_file}')" ]; then
-					sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" #{config_file}
-				fi
-			EOS
-		end
-	else
-		bash "Enable #{egg_name} plugin" do
-			user "#{account_name}"
-			cwd "#{config_dir}"
-			code <<-EOS
-				if [ -z  "$(grep 'ckan.plugins.*#{extname} #{config_file}')" ]; then
-					sed -i "/^ckan.plugins/ s/$/ #{extname} /" #{config_file}
-				fi
-			EOS
-		end
-	end
+	plugin_names[plugin] = extname
 
 	# Add the extension to the default_views line if required
 	#
@@ -206,6 +177,71 @@ node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
 			EOS
 		end
 	end
+end
+
+plugin_url_string = plugin_urls.join(' ')
+
+log "#{DateTime.now}: Installing plugin eggs"
+execute "Install plugins" do
+	user account_name
+	group account_name
+	command "#{pip} install #{plugin_url_string}"
+end
+
+log "#{DateTime.now}: Installing plugin requirement files"
+bash "Install plugin requirements" do
+	cwd "#{virtualenv_dir}/src"
+	code <<-EOS
+		PYTHON_MAJOR_VERSION=$(#{python} -c "import sys; print(sys.version_info.major)")
+		PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
+		CKAN_MINOR_VERSION=$(#{python} -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
+		CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
+		for extension in `ls -d ckanext-*`; do
+			if [ -f $extension/$PYTHON_REQUIREMENTS_FILE ]; then
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $PYTHON_REQUIREMENTS_FILE"
+			else
+				if [ -f "$extension/$CKAN_REQUIREMENTS_FILE" ]; then
+					REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $CKAN_REQUIREMENTS_FILE"
+				else
+					REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r requirements.txt"
+				fi
+			fi
+			# ckanext-harvest uses this filename
+			if [ -f "$extension/pip-requirements.txt" ]; then
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r pip-requirements.txt"
+			fi
+		done
+		#{pip} install $REQUIREMENTS_FILES
+	EOS
+end
+
+sorted_plugin_names = plugin_names.values.sort_by { |a, b|
+	if extordering.key? a then
+		if extordering.key? b then
+			return extordering[a] - extordering[b]
+		else
+			# ordered plugins come before unordered
+			return -1
+		end
+	else
+		if extordering.key? b then
+			return 1
+		else
+			return a.to_i - b.to_i
+		end
+	end
+}
+plugins_config = "stats resource_proxy text_view webpage_view recline_grid_view image_view audio_view video_view recline_view recline_graph_view recline_map_view datatables_view #{sorted_plugin_names}"
+
+execute "Enable plugins" do
+	user "#{account_name}"
+	cwd "#{config_dir}"
+	command "sed -i 's/^ckan[.]plugins.*/ckan.plugins = #{plugins_config}/' #{config_file}"
+end
+
+node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
+
+	pluginname = plugin_names[plugin]
 
 	log "#{DateTime.now}: Running custom actions for plugin #{pluginname}"
 	execute "#{pluginname}: Validation CKAN ext database init" do
