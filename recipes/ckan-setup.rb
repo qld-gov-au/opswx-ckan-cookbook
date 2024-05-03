@@ -16,12 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'date'
+
 include_recipe "datashades::default"
 include_recipe "datashades::ckanparams"
 
 # Install CKAN services and dependencies
 #
-log "Installing packages required for CKAN"
+log "#{DateTime.now}: Installing packages required for CKAN"
 node['datashades']['ckan_web']['packages'].each do |p|
 	package p
 end
@@ -40,7 +42,7 @@ node['datashades']['ckan_web']['alternative_packages'].each do |p|
 	end
 end
 
-log "Creating accounts and directories for CKAN"
+log "#{DateTime.now}: Creating accounts and directories for CKAN"
 
 # Create CKAN Group
 #
@@ -89,7 +91,7 @@ include_recipe "datashades::ckan-efs-setup"
 # Set up Python virtual environment
 #
 
-log "Creating Python virtual environment for CKAN"
+log "#{DateTime.now}: Creating Python virtual environment for CKAN"
 execute "Install Python Virtual Environment" do
 	command "pip --cache-dir=/tmp/ install virtualenv"
 end

@@ -20,16 +20,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'date'
+
 include_recipe "datashades::stackparams"
 
 # Install NGINX packages
 #
-log "Installing packages required for Nginx"
+log "#{DateTime.now}: Installing packages required for Nginx"
 node['datashades']['nginx']['packages'].each do |p|
 	package p
 end
 
-log "Creating directories required for Nginx"
+log "#{DateTime.now}: Creating directories required for Nginx"
 include_recipe "datashades::nginx-efs-setup"
 
 # Create self-signed temporary SSL cert for Datashades
