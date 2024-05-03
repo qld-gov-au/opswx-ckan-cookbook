@@ -139,6 +139,7 @@ node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
 	# Install Extension
 	#
 
+	log "#{DateTime.now}: Installing Python egg #{egg_name}"
 	datashades_pip_install_app egg_name do
 		type `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
 		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
@@ -206,6 +207,7 @@ node['datashades']['ckan_web']['plugin_app_names'].sort.each do |plugin|
 		end
 	end
 
+	log "#{DateTime.now}: Running custom actions for plugin #{pluginname}"
 	execute "#{pluginname}: Validation CKAN ext database init" do
 		user "#{account_name}"
 		command "PASTER_PLUGIN=ckanext-validation #{ckan_cli} validation init-db || echo 'Ignoring expected error, see https://github.com/frictionlessdata/ckanext-validation/issues/44'"
