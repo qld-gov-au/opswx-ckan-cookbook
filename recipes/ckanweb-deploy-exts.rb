@@ -136,9 +136,9 @@ plugin_names = {}
 plugin_urls = []
 node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
-	JSON.parse(
-		`aws ssm get-parameters --region "#{node['datashades']['region']}" --names "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" /config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameters"`
-	).each do |parameter|
+	plugin_parameters = `aws ssm get-parameters --region "#{node['datashades']['region']}" --names "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" /config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameters"`
+	log "Plugin parameters: #{plugin_parameters}"
+	JSON.parse(plugin_parameters).each do |parameter|
 		if parameter['Name'].end_with? "/shortname" then
 			egg_name = parameter['Value']
 		elsif parameter['Name'].end_with? "/type" then
