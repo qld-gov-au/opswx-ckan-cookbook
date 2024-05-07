@@ -43,17 +43,8 @@ end
 # Enable RedHat EPEL
 #
 
-bash "Enable EPEL" do
-    code <<-EOS
-        # Amazon Linux 2
-        which amazon-linux-extras && amazon-linux-extras install epel
-
-        # Amazon Linux 1
-        EPEL_REPO_FILE=/etc/yum.repos.d/epel.repo
-        if [ -e $EPEL_REPO_FILE ]; then
-            sed -i 's/enabled=0/enabled=1/g' $EPEL_REPO_FILE
-        fi
-    EOS
+execute "Enable EPEL" do
+    command "which amazon-linux-extras && (amazon-linux-extras list |grep ' epel=.*enabled' || amazon-linux-extras install epel)"
 end
 
 # Install/remove core packages
@@ -64,9 +55,7 @@ node['datashades']['core']['unwanted-packages'].each do |p|
     end
 end
 
-node['datashades']['core']['packages'].each do |p|
-    package p
-end
+package node['datashades']['core']['packages']
 
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
@@ -194,11 +183,6 @@ template "/etc/init.d/aws-smtp-relay" do
     source "aws-smtp-relay.erb"
     mode "0755"
 end
-
-# Installing Supervisor via yum gives initd integration, but has import problems.
-# Installing via pip fixes the import problems, but doesn't provide the integration.
-# So we do both.
-execute "pip --cache-dir=/tmp/ install supervisor"
 
 bash "Configure Supervisord" do
     user "root"

@@ -102,8 +102,8 @@ ckan.auth.public_user_details = False
 
 ckan.base_public_folder = public
 ckan.base_templates_folder = templates
-extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public
-extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/templates
+extra_public_paths = /var/www/sites/<%= node['datashades']['app_id'] %>/public
+extra_template_paths = /var/www/sites/<%= node['datashades']['app_id'] %>/templates
 feedback_form_recipients = <%= node['datashades']['ckan_web']['feedback_recipients'] %>
 feedback_redirection = <%= node['datashades']['ckan_web']['feedback_redirection'] %>
 
