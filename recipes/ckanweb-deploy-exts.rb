@@ -175,7 +175,7 @@ log "#{DateTime.now}: Installing plugin eggs"
 execute "Install plugins" do
 	user account_name
 	group account_name
-	command "#{pip} install '#{plugin_url_string}'"
+	command "#{pip} install -e '#{plugin_url_string}'"
 end
 
 log "#{DateTime.now}: Installing plugin requirement files"
