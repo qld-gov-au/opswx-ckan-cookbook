@@ -24,7 +24,6 @@
 # Ascertain whether or not the instance deploying is a batch node
 #
 require 'date'
-require 'json'
 
 batchnode = node['datashades']['layer'] == 'batch'
 
@@ -136,20 +135,11 @@ plugin_names = {}
 plugin_urls = []
 node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
-	plugin_parameters = `aws ssm get-parameters --region "#{node['datashades']['region']}" --names "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" /config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameters"`
-	log "Plugin parameters: #{plugin_parameters}"
-	JSON.parse(plugin_parameters).each do |parameter|
-		if parameter['Name'].end_with? "/shortname" then
-			egg_name = parameter['Value']
-		elsif parameter['Name'].end_with? "/type" then
-			type = parameter['Value']
-		elsif parameter['Name'].end_with? "/revision" then
-			revision = parameter['Value']
-		else
-			url = parameter['Value'].sub(/@(.*)/, '')
-		end
-		plugin_urls.push("#{type}+#{url}@#{revision}#egg=#{egg_name}")
-	end
+	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
+	type = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
+	revision = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+	url = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip.sub(/@(.*)/, '')
+	plugin_urls.push("#{type}+#{url}@#{revision}#egg=#{egg_name}")
 
 	# Install Extension
 	#
