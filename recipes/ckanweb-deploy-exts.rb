@@ -188,17 +188,15 @@ bash "Install plugin requirements" do
 		CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
 		for extension in `ls -d ckanext-*`; do
 			if [ -f $extension/$PYTHON_REQUIREMENTS_FILE ]; then
-				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $PYTHON_REQUIREMENTS_FILE"
-			else
-				if [ -f "$extension/$CKAN_REQUIREMENTS_FILE" ]; then
-					REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $CKAN_REQUIREMENTS_FILE"
-				else
-					REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r requirements.txt"
-				fi
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $extension/$PYTHON_REQUIREMENTS_FILE"
+			elif [ -f "$extension/$CKAN_REQUIREMENTS_FILE" ]; then
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $extension/$CKAN_REQUIREMENTS_FILE"
+			elif [ -f "$extension/requirements.txt" ]; then
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $extension/requirements.txt"
 			fi
 			# ckanext-harvest uses this filename
 			if [ -f "$extension/pip-requirements.txt" ]; then
-				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r pip-requirements.txt"
+				REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r $extension/pip-requirements.txt"
 			fi
 		done
 		#{pip} install $REQUIREMENTS_FILES
