@@ -169,7 +169,7 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 	end
 end
 
-plugin_url_string = plugin_urls.join("' '")
+plugin_url_string = plugin_urls.join("' -e '")
 
 log "#{DateTime.now}: Installing plugin eggs"
 execute "Install plugins" do
