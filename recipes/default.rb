@@ -98,24 +98,6 @@ service "yum-cron" do
     action [:enable, :start]
 end
 
-# Enable nano syntax highlighing
-#
-cookbook_file '/etc/nanorc' do
-  source 'nanorc'
-  owner 'root'
-  group 'root'
-  mode '0755'
-end
-
-# Add some helpful stuff to bash
-#
-cookbook_file "/etc/profile.d/datashades.sh" do
-    source "datashades_bash.sh"
-    owner 'root'
-    group 'root'
-    mode '0755'
-end
-
 # Tag the root EBS volume so we can manage it in AWS Backup etc.
 #
 bash "Tag root EBS volume" do
@@ -133,24 +115,6 @@ bash "Adding AWS ZoneID" do
     zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
     echo "zoneid=${zoneid}" > /etc/awszoneid
     EOS
-end
-
-# Create DNS helper script
-#
-cookbook_file "/bin/checkdns" do
-    source "checkdns"
-    owner 'root'
-    group 'root'
-    mode '0755'
-end
-
-# Create ASG helper script
-#
-cookbook_file "/bin/updateasg" do
-    source "updateasg"
-    owner 'root'
-    group 'root'
-    mode '0755'
 end
 
 # Push stats to enable Cloudwatch monitoring
