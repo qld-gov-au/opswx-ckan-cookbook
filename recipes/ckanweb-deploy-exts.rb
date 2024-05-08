@@ -137,9 +137,13 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 
 	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
 	type = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-	revision = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
 	url = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip.sub(/@(.*)/, '')
-	plugin_urls.push("#{type}+#{url}@#{revision}#egg=#{egg_name}")
+	if type == 'git' then
+		revision = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
+		plugin_urls.push("-e '#{type}+#{url}@#{revision}#egg=#{egg_name}'")
+	else
+		plugin_urls.push("'#{url}#egg=#{egg_name}'")
+	end
 
 	# Install Extension
 	#
@@ -169,13 +173,13 @@ node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
 	end
 end
 
-plugin_url_string = plugin_urls.join("' -e '")
+plugin_url_string = plugin_urls.join(" ")
 
 log "#{DateTime.now}: Installing plugin eggs"
 execute "Install plugins" do
 	user account_name
 	group account_name
-	command "#{pip} install -e '#{plugin_url_string}'"
+	command "#{pip} install #{plugin_url_string}"
 end
 
 log "#{DateTime.now}: Installing plugin requirement files"
