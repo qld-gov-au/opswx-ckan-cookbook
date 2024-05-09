@@ -185,6 +185,8 @@ end
 log "#{DateTime.now}: Installing plugin requirement files"
 bash "Install plugin requirements" do
 	cwd "#{virtualenv_dir}/src"
+	user account_name
+	group account_name
 	code <<-EOS
 		PYTHON_MAJOR_VERSION=$(#{python} -c "import sys; print(sys.version_info.major)")
 		PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
