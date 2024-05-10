@@ -131,7 +131,7 @@ action :create do
                 if [ -f "pip-requirements.txt" ]; then
                     REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r pip-requirements.txt"
                 fi
-                #{pip} install . $REQUIREMENTS_FILES
+                #{pip} install -e . $REQUIREMENTS_FILES
             fi
         EOS
     end
