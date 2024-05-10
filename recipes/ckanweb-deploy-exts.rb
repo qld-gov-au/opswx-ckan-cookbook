@@ -129,7 +129,23 @@ resource_visibility_present = false
 harvest_present = false
 csrf_present = false
 
+# Ensure plugins that depend on others are installed last
+dependent_plugins = ['CKANExtArchiver', 'CKANExtQa', 'CKANExtHarvestDataQldGeoScience']
+sorted_plugin_names = []
+dependent_plugin_names = []
 node['datashades']['ckan_web']['plugin_app_names'].each do |plugin|
+	if dependent_plugins.include? plugin then
+		dependent_plugin_names.append(plugin)
+	else
+		sorted_plugin_names.append(plugin)
+	end
+end
+
+# Ensure Archiver comes before QA
+dependent_plugin_names.sort!
+
+sorted_plugin_names.concat(dependent_plugin_names)
+sorted_plugin_names.each do |plugin|
 
 	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
 
