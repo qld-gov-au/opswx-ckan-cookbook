@@ -58,6 +58,7 @@ action :create do
     #
 
     if (::File.exist? "#{install_dir}/setup.py") then
+        new_install = false
         if is_git then
             execute "Ensure correct #{new_resource.service_name} Git origin" do
                 user new_resource.account_name
@@ -67,6 +68,7 @@ action :create do
             end
         end
     else
+        new_install = true
         if is_git then
             apprelease.sub!(/^(https?:)/, 'git+\1')
             apprelease << "@#{version}"
@@ -81,52 +83,55 @@ action :create do
         end
     end
 
-    bash "Check out #{version} revision of #{new_resource.service_name}" do
+    bash "Install #{version} revision of #{new_resource.service_name}" do
         user new_resource.account_name
         group new_resource.account_name
         cwd install_dir
         code <<-EOS
-            # retrieve latest branch metadata
-            git fetch --tags -f origin '#{version}' || exit 1
-            # make versioned files pristine
-            git clean -f
-            git reset --hard
-            find . -name '*.pyc' -delete
-            # move to target revision
-            git checkout '#{version}' || exit 1
-            # get latest changes if we're checking out a branch, otherwise it doesn't matter
-            git pull
-            # regenerate metadata
-            #{new_resource.virtualenv_dir}/bin/python setup.py develop
-        EOS
-        only_if { is_git }
-    end
-
-    bash "Install Python dependencies for #{new_resource.service_name}" do
-        user new_resource.account_name
-        group new_resource.account_name
-        cwd install_dir
-        code <<-EOS
-            #{pip} install -e .
-            PYTHON_MAJOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
-            PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
-            if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
-                REQUIREMENTS_FILE=$PYTHON_REQUIREMENTS_FILE
-            else
-                CKAN_MINOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
-                CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
-                if [ -f "$CKAN_REQUIREMENTS_FILE" ]; then
-                    REQUIREMENTS_FILE=$CKAN_REQUIREMENTS_FILE
-                else
-                    REQUIREMENTS_FILE=requirements.txt
+            if [ "#{is_git}" = "true" ]; then
+                # retrieve latest branch metadata
+                git fetch --tags -f origin '#{version}' || exit 1
+                # make versioned files pristine
+                git clean -f
+                git reset --hard
+                find . -name '*.pyc' -delete
+                # check if we actually need to change anything
+                if [ "#{new_install}" != "true" ]; then
+                    if (git tag -l '#{version}' >/dev/null); then
+                        git diff '#{version}' >/dev/null || SKIP_INSTALL=1
+                    elif (git branch -l '#{version}' >/dev/null); then
+                        git diff 'origin/#{version}' >/dev/null || SKIP_INSTALL=1
+                    fi
                 fi
+                # move to target revision
+                git checkout '#{version}' || exit 1
+                # get latest changes if we're checking out a branch, otherwise it doesn't matter
+                git pull
+                # regenerate metadata
+                #{new_resource.virtualenv_dir}/bin/python setup.py develop
             fi
-            if [ -f "$REQUIREMENTS_FILE" ]; then
-                #{pip} install -r $REQUIREMENTS_FILE
-            fi
-            # ckanext-harvest uses this filename
-            if [ -f "pip-requirements.txt" ]; then
-                #{pip} install -r "pip-requirements.txt"
+            if [ "$SKIP_INSTALL" != "1" ]; then
+                PYTHON_MAJOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import sys; print(sys.version_info.major)")
+                PYTHON_REQUIREMENTS_FILE=requirements-py$PYTHON_MAJOR_VERSION.txt
+                if [ -f $PYTHON_REQUIREMENTS_FILE ]; then
+                    REQUIREMENTS_FILE=$PYTHON_REQUIREMENTS_FILE
+                else
+                    CKAN_MINOR_VERSION=$(#{new_resource.virtualenv_dir}/bin/python -c "import ckan; print(ckan.__version__)" | grep -o '^[0-9]*[.][0-9]*')
+                    CKAN_REQUIREMENTS_FILE=requirements-$CKAN_MINOR_VERSION.txt
+                    if [ -f "$CKAN_REQUIREMENTS_FILE" ]; then
+                        REQUIREMENTS_FILE=$CKAN_REQUIREMENTS_FILE
+                    else
+                        REQUIREMENTS_FILE=requirements.txt
+                    fi
+                fi
+                if [ -f "$REQUIREMENTS_FILE" ]; then
+                    REQUIREMENTS_FILES="-r $REQUIREMENTS_FILE"
+                fi
+                # ckanext-harvest uses this filename
+                if [ -f "pip-requirements.txt" ]; then
+                    REQUIREMENTS_FILES="$REQUIREMENTS_FILES -r pip-requirements.txt"
+                fi
+                #{pip} install -e . $REQUIREMENTS_FILES || exit 1
             fi
         EOS
     end

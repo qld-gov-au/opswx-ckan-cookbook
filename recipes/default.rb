@@ -43,17 +43,8 @@ end
 # Enable RedHat EPEL
 #
 
-bash "Enable EPEL" do
-    code <<-EOS
-        # Amazon Linux 2
-        which amazon-linux-extras && amazon-linux-extras install epel
-
-        # Amazon Linux 1
-        EPEL_REPO_FILE=/etc/yum.repos.d/epel.repo
-        if [ -e $EPEL_REPO_FILE ]; then
-            sed -i 's/enabled=0/enabled=1/g' $EPEL_REPO_FILE
-        fi
-    EOS
+execute "Enable EPEL" do
+    command "which amazon-linux-extras && (amazon-linux-extras list |grep ' epel=.*enabled' || amazon-linux-extras install epel)"
 end
 
 # Install/remove core packages
@@ -64,9 +55,7 @@ node['datashades']['core']['unwanted-packages'].each do |p|
     end
 end
 
-node['datashades']['core']['packages'].each do |p|
-    package p
-end
+package node['datashades']['core']['packages']
 
 extra_disk = "/mnt/local_data"
 extra_disk_present = ::File.exist? extra_disk
@@ -109,24 +98,6 @@ service "yum-cron" do
     action [:enable, :start]
 end
 
-# Enable nano syntax highlighing
-#
-cookbook_file '/etc/nanorc' do
-  source 'nanorc'
-  owner 'root'
-  group 'root'
-  mode '0755'
-end
-
-# Add some helpful stuff to bash
-#
-cookbook_file "/etc/profile.d/datashades.sh" do
-    source "datashades_bash.sh"
-    owner 'root'
-    group 'root'
-    mode '0755'
-end
-
 # Tag the root EBS volume so we can manage it in AWS Backup etc.
 #
 bash "Tag root EBS volume" do
@@ -144,24 +115,6 @@ bash "Adding AWS ZoneID" do
     zoneid=$(aws route53 list-hosted-zones-by-name --dns-name "#{node['datashades']['tld']}" | jq '.HostedZones[0].Id' | tr -d '"/hostedzone')
     echo "zoneid=${zoneid}" > /etc/awszoneid
     EOS
-end
-
-# Create DNS helper script
-#
-cookbook_file "/bin/checkdns" do
-    source "checkdns"
-    owner 'root'
-    group 'root'
-    mode '0755'
-end
-
-# Create ASG helper script
-#
-cookbook_file "/bin/updateasg" do
-    source "updateasg"
-    owner 'root'
-    group 'root'
-    mode '0755'
 end
 
 # Push stats to enable Cloudwatch monitoring
@@ -194,11 +147,6 @@ template "/etc/init.d/aws-smtp-relay" do
     source "aws-smtp-relay.erb"
     mode "0755"
 end
-
-# Installing Supervisor via yum gives initd integration, but has import problems.
-# Installing via pip fixes the import problems, but doesn't provide the integration.
-# So we do both.
-execute "pip --cache-dir=/tmp/ install supervisor"
 
 bash "Configure Supervisord" do
     user "root"

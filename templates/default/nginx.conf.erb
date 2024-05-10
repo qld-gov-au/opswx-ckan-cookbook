@@ -22,7 +22,7 @@
     {
         listen       <% if node['datashades']['nginx']['ssl'] -%> 443 ssl <% else %> 80 <%= node['datashades']['nginx']['default_server'] %><% end -%>;
         server_name  <%= @app_url %> www.<%= @app_url %>;
-        root /var/www/sites/<%= node['datashades']['app_id'] %>-<%= node['datashades']['version'] %>/public; ## <-- Your only path reference.
+        root /var/www/sites/<%= node['datashades']['app_id'] %>/public; ## <-- Your only path reference.
         if ($http_x_forwarded_proto = 'http') {
             return 301 https://$host$request_uri;
         }
