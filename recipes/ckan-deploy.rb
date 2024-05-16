@@ -176,3 +176,8 @@ execute "Compile locale translation" do
 	cwd install_dir
 	command "#{virtualenv_dir}/bin/python setup.py compile_catalog -f --locale en_AU"
 end
+
+# Configure CKAN log processing
+cookbook_file "/etc/logrotate.d/ckan" do
+    source "ckan-logrotate"
+end

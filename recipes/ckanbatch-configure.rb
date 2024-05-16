@@ -18,33 +18,43 @@
 
 include_recipe "datashades::ckan-configure"
 
-extra_disk = "/mnt/local_data"
-if ::File.directory?(extra_disk) then
-    swap_file = "#{extra_disk}/swapfile_2g"
-    bash "Add swap disk" do
-        code <<-EOS
-            dd if=/dev/zero of=#{swap_file} bs=1024 count=2M
-            chmod 0600 #{swap_file}
-            mkswap #{swap_file}
-        EOS
-        not_if { ::File.exist?(swap_file) }
-    end
+virtualenv_dir = "/usr/lib/ckan/default"
+ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 
-    execute "Enable swap disk" do
-        command "swapon -s | grep '^#{swap_file} ' || swapon #{swap_file}"
-    end
+# Run tracking update at 8:30am everywhere
+file "/etc/cron.d/ckan-tracking-update" do
+    content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
+    mode '0644'
+    owner "root"
+    group "root"
 end
 
-template "/usr/local/bin/ckan-monitor-job-queue.sh" do
-    source 'ckan-monitor-job-queue.sh.erb'
-    owner 'root'
-    group 'root'
+file "/etc/cron.hourly/ckan-email-notifications" do
+    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n"
     mode '0755'
+    owner "root"
+    group "root"
+end
+
+file "/etc/cron.daily/ckan-revision-archival" do
+    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n"
+    mode '0755'
+    owner "root"
+    group "root"
 end
 
 file "/etc/cron.d/ckan-worker" do
     content "*/5 * * * * root /usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
     mode '0644'
+end
+
+# Only set cron job for lower environments
+file '/etc/cron.hourly/ckan-tracking-update' do
+    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
+    mode '0755'
+    owner "root"
+    group "root"
+    only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
 end
 
 # Make any other instances aware of us

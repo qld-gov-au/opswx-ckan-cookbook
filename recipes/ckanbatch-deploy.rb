@@ -57,7 +57,7 @@ cookbook_file "/etc/supervisord.d/supervisor-ckan-worker.ini" do
     mode "0744"
 end
 
-# Set up maintenance cron jobs
+# Set up maintenance scripts needed for cron jobs
 
 cookbook_file "/usr/local/bin/archive-resource-revisions.sql" do
     source "archive-resource-revisions.sql"
@@ -105,46 +105,11 @@ template "/usr/local/bin/redis-backup.py" do
     mode "0755"
 end
 
-# Remove unwanted cron job
-file '/etc/cron.daily/ckan-tracking-update' do
-    action :delete
-end
-#
-# # Remove unwanted cron job from higher environments
-# file '/etc/cron.hourly/ckan-tracking-update' do
-#     action :delete
-#     not_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
-# end
-
-# Only set cron job for lower environments
-file '/etc/cron.hourly/ckan-tracking-update' do
-    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
+template "/usr/local/bin/ckan-monitor-job-queue.sh" do
+    source 'ckan-monitor-job-queue.sh.erb'
+    owner 'root'
+    group 'root'
     mode '0755'
-    owner "root"
-    group "root"
-    only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
-end
-
-# Run tracking update at 8:30am everywhere
-file "/etc/cron.d/ckan-tracking-update" do
-    content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
-    mode '0644'
-    owner "root"
-    group "root"
-end
-
-file "/etc/cron.hourly/ckan-email-notifications" do
-    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
-end
-
-file "/etc/cron.daily/ckan-revision-archival" do
-    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
 end
 
 service "supervisord restart" do
