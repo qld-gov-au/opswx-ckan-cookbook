@@ -111,8 +111,3 @@ template "/usr/local/bin/ckan-monitor-job-queue.sh" do
     group 'root'
     mode '0755'
 end
-
-service "supervisord restart" do
-    service_name "supervisord"
-    action [:stop, :start]
-end

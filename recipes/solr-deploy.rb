@@ -107,7 +107,7 @@ unless ::File.identical?(installed_solr_version, solr_path)
 
     execute "install #{service_name} #{solr_version}" do
         cwd "#{working_dir}/solr-#{solr_version}"
-        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
+        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f -n"
     end
 end
 
@@ -263,8 +263,3 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
-
-service "supervisord restart" do
-    service_name "supervisord"
-    action [:stop, :start]
-end
