@@ -123,6 +123,56 @@ cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
     mode "0744"
 end
 
+# Create management scripts
+
+cookbook_file '/bin/updatedns' do
+	source 'updatedns'
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
+
+template "/usr/local/bin/solr-env.sh" do
+	source "solr-env.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
+	source "solr-healthcheck.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/toggle-solr-healthcheck.sh" do
+	source "toggle-solr-healthcheck.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/pick-solr-master.sh" do
+	source "pick-solr-master.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-sync.sh" do
+	source "solr-sync.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/etc/logrotate.d/solr" do
+	source "solr-logrotate"
+end
+
+# Patch vulnerable Log4J
+
 log4j_version = '2.17.1'
 for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
     log4j_artefact = "log4j-#{jar_type}"
@@ -135,6 +185,8 @@ for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
     end
 end
 
+# move logs off root disk
+
 if extra_disk_present then
     real_data_dir = "#{extra_disk}/#{service_name}_data"
     real_log_dir = "#{extra_disk}/#{service_name}"
@@ -142,8 +194,6 @@ else
     real_data_dir = efs_data_dir
     real_log_dir = var_log_dir
 end
-
-# move logs off root disk
 
 datashades_move_and_link(var_log_dir) do
     target real_log_dir
