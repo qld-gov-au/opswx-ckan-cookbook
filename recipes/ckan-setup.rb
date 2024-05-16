@@ -155,3 +155,12 @@ link "/etc/ckan/default" do
 	to "#{virtualenv_dir}/etc"
 	link_type :symbolic
 end
+
+# Add Bash alias to automatically use 'ckan' account for Git commands
+if not system("grep 'alias git=' ~/.bash_profile")
+    execute "Add CKAN Git alias to Bash" do
+        command <<-EOS
+            echo "alias git='sudo -u ckan git'" >> ~/.bash_profile
+        EOS
+    end
+end
