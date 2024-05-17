@@ -110,11 +110,8 @@ end
 
 service "supervisord start" do
     service_name "supervisord"
-    action [:start]
-end
-
-execute "Update supervisor workers if needed" do
-    command "supervisorctl update"
+    supports restart: true
+    action [:restart]
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions
