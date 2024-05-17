@@ -244,7 +244,6 @@ service service_name do
     action [:stop]
 end
 execute "rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/" do
-    user service_name
     only_if { ::File.directory? efs_data_dir }
 end
 
