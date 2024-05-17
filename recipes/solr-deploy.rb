@@ -243,7 +243,12 @@ end
 service service_name do
     action [:stop]
 end
-execute "rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/" do
+bash "Copy latest index from EFS" do
+    code <<-EOS
+        rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
+        LATEST_INDEX=`ls -dtr #{efs_data_dir}/data/#{core_name}/data/snapshot.* |tail -1`
+        rsync $LATEST_INDEX/ #{real_data_dir}/data/#{core_name}/data/index/
+    EOS
     only_if { ::File.directory? efs_data_dir }
 end
 
