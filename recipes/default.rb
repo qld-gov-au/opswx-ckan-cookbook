@@ -211,9 +211,13 @@ if system('which systemctl')
                 WantedBy: 'multi-user.target'
             }
         })
-        action [:create, :enable]
+        action [:create, :enable, :stop]
     end
 else
+    service "supervisord" do
+        action [:enable]
+    end
+
     # Managed processes sometimes don't shut down properly on daemon stop,
     # leaving them 'orphaned' and resulting in duplicates.
     # Work around by issuing a stop command to the children first.

@@ -110,7 +110,7 @@ end
 
 service "supervisord start" do
     service_name "supervisord"
-    action [:enable,:start]
+    action [:start]
 end
 
 execute "Update supervisor workers if needed" do
