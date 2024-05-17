@@ -239,15 +239,13 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-# copy EFS contents if we need them, but don't alter them
-if not ::File.identical?(real_data_dir, var_data_dir) then
-    service service_name do
-        action [:stop]
-    end
-    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
-        user service_name
-        only_if { ::File.directory? efs_data_dir }
-    end
+# copy latest EFS contents
+service service_name do
+    action [:stop]
+end
+execute "rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/" do
+    user service_name
+    only_if { ::File.directory? efs_data_dir }
 end
 
 datashades_move_and_link(var_data_dir) do
