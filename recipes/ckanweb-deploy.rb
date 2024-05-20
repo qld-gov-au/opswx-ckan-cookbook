@@ -129,8 +129,3 @@ template "#{nginx_config_file}" do
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
-
-service "supervisord restart" do
-	service_name "supervisord"
-	action [:stop, :start]
-end

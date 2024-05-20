@@ -107,7 +107,7 @@ unless ::File.identical?(installed_solr_version, solr_path)
 
     execute "install #{service_name} #{solr_version}" do
         cwd "#{working_dir}/solr-#{solr_version}"
-        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
+        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f -n"
     end
 end
 
@@ -239,15 +239,17 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-# copy EFS contents if we need them, but don't alter them
-if not ::File.identical?(real_data_dir, var_data_dir) then
-    service service_name do
-        action [:stop]
-    end
-    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
-        user service_name
-        only_if { ::File.directory? efs_data_dir }
-    end
+# copy latest EFS contents
+service service_name do
+    action [:stop]
+end
+bash "Copy latest index from EFS" do
+    code <<-EOS
+        rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
+        LATEST_INDEX=`ls -dtr #{efs_data_dir}/data/#{core_name}/data/snapshot.* |tail -1`
+        rsync $LATEST_INDEX/ #{real_data_dir}/data/#{core_name}/data/index/
+    EOS
+    only_if { ::File.directory? efs_data_dir }
 end
 
 datashades_move_and_link(var_data_dir) do
@@ -263,8 +265,3 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
-
-service "supervisord restart" do
-    service_name "supervisord"
-    action [:stop, :start]
-end
