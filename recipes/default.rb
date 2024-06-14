@@ -40,13 +40,6 @@ template '/etc/sysconfig/clock' do
     mode '0755'
 end
 
-# Enable RedHat EPEL
-#
-
-execute "Enable EPEL" do
-    command "which amazon-linux-extras && (amazon-linux-extras list |grep ' epel=.*enabled' || amazon-linux-extras install epel)"
-end
-
 # Install/remove core packages
 #
 node['datashades']['core']['unwanted-packages'].each do |p|
