@@ -48,6 +48,19 @@ node['datashades']['core']['unwanted-packages'].each do |p|
     end
 end
 
+# Install packages that have different names on different systems
+node['datashades']['core']['alternative_packages'].each do |p|
+	bash "Install one of #{p}" do
+		code <<-EOS
+			if (yum info "#{p[0]}"); then
+				yum install -y "#{p[0]}"
+			else
+				yum install -y "#{p[1]}"
+			fi
+		EOS
+	end
+end
+
 package node['datashades']['core']['packages']
 
 extra_disk = "/mnt/local_data"
