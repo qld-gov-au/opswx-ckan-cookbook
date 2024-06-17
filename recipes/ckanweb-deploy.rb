@@ -87,11 +87,18 @@ cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
 	mode "0744"
 end
 
-cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
-	source "supervisor-ckan-uwsgi.conf"
-	owner 'root'
-	group 'root'
-	mode "0744"
+if system('yum info supervisor')
+	cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
+		source "supervisor-ckan-uwsgi.conf"
+		owner 'root'
+		group 'root'
+		mode "0744"
+	end
+else
+	cookbook_file "/etc/systemd/system/ckan-uwsgi.service" do
+		source "ckan-uwsgi.service"
+		mode 0644
+	end
 end
 
 #

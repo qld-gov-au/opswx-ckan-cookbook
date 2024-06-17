@@ -108,10 +108,12 @@ service 'aws-smtp-relay' do
     action [:enable, :restart]
 end
 
-service "supervisord start" do
-    service_name "supervisord"
-    supports restart: true
-    action [:restart]
+if system('yum info supervisor')
+    service "supervisord start" do
+        service_name "supervisord"
+        supports restart: true
+        action [:restart]
+    end
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions

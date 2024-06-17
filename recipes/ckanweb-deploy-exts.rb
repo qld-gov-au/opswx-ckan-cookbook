@@ -245,9 +245,20 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			harvest_present = true
 
-			cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
-				source "supervisor-ckan-harvest.conf"
-				mode "0744"
+			if system('yum info supervisor')
+				cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
+					source "supervisor-ckan-harvest.conf"
+					mode "0744"
+				end
+			else
+				cookbook_file "/etc/systemd/system/ckan-worker-harvest-fetch.service" do
+					source "ckan-worker-harvest-fetch.service"
+					mode 0644
+				end
+				cookbook_file "/etc/systemd/system/ckan-worker-harvest-gather.service" do
+					source "ckan-worker-harvest-gather.service"
+					mode 0644
+				end
 			end
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
@@ -318,9 +329,20 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			archiver_present = true
 
-			cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
-				source "supervisor-ckan-archiver.conf"
-				mode "0744"
+			if system('yum info supervisor')
+				cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
+					source "supervisor-ckan-archiver.conf"
+					mode "0744"
+				end
+			else
+				cookbook_file "/etc/systemd/system/ckan-worker-bulk.service" do
+					source "ckan-worker-bulk.service"
+					mode 0644
+				end
+				cookbook_file "/etc/systemd/system/ckan-worker-priority.service" do
+					source "ckan-worker-priority.service"
+					mode 0644
+				end
 			end
 
 			template "/usr/local/bin/archiverTriggerAll.sh" do
@@ -413,20 +435,28 @@ if not archiver_present then
 		command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
 	end
 
+	execute "Clean Archiver Systemd config" do
+		command "find /etc/systemd/system -name 'ckan-worker-bulk*' -o -name 'ckan-worker-priority*' -delete"
+	end
+
 	execute "Clean Archiver cron" do
 		command "rm -f /etc/cron.*/ckan-archiver*"
 	end
 end
 
 if not resource_visibility_present then
-   execute "Clean Resource Visibility cron" do
-        command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
-   end
+	execute "Clean Resource Visibility cron" do
+		command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
+	end
 end
 
 if not harvest_present then
 	execute "Clean Harvest supervisor config" do
 		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
+	end
+
+	execute "Clean Harvest Systemd config" do
+		command "find /etc/systemd/system -name 'ckan-worker-harvest*' -delete"
 	end
 
 	execute "Clean Harvest cron" do

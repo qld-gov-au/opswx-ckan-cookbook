@@ -111,16 +111,23 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 end
 
-# Replace legacy initd integration with supervisord
+# Replace legacy initd integration with supervisord or systemd
 service "solr" do
     action [:disable]
 end
 
-cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
-    source "supervisor-solr.conf"
-    owner "root"
-    group "root"
-    mode "0744"
+if system('yum info supervisor')
+    cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
+        source "supervisor-solr.conf"
+        owner "root"
+        group "root"
+        mode "0744"
+    end
+else
+    cookbook_file "/etc/systemd/system/solr.service" do
+        source "solr.service"
+        mode 0644
+    end
 end
 
 # Create management scripts

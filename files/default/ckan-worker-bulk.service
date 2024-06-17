@@ -1,0 +1,14 @@
+[Unit]
+Description=CKAN low-priority job worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ckan
+ExecStart=/usr/lib/ckan/default/bin/ckan_cli jobs worker bulk
+Restart=on-failure
+StandardOutput=append:/var/log/ckan/ckan-worker-bulk.log
+StandardError=append:/var/log/ckan/ckan-worker-bulk.log
+
+[Install]
+WantedBy=multi-user.target

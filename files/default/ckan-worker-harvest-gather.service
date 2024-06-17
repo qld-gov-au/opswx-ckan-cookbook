@@ -1,0 +1,14 @@
+[Unit]
+Description=CKAN Harvest Gather worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ckan
+ExecStart=/usr/lib/ckan/default/bin/ckan_cli harvester gather_consumer
+Restart=on-failure
+StandardOutput=append:/var/log/ckan/ckan-harvest-gather.log
+StandardError=append:/var/log/ckan/ckan-harvest-gather.log
+
+[Install]
+WantedBy=multi-user.target
