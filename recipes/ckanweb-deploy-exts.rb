@@ -431,12 +431,14 @@ sorted_plugin_names.each do |plugin|
 end
 
 if not archiver_present then
-	execute "Clean Archiver supervisor config" do
-		command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
-	end
-
-	execute "Clean Archiver Systemd config" do
-		command "find /etc/systemd/system -name 'ckan-worker-bulk*' -o -name 'ckan-worker-priority*' -delete"
+	if system('yum info supervisor')
+		execute "Clean Archiver supervisor config" do
+			command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
+		end
+	else
+		execute "Clean Archiver Systemd config" do
+			command "find /etc/systemd/system -name 'ckan-worker-bulk*' -o -name 'ckan-worker-priority*' -delete"
+		end
 	end
 
 	execute "Clean Archiver cron" do
@@ -451,12 +453,14 @@ if not resource_visibility_present then
 end
 
 if not harvest_present then
-	execute "Clean Harvest supervisor config" do
-		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
-	end
-
-	execute "Clean Harvest Systemd config" do
-		command "find /etc/systemd/system -name 'ckan-worker-harvest*' -delete"
+	if system('yum info supervisor')
+		execute "Clean Harvest supervisor config" do
+			command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
+		end
+	else
+		execute "Clean Harvest Systemd config" do
+			command "find /etc/systemd/system -name 'ckan-worker-harvest*' -delete"
+		end
 	end
 
 	execute "Clean Harvest cron" do
