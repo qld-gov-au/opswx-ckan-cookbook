@@ -117,7 +117,7 @@ if system('yum info supervisor')
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions
-if system('which postfix') then
+if system('yum info postfix') then
     mailer_daemon = 'postfix'
 else
     mailer_daemon = 'sendmail'
