@@ -58,9 +58,24 @@ if system('yum info supervisor')
         mode "0744"
     end
 else
-    cookbook_file "/etc/systemd/system/ckan-worker.service" do
-        source "ckan-worker.service"
-        mode 0644
+    systemd_unit "ckan-worker.service" do
+        content({
+            Unit: {
+                Description: 'CKAN default job worker',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/ckan/ckan-worker.log',
+                StandardError: 'append:/var/log/ckan/ckan-worker.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create, :enable, :start]
     end
 end
 

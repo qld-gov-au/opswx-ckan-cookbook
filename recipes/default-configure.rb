@@ -45,15 +45,21 @@ file "/etc/cron.daily/archive-system-logs-to-s3" do
 end
 
 # Archive logs on system shutdown
-cookbook_file "/etc/systemd/system/logrotate-shutdown.service" do
-    source "logrotate-shutdown.service"
-    owner "root"
-    group "root"
-    mode "0744"
-end
-
-service "logrotate-shutdown" do
-    action [:enable,:start]
+systemd_unit "logrotate-shutdown.service" do
+    content({
+        Unit: {
+            Description: 'Archive logs before shutdown',
+            After: 'network-online.target'
+        },
+        Service: {
+            RemainAfterExit: 'yes',
+            ExecStop: '/usr/sbin/logrotate /etc/logrotate.conf --force',
+        },
+        Install: {
+            WantedBy: 'multi-user.target'
+        }
+    })
+    action [:create, :enable, :start]
 end
 
 # Run custom actions on system shutdown

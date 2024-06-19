@@ -95,9 +95,24 @@ if system('yum info supervisor')
 		mode "0744"
 	end
 else
-	cookbook_file "/etc/systemd/system/ckan-uwsgi.service" do
-		source "ckan-uwsgi.service"
-		mode 0644
+	systemd_unit "ckan-uwsgi.service" do
+		content({
+			Unit: {
+				Description: 'CKAN uWSGI application',
+				After: 'network-online.target'
+			},
+			Service: {
+				User: service_name,
+				ExecStart: '/usr/lib/ckan/default/bin/uwsgi -i /etc/ckan/default/ckan-uwsgi.ini',
+				Restart: 'on-failure',
+				StandardOutput: 'append:/var/log/ckan/ckan-out.log',
+				StandardError: 'append:/var/log/ckan/ckan-err.log'
+			},
+			Install: {
+				WantedBy: 'multi-user.target'
+			}
+		})
+		action [:create, :enable, :start]
 	end
 end
 

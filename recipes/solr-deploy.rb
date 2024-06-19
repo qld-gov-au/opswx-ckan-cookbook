@@ -111,11 +111,6 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 end
 
-# Replace legacy initd integration with supervisord or systemd
-service "solr" do
-    action [:disable]
-end
-
 if system('yum info supervisor')
     cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
         source "supervisor-solr.conf"
@@ -124,9 +119,24 @@ if system('yum info supervisor')
         mode "0744"
     end
 else
-    cookbook_file "/etc/systemd/system/solr.service" do
-        source "solr.service"
-        mode 0644
+    systemd_unit "solr.service" do
+        content({
+            Unit: {
+                Description: 'Apache Solr',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/opt/solr/bin/solr start -f',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/solr/solr.log',
+                StandardError: 'append:/var/log/solr/stderr.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create, :enable, :start]
     end
 end
 

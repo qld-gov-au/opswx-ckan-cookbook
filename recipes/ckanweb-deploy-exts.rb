@@ -251,13 +251,43 @@ sorted_plugin_names.each do |plugin|
 					mode "0744"
 				end
 			else
-				cookbook_file "/etc/systemd/system/ckan-worker-harvest-fetch.service" do
-					source "ckan-worker-harvest-fetch.service"
-					mode 0644
+				systemd_unit "ckan-worker-harvest-fetch.service" do
+					content({
+						Unit: {
+							Description: 'CKAN Harvest Fetch worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli harvester fetch_consumer',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-harvest-fetch.log',
+							StandardError: 'append:/var/log/ckan/ckan-harvest-fetch.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
 				end
-				cookbook_file "/etc/systemd/system/ckan-worker-harvest-gather.service" do
-					source "ckan-worker-harvest-gather.service"
-					mode 0644
+				systemd_unit "ckan-worker-harvest-gather.service" do
+					content({
+						Unit: {
+							Description: 'CKAN Harvest Gather worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli harvester gather_consumer',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-harvest-gather.log',
+							StandardError: 'append:/var/log/ckan/ckan-harvest-gather.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
 				end
 			end
 
@@ -335,13 +365,43 @@ sorted_plugin_names.each do |plugin|
 					mode "0744"
 				end
 			else
-				cookbook_file "/etc/systemd/system/ckan-worker-bulk.service" do
-					source "ckan-worker-bulk.service"
-					mode 0644
+				systemd_unit "ckan-worker-bulk.service" do
+					content({
+						Unit: {
+							Description: 'CKAN low-priority job worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker bulk',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-worker-bulk.log',
+							StandardError: 'append:/var/log/ckan/ckan-worker-bulk.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
 				end
-				cookbook_file "/etc/systemd/system/ckan-worker-priority.service" do
-					source "ckan-worker-priority.service"
-					mode 0644
+				systemd_unit "ckan-worker-priority.service" do
+					content({
+						Unit: {
+							Description: 'CKAN high-priority job worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker priority',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-worker-priority.log',
+							StandardError: 'append:/var/log/ckan/ckan-worker-priority.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
 				end
 			end
 
@@ -436,8 +496,11 @@ if not archiver_present then
 			command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
 		end
 	else
-		execute "Clean Archiver Systemd config" do
-			command "find /etc/systemd/system -name 'ckan-worker-bulk*' -o -name 'ckan-worker-priority*' -delete"
+		systemd_unit "ckan-worker-bulk.service" do
+			action [:stop, :delete]
+		end
+		systemd_unit "ckan-worker-priority.service" do
+			action [:stop, :delete]
 		end
 	end
 
@@ -458,8 +521,11 @@ if not harvest_present then
 			command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
 		end
 	else
-		execute "Clean Harvest Systemd config" do
-			command "find /etc/systemd/system -name 'ckan-worker-harvest*' -delete"
+		systemd_unit "ckan-worker-harvest-fetch.service" do
+			action [:stop, :delete]
+		end
+		systemd_unit "ckan-worker-harvest-gather.service" do
+			action [:stop, :delete]
 		end
 	end
 
