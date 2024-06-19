@@ -87,11 +87,33 @@ cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
 	mode "0744"
 end
 
-cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
-	source "supervisor-ckan-uwsgi.conf"
-	owner 'root'
-	group 'root'
-	mode "0744"
+if system('yum info supervisor')
+	cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
+		source "supervisor-ckan-uwsgi.conf"
+		owner 'root'
+		group 'root'
+		mode "0744"
+	end
+else
+	systemd_unit "ckan-uwsgi.service" do
+		content({
+			Unit: {
+				Description: 'CKAN uWSGI application',
+				After: 'network-online.target'
+			},
+			Service: {
+				User: service_name,
+				ExecStart: '/usr/lib/ckan/default/bin/uwsgi -i /etc/ckan/default/ckan-uwsgi.ini',
+				Restart: 'on-failure',
+				StandardOutput: 'append:/var/log/ckan/ckan-out.log',
+				StandardError: 'append:/var/log/ckan/ckan-err.log'
+			},
+			Install: {
+				WantedBy: 'multi-user.target'
+			}
+		})
+		action [:create, :enable, :start]
+	end
 end
 
 #

@@ -45,20 +45,39 @@ file "/etc/cron.daily/archive-system-logs-to-s3" do
 end
 
 # Archive logs on system shutdown
-cookbook_file "/etc/systemd/system/logrotate-shutdown.service" do
-    source "logrotate-shutdown.service"
-    owner "root"
-    group "root"
-    mode "0744"
-end
-
-service "logrotate-shutdown" do
-    action [:enable,:start]
+systemd_unit "logrotate-shutdown.service" do
+    content({
+        Unit: {
+            Description: 'Archive logs before shutdown',
+            After: 'network-online.target'
+        },
+        Service: {
+            RemainAfterExit: 'yes',
+            ExecStop: '/usr/sbin/logrotate /etc/logrotate.conf --force',
+        },
+        Install: {
+            WantedBy: 'multi-user.target'
+        }
+    })
+    action [:create, :enable, :start]
 end
 
 # Run custom actions on system shutdown
-file "/etc/rc0.d/S01heartbeat" do
-    content "rm /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system"
+systemd_unit "healthcheck-cleanup.service" do
+    content({
+        Unit: {
+            Description: 'Remove heartbeat files before shutdown',
+            After: 'network-online.target'
+        },
+        Service: {
+            RemainAfterExit: 'yes',
+            ExecStop: "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system",
+        },
+        Install: {
+            WantedBy: 'multi-user.target'
+        }
+    })
+    action [:create, :enable, :start]
 end
 
 # Run updateDNS script
@@ -108,14 +127,16 @@ service 'aws-smtp-relay' do
     action [:enable, :restart]
 end
 
-service "supervisord start" do
-    service_name "supervisord"
-    supports restart: true
-    action [:restart]
+if system('yum info supervisor')
+    service "supervisord start" do
+        service_name "supervisord"
+        supports restart: true
+        action [:restart]
+    end
 end
 
 # Re-enable and start in case it was stopped by previous recipe versions
-if system('which postfix') then
+if system('yum info postfix') then
     mailer_daemon = 'postfix'
 else
     mailer_daemon = 'sendmail'

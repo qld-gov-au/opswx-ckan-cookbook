@@ -24,14 +24,8 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
-# Add instance to pool
-
-file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
-	action :touch
-end
-
-cron "Solr health check" do
-	action :delete
+execute "Add instance to Solr health check pool" do
+	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
 end
 
 file "/etc/cron.d/solr-healthcheck" do

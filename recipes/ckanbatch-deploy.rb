@@ -50,11 +50,33 @@ install_dir = "#{virtualenv_dir}/src/#{service_name}"
 # Create job worker config files.
 #
 
-cookbook_file "/etc/supervisord.d/supervisor-ckan-worker.ini" do
-    source "supervisor-ckan-worker.conf"
-    owner "root"
-    group "root"
-    mode "0744"
+if system('yum info supervisor')
+    cookbook_file "/etc/supervisord.d/supervisor-ckan-worker.ini" do
+        source "supervisor-ckan-worker.conf"
+        owner "root"
+        group "root"
+        mode "0744"
+    end
+else
+    systemd_unit "ckan-worker.service" do
+        content({
+            Unit: {
+                Description: 'CKAN default job worker',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/ckan/ckan-worker.log',
+                StandardError: 'append:/var/log/ckan/ckan-worker.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create, :enable, :start]
+    end
 end
 
 # Set up maintenance scripts needed for cron jobs

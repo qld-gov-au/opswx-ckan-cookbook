@@ -245,9 +245,50 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			harvest_present = true
 
-			cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
-				source "supervisor-ckan-harvest.conf"
-				mode "0744"
+			if system('yum info supervisor')
+				cookbook_file "/etc/supervisord.d/supervisor-ckan-harvest.ini" do
+					source "supervisor-ckan-harvest.conf"
+					mode "0744"
+				end
+			else
+				systemd_unit "ckan-worker-harvest-fetch.service" do
+					content({
+						Unit: {
+							Description: 'CKAN Harvest Fetch worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli harvester fetch_consumer',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-harvest-fetch.log',
+							StandardError: 'append:/var/log/ckan/ckan-harvest-fetch.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
+				end
+				systemd_unit "ckan-worker-harvest-gather.service" do
+					content({
+						Unit: {
+							Description: 'CKAN Harvest Gather worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli harvester gather_consumer',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-harvest-gather.log',
+							StandardError: 'append:/var/log/ckan/ckan-harvest-gather.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
+				end
 			end
 
 			# only have one server trigger harvest initiation, which then worker queues harvester fetch/gather works through the queues.
@@ -318,9 +359,50 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			archiver_present = true
 
-			cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
-				source "supervisor-ckan-archiver.conf"
-				mode "0744"
+			if system('yum info supervisor')
+				cookbook_file "/etc/supervisord.d/supervisor-ckan-archiver.ini" do
+					source "supervisor-ckan-archiver.conf"
+					mode "0744"
+				end
+			else
+				systemd_unit "ckan-worker-bulk.service" do
+					content({
+						Unit: {
+							Description: 'CKAN low-priority job worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker bulk',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-worker-bulk.log',
+							StandardError: 'append:/var/log/ckan/ckan-worker-bulk.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
+				end
+				systemd_unit "ckan-worker-priority.service" do
+					content({
+						Unit: {
+							Description: 'CKAN high-priority job worker',
+							After: 'network-online.target'
+						},
+						Service: {
+							User: account_name,
+							ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker priority',
+							Restart: 'on-failure',
+							StandardOutput: 'append:/var/log/ckan/ckan-worker-priority.log',
+							StandardError: 'append:/var/log/ckan/ckan-worker-priority.log'
+						},
+						Install: {
+							WantedBy: 'multi-user.target'
+						}
+					})
+					action [:create, :enable, :start]
+				end
 			end
 
 			template "/usr/local/bin/archiverTriggerAll.sh" do
@@ -409,8 +491,17 @@ sorted_plugin_names.each do |plugin|
 end
 
 if not archiver_present then
-	execute "Clean Archiver supervisor config" do
-		command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
+	if system('yum info supervisor')
+		execute "Clean Archiver supervisor config" do
+			command "find /etc/supervisor* -name 'supervisor-ckan-archiver*' -delete"
+		end
+	else
+		systemd_unit "ckan-worker-bulk.service" do
+			action [:stop, :delete]
+		end
+		systemd_unit "ckan-worker-priority.service" do
+			action [:stop, :delete]
+		end
 	end
 
 	execute "Clean Archiver cron" do
@@ -419,14 +510,23 @@ if not archiver_present then
 end
 
 if not resource_visibility_present then
-   execute "Clean Resource Visibility cron" do
-        command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
-   end
+	execute "Clean Resource Visibility cron" do
+		command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
+	end
 end
 
 if not harvest_present then
-	execute "Clean Harvest supervisor config" do
-		command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
+	if system('yum info supervisor')
+		execute "Clean Harvest supervisor config" do
+			command "find /etc/supervisor* -name 'supervisor-ckan-harvest*' -delete"
+		end
+	else
+		systemd_unit "ckan-worker-harvest-fetch.service" do
+			action [:stop, :delete]
+		end
+		systemd_unit "ckan-worker-harvest-gather.service" do
+			action [:stop, :delete]
+		end
 	end
 
 	execute "Clean Harvest cron" do

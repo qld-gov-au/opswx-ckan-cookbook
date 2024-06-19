@@ -111,16 +111,33 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 end
 
-# Replace legacy initd integration with supervisord
-service "solr" do
-    action [:disable]
-end
-
-cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
-    source "supervisor-solr.conf"
-    owner "root"
-    group "root"
-    mode "0744"
+if system('yum info supervisor')
+    cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
+        source "supervisor-solr.conf"
+        owner "root"
+        group "root"
+        mode "0744"
+    end
+else
+    systemd_unit "solr.service" do
+        content({
+            Unit: {
+                Description: 'Apache Solr',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/opt/solr/bin/solr start -f',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/solr/solr.log',
+                StandardError: 'append:/var/log/solr/stderr.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create, :enable, :start]
+    end
 end
 
 # Create management scripts
@@ -265,3 +282,7 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
+
+execute "Start Solr" do
+    command "supervisorctl start 'solr:*' || systemctl start solr"
+end
