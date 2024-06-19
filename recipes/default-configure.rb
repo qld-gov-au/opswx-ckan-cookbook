@@ -63,8 +63,21 @@ systemd_unit "logrotate-shutdown.service" do
 end
 
 # Run custom actions on system shutdown
-file "/etc/rc0.d/S01heartbeat" do
-    content "rm /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system"
+systemd_unit "healthcheck-cleanup.service" do
+    content({
+        Unit: {
+            Description: 'Remove heartbeat files before shutdown',
+            After: 'network-online.target'
+        },
+        Service: {
+            RemainAfterExit: 'yes',
+            ExecStop: "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system",
+        },
+        Install: {
+            WantedBy: 'multi-user.target'
+        }
+    })
+    action [:create, :enable, :start]
 end
 
 # Run updateDNS script
