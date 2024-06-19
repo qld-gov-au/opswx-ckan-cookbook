@@ -282,3 +282,7 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
+
+execute "Start Solr" do
+    command "supervisorctl start 'solr:*' || systemctl start solr"
+end
