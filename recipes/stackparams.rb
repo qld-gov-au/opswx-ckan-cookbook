@@ -24,7 +24,7 @@
 #
 
 # Retrieve attributes from instance metadata
-metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token`
+metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token`
 node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
 node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
 
