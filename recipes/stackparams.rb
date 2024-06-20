@@ -59,8 +59,8 @@ node.default['datashades']['solr_app']['app_source']['url'] = `aws ssm get-param
 bash "Get VPC CIDR" do
 	user "root"
 	code <<-EOS
-		mac_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
-		vpc_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
+		mac_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+		vpc_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
 		aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
 	EOS
 end
