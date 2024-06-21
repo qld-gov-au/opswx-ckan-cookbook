@@ -24,6 +24,10 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
+service service_name do
+	action [:enable, :start]
+end
+
 execute "Add instance to Solr health check pool" do
 	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
 end

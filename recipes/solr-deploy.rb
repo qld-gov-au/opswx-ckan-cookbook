@@ -119,6 +119,12 @@ if system('yum info supervisor')
         mode "0744"
     end
 else
+    # Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+    execute "Start Solr log files" do
+        user service_name
+        group service_name
+        command "touch #{var_log_dir}/solr.log #{var_log_dir}/stderr.log"
+    end
     systemd_unit "solr.service" do
         content({
             Unit: {
@@ -136,7 +142,7 @@ else
                 WantedBy: 'multi-user.target'
             }
         })
-        action [:create, :enable, :start]
+        action [:create]
     end
 end
 
@@ -283,6 +289,12 @@ end
 
 include_recipe "datashades::solr-deploycore"
 
-execute "Start Solr" do
-    command "supervisorctl start 'solr:*' || systemctl start solr"
+if system('yum info supervisor')
+    execute "Start Solr" do
+        command "supervisorctl start 'solr:*'"
+    end
+else
+    execute "Start Solr" do
+        command "systemctl start solr"
+    end
 end

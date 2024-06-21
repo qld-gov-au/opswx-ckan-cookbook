@@ -251,6 +251,12 @@ sorted_plugin_names.each do |plugin|
 					mode "0744"
 				end
 			else
+				# Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+				execute "Start Harvester log files" do
+					user account_name
+					group account_name
+					command "touch /var/log/ckan/ckan-harvest-fetch.log /var/log/ckan/ckan-harvest-gather.log"
+				end
 				systemd_unit "ckan-worker-harvest-fetch.service" do
 					content({
 						Unit: {
@@ -365,6 +371,12 @@ sorted_plugin_names.each do |plugin|
 					mode "0744"
 				end
 			else
+				# Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+				execute "Start Archiver log files" do
+					user account_name
+					group account_name
+					command "touch /var/log/ckan/ckan-worker-bulk.log /var/log/ckan/ckan-worker-priority.log"
+				end
 				systemd_unit "ckan-worker-bulk.service" do
 					content({
 						Unit: {

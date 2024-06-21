@@ -21,6 +21,12 @@ include_recipe "datashades::ckan-configure"
 virtualenv_dir = "/usr/lib/ckan/default"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 
+if not system('yum info supervisor')
+    service "ckan-worker" do
+        action [:enable, :start]
+    end
+end
+
 # Run tracking update at 8:30am everywhere
 file "/etc/cron.d/ckan-tracking-update" do
     content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
