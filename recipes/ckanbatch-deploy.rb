@@ -58,6 +58,12 @@ if system('yum info supervisor')
         mode "0744"
     end
 else
+    # Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+    execute "Start job worker log file" do
+        user service_name
+        group service_name
+        command "touch /var/log/ckan/ckan-worker.log"
+    end
     systemd_unit "ckan-worker.service" do
         content({
             Unit: {
