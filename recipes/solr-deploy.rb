@@ -142,7 +142,7 @@ else
                 WantedBy: 'multi-user.target'
             }
         })
-        action [:create, :enable, :start]
+        action [:create]
     end
 end
 
@@ -289,6 +289,12 @@ end
 
 include_recipe "datashades::solr-deploycore"
 
-execute "Start Solr" do
-    command "supervisorctl start 'solr:*' || systemctl start solr"
+if system('yum info supervisor')
+    execute "Start Solr" do
+        command "supervisorctl start 'solr:*'"
+    end
+else
+    execute "Start Solr" do
+        command "systemctl start solr"
+    end
 end

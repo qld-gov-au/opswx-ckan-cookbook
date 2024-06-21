@@ -22,3 +22,9 @@
 
 include_recipe "datashades::ckan-configure"
 include_recipe "datashades::nginx-configure"
+
+if not system('yum info supervisor')
+    service "ckan-uwsgi" do
+        action [:enable, :start]
+    end
+end
