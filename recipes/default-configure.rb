@@ -71,7 +71,8 @@ systemd_unit "healthcheck-cleanup.service" do
         },
         Service: {
             RemainAfterExit: 'yes',
-            ExecStop: "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}; archive-logs system",
+            ExecStop: "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}",
+            ExecStopPost: "archive-logs system",
         },
         Install: {
             WantedBy: 'multi-user.target'
