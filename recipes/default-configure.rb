@@ -62,6 +62,11 @@ systemd_unit "logrotate-shutdown.service" do
     action [:create, :enable, :start]
 end
 
+file "/usr/local/bin/shutdown-cleanup.sh" do
+    content "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}\narchive-logs system\n"
+    mode '0744'
+end
+
 # Run custom actions on system shutdown
 systemd_unit "healthcheck-cleanup.service" do
     content({
@@ -71,8 +76,7 @@ systemd_unit "healthcheck-cleanup.service" do
         },
         Service: {
             RemainAfterExit: 'yes',
-            ExecStop: "rm -f /data/*-healthcheck_#{node['datashades']['hostname']}",
-            ExecStopPost: "archive-logs system",
+            ExecStop: '/usr/local/bin/shutdown-cleanup.sh',
         },
         Install: {
             WantedBy: 'multi-user.target'
