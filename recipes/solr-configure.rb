@@ -24,51 +24,12 @@ include_recipe "datashades::default-configure"
 
 service_name = 'solr'
 
-template "/usr/local/bin/solr-env.sh" do
-	source "solr-env.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
+service service_name do
+	action [:enable, :start]
 end
 
-cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
-	source "solr-healthcheck.sh"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-cookbook_file "/usr/local/bin/toggle-solr-healthcheck.sh" do
-	source "toggle-solr-healthcheck.sh"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-cookbook_file "/usr/local/bin/pick-solr-master.sh" do
-	source "pick-solr-master.sh"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-cookbook_file "/usr/local/bin/solr-sync.sh" do
-	source "solr-sync.sh"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
-file "/data/solr-healthcheck_#{node['datashades']['hostname']}" do
-	action :touch
-end
-
-cookbook_file "/etc/logrotate.d/solr" do
-	source "solr-logrotate"
-end
-
-cron "Solr health check" do
-	action :delete
+execute "Add instance to Solr health check pool" do
+	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
 end
 
 file "/etc/cron.d/solr-healthcheck" do
@@ -98,11 +59,4 @@ bash "Add #{service_name} DNS entry" do
 		alias="#{node['datashades']['app_id']}#{service_name}${server_id}.#{node['datashades']['tld']}"
 		echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
 	EOS
-end
-
-cookbook_file '/bin/updatedns' do
-	source 'updatedns'
-	owner 'root'
-	group 'root'
-	mode '0755'
 end

@@ -107,21 +107,94 @@ unless ::File.identical?(installed_solr_version, solr_path)
 
     execute "install #{service_name} #{solr_version}" do
         cwd "#{working_dir}/solr-#{solr_version}"
-        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f"
+        command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f -n"
     end
 end
 
-# Replace legacy initd integration with supervisord
-service "solr" do
-    action [:disable]
+if system('yum info supervisor')
+    cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
+        source "supervisor-solr.conf"
+        owner "root"
+        group "root"
+        mode "0744"
+    end
+else
+    # Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+    execute "Start Solr log files" do
+        user service_name
+        group service_name
+        command "touch #{var_log_dir}/solr.log #{var_log_dir}/stderr.log"
+    end
+    systemd_unit "solr.service" do
+        content({
+            Unit: {
+                Description: 'Apache Solr',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/opt/solr/bin/solr start -f',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/solr/solr.log',
+                StandardError: 'append:/var/log/solr/stderr.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create]
+    end
 end
 
-cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
-    source "supervisor-solr.conf"
-    owner "root"
-    group "root"
-    mode "0744"
+# Create management scripts
+
+cookbook_file '/bin/updatedns' do
+	source 'updatedns'
+	owner 'root'
+	group 'root'
+	mode '0755'
 end
+
+template "/usr/local/bin/solr-env.sh" do
+	source "solr-env.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
+	source "solr-healthcheck.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/toggle-solr-healthcheck.sh" do
+	source "toggle-solr-healthcheck.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/pick-solr-master.sh" do
+	source "pick-solr-master.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-sync.sh" do
+	source "solr-sync.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/etc/logrotate.d/solr" do
+	source "solr-logrotate"
+end
+
+# Patch vulnerable Log4J
 
 log4j_version = '2.17.1'
 for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
@@ -135,6 +208,8 @@ for jar_type in ['1.2-api', 'api', 'core', 'slf4j-impl'] do
     end
 end
 
+# move logs off root disk
+
 if extra_disk_present then
     real_data_dir = "#{extra_disk}/#{service_name}_data"
     real_log_dir = "#{extra_disk}/#{service_name}"
@@ -142,8 +217,6 @@ else
     real_data_dir = efs_data_dir
     real_log_dir = var_log_dir
 end
-
-# move logs off root disk
 
 datashades_move_and_link(var_log_dir) do
     target real_log_dir
@@ -189,15 +262,17 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-# copy EFS contents if we need them, but don't alter them
-if not ::File.identical?(real_data_dir, var_data_dir) then
-    service service_name do
-        action [:stop]
-    end
-    execute "rsync -a #{efs_data_dir}/ #{real_data_dir}/" do
-        user service_name
-        only_if { ::File.directory? efs_data_dir }
-    end
+# copy latest EFS contents
+service service_name do
+    action [:stop]
+end
+bash "Copy latest index from EFS" do
+    code <<-EOS
+        rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
+        LATEST_INDEX=`ls -dtr #{efs_data_dir}/data/#{core_name}/data/snapshot.* |tail -1`
+        rsync $LATEST_INDEX/ #{real_data_dir}/data/#{core_name}/data/index/
+    EOS
+    only_if { ::File.directory? efs_data_dir }
 end
 
 datashades_move_and_link(var_data_dir) do
@@ -209,12 +284,17 @@ end
 # Use find+exec instead of chown's recursive -R flag,
 # so that we can exclude temporary snapshots.
 execute "Ensure directory ownership is correct" do
-    command "find #{efs_data_dir}/data/#{core_name} #{real_data_dir}/data/#{core_name} #{solr_environment_file} #{real_log_dir} |grep -vE 'snapshot|index' |xargs chown #{account_name}:ec2-user"
+    command "find #{efs_data_dir}/data/#{core_name} #{real_data_dir}/data/#{core_name} #{solr_environment_file} #{real_log_dir} |grep -vE 'snapshot|index/' |xargs chown #{account_name}:ec2-user"
 end
 
 include_recipe "datashades::solr-deploycore"
 
-service "supervisord restart" do
-    service_name "supervisord"
-    action [:stop, :start]
+if system('yum info supervisor')
+    execute "Start Solr" do
+        command "supervisorctl start 'solr:*'"
+    end
+else
+    execute "Start Solr" do
+        command "systemctl start solr"
+    end
 end

@@ -21,4 +21,4 @@
 # limitations under the License.
 #
 
-default['datashades']['solr']['packages'] = ['java-1.8.0-openjdk']
+default['datashades']['solr']['packages'] = ['java-1.8.0']

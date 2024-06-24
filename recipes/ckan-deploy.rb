@@ -77,6 +77,8 @@ log "#{DateTime.now}: Installing pinned dependencies for CKAN"
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
 # #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
 execute "Pin pip versions" do
+	user service_name
+	group service_name
 	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0' 'pyOpenSSL>=23.0.0'"
 end
 
@@ -175,4 +177,9 @@ execute "Compile locale translation" do
 	group service_name
 	cwd install_dir
 	command "#{virtualenv_dir}/bin/python setup.py compile_catalog -f --locale en_AU"
+end
+
+# Configure CKAN log processing
+cookbook_file "/etc/logrotate.d/ckan" do
+    source "ckan-logrotate"
 end

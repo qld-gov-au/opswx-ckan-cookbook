@@ -31,7 +31,12 @@ default['datashades']['sitename'] = 'ckan'
 
 default['datashades']['backup']['retention'] = '30'
 
-default['datashades']['core']['packages'] = ['nfs-utils', 'yum-cron', 'clamav', 'gcc', 'jq', 'java-1.8.0-openjdk', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64', 'git', 'telnet', 'supervisor']
+default['datashades']['core']['packages'] = ['nfs-utils', 'clamav', 'gcc', 'jq', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA.x86_64', 'git', 'telnet', 'cronie']
+default['datashades']['core']['alternative_packages'] = [
+    ['postfix', 'sendmail'],
+    ['yum-cron', 'dnf-automatic'],
+    ['python27-pip', 'python3-pip'],
+]
 default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
 default['datashades']['log_bucket'] = 'osssio-ckan-web-logs'

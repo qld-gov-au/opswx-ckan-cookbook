@@ -28,15 +28,3 @@ bash "Fix Python Install Layout" do
     EOS
     not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
 end
-
-cookbook_file "/etc/logrotate.d/ckan" do
-    source "ckan-logrotate"
-end
-
-if not system("grep 'alias git=' ~/.bash_profile")
-    execute "Add CKAN Git alias to Bash" do
-        command <<-EOS
-            echo "alias git='sudo -u ckan git'" >> ~/.bash_profile
-        EOS
-    end
-end

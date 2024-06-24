@@ -87,11 +87,39 @@ cookbook_file "#{config_dir}/ckan-uwsgi.ini" do
 	mode "0744"
 end
 
-cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
-	source "supervisor-ckan-uwsgi.conf"
-	owner 'root'
-	group 'root'
-	mode "0744"
+if system('yum info supervisor')
+	cookbook_file "/etc/supervisord.d/supervisor-ckan-uwsgi.ini" do
+		source "supervisor-ckan-uwsgi.conf"
+		owner 'root'
+		group 'root'
+		mode "0744"
+	end
+else
+	# Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+	execute "Start CKAN log file" do
+		user service_name
+		group service_name
+		command "touch /var/log/ckan/ckan-out.log /var/log/ckan/ckan-err.log"
+	end
+	systemd_unit "ckan-uwsgi.service" do
+		content({
+			Unit: {
+				Description: 'CKAN uWSGI application',
+				After: 'network-online.target'
+			},
+			Service: {
+				User: service_name,
+				ExecStart: '/usr/lib/ckan/default/bin/uwsgi -i /etc/ckan/default/ckan-uwsgi.ini',
+				Restart: 'on-failure',
+				StandardOutput: 'append:/var/log/ckan/ckan-out.log',
+				StandardError: 'append:/var/log/ckan/ckan-err.log'
+			},
+			Install: {
+				WantedBy: 'multi-user.target'
+			}
+		})
+		action [:create]
+	end
 end
 
 #
@@ -129,8 +157,3 @@ template "#{nginx_config_file}" do
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
-
-service "supervisord restart" do
-	service_name "supervisord"
-	action [:stop, :start]
-end
