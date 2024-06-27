@@ -28,3 +28,7 @@ bash "Fix Python Install Layout" do
     EOS
     not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
 end
+
+execute "Restart all CKAN Systemd services" do
+    command "systemctl restart 'ckan-*'"
+end
