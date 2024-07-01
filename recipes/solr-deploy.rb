@@ -111,16 +111,39 @@ unless ::File.identical?(installed_solr_version, solr_path)
     end
 end
 
-# Replace legacy initd integration with supervisord
-service "solr" do
-    action [:disable]
-end
-
-cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
-    source "supervisor-solr.conf"
-    owner "root"
-    group "root"
-    mode "0744"
+if system('yum info supervisor')
+    cookbook_file "/etc/supervisord.d/supervisor-solr.ini" do
+        source "supervisor-solr.conf"
+        owner "root"
+        group "root"
+        mode "0744"
+    end
+else
+    # Create files with our preferred ownership to work around https://github.com/systemd/systemd/issues/14385
+    execute "Start Solr log files" do
+        user service_name
+        group service_name
+        command "touch #{var_log_dir}/solr.log #{var_log_dir}/stderr.log"
+    end
+    systemd_unit "solr.service" do
+        content({
+            Unit: {
+                Description: 'Apache Solr',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/opt/solr/bin/solr start -f',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/solr/solr.log',
+                StandardError: 'append:/var/log/solr/stderr.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create]
+    end
 end
 
 # Create management scripts
@@ -261,7 +284,17 @@ end
 # Use find+exec instead of chown's recursive -R flag,
 # so that we can exclude temporary snapshots.
 execute "Ensure directory ownership is correct" do
-    command "find #{efs_data_dir}/data/#{core_name} #{real_data_dir}/data/#{core_name} #{solr_environment_file} #{real_log_dir} |grep -vE 'snapshot|index' |xargs chown #{account_name}:ec2-user"
+    command "find #{efs_data_dir}/data/#{core_name} #{real_data_dir}/data/#{core_name} #{solr_environment_file} #{real_log_dir} |grep -vE 'snapshot|index/' |xargs chown #{account_name}:ec2-user"
 end
 
 include_recipe "datashades::solr-deploycore"
+
+if system('yum info supervisor')
+    execute "Start Solr" do
+        command "supervisorctl start 'solr:*'"
+    end
+else
+    execute "Start Solr" do
+        command "systemctl start solr"
+    end
+end

@@ -40,11 +40,8 @@ template '/etc/sysconfig/clock' do
     mode '0755'
 end
 
-# Enable RedHat EPEL
-#
-
-execute "Enable EPEL" do
-    command "which amazon-linux-extras && (amazon-linux-extras list |grep ' epel=.*enabled' || amazon-linux-extras install epel)"
+execute "Enable RedHat EPEL if available" do
+    command "amazon-linux-extras install epel || true"
 end
 
 # Install/remove core packages
@@ -53,6 +50,19 @@ node['datashades']['core']['unwanted-packages'].each do |p|
     package p do
         action :remove
     end
+end
+
+# Install packages that have different names on different systems
+node['datashades']['core']['alternative_packages'].each do |p|
+	bash "Install one of #{p}" do
+		code <<-EOS
+			if (yum info "#{p[0]}"); then
+				yum install -y "#{p[0]}"
+			else
+				yum install -y "#{p[1]}"
+			fi
+		EOS
+	end
 end
 
 package node['datashades']['core']['packages']
@@ -94,8 +104,18 @@ include_recipe "datashades::stackparams"
 
 # Enable yum-cron so updates are downloaded on running nodes
 #
-service "yum-cron" do
+service 'crond' do
     action [:enable, :start]
+end
+
+if system('yum info yum-cron')
+    service "yum-cron" do
+        action [:enable, :start]
+    end
+else
+    execute "Enable automatic DNF updates" do
+        command "systemctl enable dnf-automatic-install.timer"
+    end
 end
 
 # Tag the root EBS volume so we can manage it in AWS Backup etc.
@@ -148,82 +168,86 @@ template "/etc/init.d/aws-smtp-relay" do
     mode "0755"
 end
 
-bash "Configure Supervisord" do
-    user "root"
-    cwd "/etc"
-    code <<-EOS
-        SUPERVISOR_CONFIG=supervisord.conf
-        if ! [ -f "$SUPERVISOR_CONFIG" ]; then
-            exit 0
-        fi
+if system('yum info supervisor')
+    package "supervisor"
 
-        # configure Unix socket path
-        UNIX_SOCKET=/var/tmp/supervisor.sock
-        DEFAULT_UNIX_SOCKET=/var/run/supervisor/supervisor[.]sock
-        if (grep "$DEFAULT_UNIX_SOCKET" $SUPERVISOR_CONFIG); then
-            # if default config exists, update it
-            sed -i "s|$DEFAULT_UNIX_SOCKET|$UNIX_SOCKET|g" $SUPERVISOR_CONFIG
-        fi
-        if ! (grep "unix_http_server" $SUPERVISOR_CONFIG); then
-            # if no config exists, add it
-            echo '[unix_http_server]' >> $SUPERVISOR_CONFIG
-            echo "file = $UNIX_SOCKET" >> $SUPERVISOR_CONFIG
-        fi
-        if ! (grep "rpcinterface:supervisor" $SUPERVISOR_CONFIG); then
-            echo '[rpcinterface:supervisor]' >> $SUPERVISOR_CONFIG
-            echo 'supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface' >> $SUPERVISOR_CONFIG
-        fi
+    bash "Configure Supervisord" do
+        user "root"
+        cwd "/etc"
+        code <<-EOS
+            SUPERVISOR_CONFIG=supervisord.conf
+            if ! [ -f "$SUPERVISOR_CONFIG" ]; then
+                exit 0
+            fi
 
-        # configure file inclusions
-        SUPERVISOR_CONFIG_D=supervisord.d
-        mkdir -p $SUPERVISOR_CONFIG_D
+            # configure Unix socket path
+            UNIX_SOCKET=/var/tmp/supervisor.sock
+            DEFAULT_UNIX_SOCKET=/var/run/supervisor/supervisor[.]sock
+            if (grep "$DEFAULT_UNIX_SOCKET" $SUPERVISOR_CONFIG); then
+                # if default config exists, update it
+                sed -i "s|$DEFAULT_UNIX_SOCKET|$UNIX_SOCKET|g" $SUPERVISOR_CONFIG
+            fi
+            if ! (grep "unix_http_server" $SUPERVISOR_CONFIG); then
+                # if no config exists, add it
+                echo '[unix_http_server]' >> $SUPERVISOR_CONFIG
+                echo "file = $UNIX_SOCKET" >> $SUPERVISOR_CONFIG
+            fi
+            if ! (grep "rpcinterface:supervisor" $SUPERVISOR_CONFIG); then
+                echo '[rpcinterface:supervisor]' >> $SUPERVISOR_CONFIG
+                echo 'supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface' >> $SUPERVISOR_CONFIG
+            fi
 
-        LEGACY_SUPERVISOR_CONFIG_D="/etc/supervisor/conf.d/[*][.]conf"
-        if (grep "$LEGACY_SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
-            # if legacy config exists, update it
-            sed -i "s|$LEGACY_SUPERVISOR_CONFIG_D|$SUPERVISOR_CONFIG_D/*.ini|g" $SUPERVISOR_CONFIG
-        elif ! (grep "$SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
-            # if no config exists, add it
-            echo '[include]' >> $SUPERVISOR_CONFIG
-            echo "files = $SUPERVISOR_CONFIG_D/*.ini" >> $SUPERVISOR_CONFIG
-        fi
-    EOS
-end
+            # configure file inclusions
+            SUPERVISOR_CONFIG_D=supervisord.d
+            mkdir -p $SUPERVISOR_CONFIG_D
 
-# Configure either initd or systemd
-if system('which systemctl')
-    systemd_unit "supervisord.service" do
-        content({
-            Unit: {
-                Description: 'Supervisor process control system for UNIX',
-                Documentation: 'http://supervisord.org',
-                After: 'network.target'
-            },
-            Service: {
-                ExecStart: '/usr/bin/supervisord -n -c /etc/supervisord.conf',
-                ExecStop: 'timeout 10s /usr/bin/supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; /usr/bin/supervisorctl $OPTIONS shutdown',
-                ExecReload: '/usr/bin/supervisorctl $OPTIONS reload',
-                KillMode: 'process',
-                Restart: 'on-failure',
-                RestartSec: '20s'
-            },
-            Install: {
-                WantedBy: 'multi-user.target'
-            }
-        })
-        action [:create, :enable, :stop]
-    end
-else
-    service "supervisord" do
-        action [:enable]
+            LEGACY_SUPERVISOR_CONFIG_D="/etc/supervisor/conf.d/[*][.]conf"
+            if (grep "$LEGACY_SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+                # if legacy config exists, update it
+                sed -i "s|$LEGACY_SUPERVISOR_CONFIG_D|$SUPERVISOR_CONFIG_D/*.ini|g" $SUPERVISOR_CONFIG
+            elif ! (grep "$SUPERVISOR_CONFIG_D" $SUPERVISOR_CONFIG); then
+                # if no config exists, add it
+                echo '[include]' >> $SUPERVISOR_CONFIG
+                echo "files = $SUPERVISOR_CONFIG_D/*.ini" >> $SUPERVISOR_CONFIG
+            fi
+        EOS
     end
 
-    # Managed processes sometimes don't shut down properly on daemon stop,
-    # leaving them 'orphaned' and resulting in duplicates.
-    # Work around by issuing a stop command to the children first.
-    execute "Stop children on supervisord stop" do
-        command <<-'SED'.strip + " /etc/init.d/supervisord"
-            sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
-        SED
+    # Configure either initd or systemd
+    if system('which systemctl')
+        systemd_unit "supervisord.service" do
+            content({
+                Unit: {
+                    Description: 'Supervisor process control system for UNIX',
+                    Documentation: 'http://supervisord.org',
+                    After: 'network.target'
+                },
+                Service: {
+                    ExecStart: '/usr/bin/supervisord -n -c /etc/supervisord.conf',
+                    ExecStop: 'timeout 10s /usr/bin/supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; /usr/bin/supervisorctl $OPTIONS shutdown',
+                    ExecReload: '/usr/bin/supervisorctl $OPTIONS reload',
+                    KillMode: 'process',
+                    Restart: 'on-failure',
+                    RestartSec: '20s'
+                },
+                Install: {
+                    WantedBy: 'multi-user.target'
+                }
+            })
+            action [:create, :enable, :stop]
+        end
+    else
+        service "supervisord" do
+            action [:enable]
+        end
+
+        # Managed processes sometimes don't shut down properly on daemon stop,
+        # leaving them 'orphaned' and resulting in duplicates.
+        # Work around by issuing a stop command to the children first.
+        execute "Stop children on supervisord stop" do
+            command <<-'SED'.strip + " /etc/init.d/supervisord"
+                sed -i 's/^\(\s*\)\(killproc\)/\1timeout 10s supervisorctl stop all || echo "WARNING: Unable to stop managed process(es) - check for orphans"; \2/'
+            SED
+        end
     end
 end

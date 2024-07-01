@@ -22,12 +22,12 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'policycoreutils-python', 'squid']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'squid']
 default['datashades']['ckan_web']['alternative_packages'] = [
-    ['postgresql94', 'postgresql'],
-    ['postgresql94-devel', 'postgresql-devel'],
+    ['postgresql', 'postgresql15'],
+    ['postgresql-devel', 'postgresql15-server-devel'],
     ['python27-devel', 'python3-devel'],
-    ['python27-pip', 'python3-pip'],
+    ['policycoreutils-python', 'policycoreutils-python-utils'],
 ]
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
@@ -62,7 +62,7 @@ default['datashades']['ckan_web']['google']['analytics_id'] = 'UA-7276966-12'
 default['datashades']['ckan_web']['wsgi']['processes'] = '1'
 default['datashades']['ckan_web']['wsgi']['threads'] = '15'
 
-default['datashades']['ckan_ext']['packages'] = ['geos-devel.x86_64']
+default['datashades']['ckan_ext']['packages'] = []
 
 default['datashades']['redis']['hostname'] = 'localhost'
 default['datashades']['redis']['port'] = '6379'
@@ -70,5 +70,5 @@ default['datashades']['redis']['port'] = '6379'
 # Postgres settings
 default['datashades']['postgres']['password'] = ''
 default['datashades']['postgres']['rds'] = 'true'
-default['datashades']['postgres']['packages'] = ['postgresql95-server', 'postgresql95', 'postgresql95-devel', 'libtool', 'libxml2-devel', 'geos-devel', 'postgis']
+default['datashades']['postgres']['packages'] = ['postgresql95-server', 'postgresql95', 'postgresql95-devel', 'libtool', 'libxml2-devel', 'postgis']
 default['datashades']['postgres']['version'] = '95'
