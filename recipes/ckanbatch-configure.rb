@@ -31,7 +31,6 @@ if not system('yum info supervisor')
             UNITS="ckan-worker-priority ckan-worker-bulk ckan-worker-harvest-fetch ckan-worker-harvest-gather"
             for UNIT_NAME in $UNITS; do
                 if (systemctl -a |grep "$UNIT_NAME"); then
-                    systemctl enable "$UNIT_NAME"
                     systemctl start "$UNIT_NAME"
                 fi
             done
