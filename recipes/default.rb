@@ -159,8 +159,8 @@ directory "/usr/share/aws-smtp-relay" do
     action :create
 end
 
-cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependencies.jar" do
-    source "aws-smtp-relay-1.0.0-jar-with-dependencies.jar"
+cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-1.3.1-jar-with-dependencies.jar" do
+    source "aws-smtp-relay-1.3.1-jar-with-dependencies.jar"
 end
 
 template "/etc/init.d/aws-smtp-relay" do

@@ -25,6 +25,17 @@ if not system('yum info supervisor')
     service "ckan-worker" do
         action [:enable, :start]
     end
+
+    bash "Enable extra job queues if available" do
+        code <<-EOS
+            UNITS="ckan-worker-priority ckan-worker-bulk ckan-worker-harvest-fetch ckan-worker-harvest-gather"
+            for UNIT_NAME in $UNITS; do
+                if (systemctl -a |grep "$UNIT_NAME"); then
+                    systemctl start "$UNIT_NAME"
+                fi
+            done
+        EOS
+    end
 end
 
 # Run tracking update at 8:30am everywhere

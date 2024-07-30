@@ -274,7 +274,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 				systemd_unit "ckan-worker-harvest-gather.service" do
 					content({
@@ -293,7 +293,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 			end
 
@@ -394,7 +394,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 				systemd_unit "ckan-worker-priority.service" do
 					content({
@@ -413,7 +413,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 			end
 
