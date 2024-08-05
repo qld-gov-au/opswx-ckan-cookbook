@@ -83,6 +83,25 @@ else
         })
         action [:create]
     end
+    systemd_unit "ckan-worker2.service" do
+        content({
+            Unit: {
+                Description: 'CKAN secondary job worker',
+                After: 'network-online.target'
+            },
+            Service: {
+                User: service_name,
+                ExecStart: '/usr/lib/ckan/default/bin/ckan_cli jobs worker default2',
+                Restart: 'on-failure',
+                StandardOutput: 'append:/var/log/ckan/ckan-worker-2.log',
+                StandardError: 'append:/var/log/ckan/ckan-worker-2.log'
+            },
+            Install: {
+                WantedBy: 'multi-user.target'
+            }
+        })
+        action [:create]
+    end
 end
 
 # Set up maintenance scripts needed for cron jobs
