@@ -7,7 +7,7 @@ set -x
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME"
-SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME"
+SYNC_SNAPSHOT="$SYNC_DIR/${SNAPSHOT_NAME}.tgz"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -52,17 +52,17 @@ function export_snapshot () {
   if [ "$REPLICATION_STATUS" != "0" ]; then
     return $REPLICATION_STATUS
   fi
-  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete $LOCAL_SNAPSHOT/ $SYNC_SNAPSHOT/" || return 1
+  sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && sudo -u solr tar --force-local --exclude=write.lock -czf $SYNC_SNAPSHOT -C $LOCAL_SNAPSHOT ." || return 1
 }
 
 function import_snapshot () {
   # Give the master time to update the sync copy
   for i in $(eval echo "{1..40}"); do
-    if [ -f "$SYNC_SNAPSHOT/write.lock" ]; then
-      sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
-      sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT/" "$LOCAL_SNAPSHOT/" || exit 1
-      rm $LOCAL_SNAPSHOT/write.lock
-      curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
+    if [ -f "$SYNC_SNAPSHOT" ]; then
+      sudo service solr stop
+      sudo -u solr mkdir $LOCAL_DIR/index
+      rm $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
+      sudo service solr start
       return 1
     else
       sleep 5
@@ -100,9 +100,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
 
   # Hourly backup to S3
   if [ "$MINUTE" = "00" ]; then
-    cd "$LOCAL_DIR"
-    tar --force-local -czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
-    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
+    aws s3 cp "$SYNC_SNAPSHOT" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
   fi
 else
   # make traffic come to this instance only as a backup option
