@@ -61,7 +61,7 @@ function import_snapshot () {
     if [ -f "$SYNC_SNAPSHOT" ]; then
       sudo service solr stop
       sudo -u solr mkdir $LOCAL_DIR/index
-      rm $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
+      rm -f $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
       sudo systemctl start solr
       return 0
     else
