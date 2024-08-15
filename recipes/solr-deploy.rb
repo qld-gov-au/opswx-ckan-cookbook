@@ -272,8 +272,11 @@ bash "Copy latest index from EFS" do
         rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
         CORE_DATA="#{real_data_dir}/data/#{core_name}/data"
         LATEST_INDEX=`ls -dtr $CORE_DATA/snapshot.* |tail -1`
-        if (echo "$LATEST_INDEX" |grep "[.]tgz$" >/dev/null 2>&1) && (tar tzf "$LATEST_INDEX" >/dev/null); then
+        # If the latest snapshot is a readable tar archive, then import it.
+        # If not, then it's either a directory (obsolete) or malformed, so ignore it.
+        if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
             mkdir -p "$CORE_DATA/index"
+            # wipe old index files if any, and unpack the archived index
             rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
         fi
     EOS
