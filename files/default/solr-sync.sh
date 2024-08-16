@@ -58,10 +58,14 @@ function export_snapshot () {
 function import_snapshot () {
   # Give the master time to update the sync copy
   for i in $(eval echo "{1..40}"); do
-    if [ -f "$SYNC_SNAPSHOT" ]; then
+    # If the snapshot is a readable tar archive, then import it.
+    # Ignore it if it's missing or malformed.
+    if (tar tzf "$SYNC_SNAPSHOT" >/dev/null 2>&1); then
       sudo service solr stop
       sudo -u solr mkdir $LOCAL_DIR/index
-      rm $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
+      # Wipe old index files if any, and unpack the archived index.
+      # Fail the whole import if we can't.
+      rm -f $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
       sudo systemctl start solr
       return 0
     else
