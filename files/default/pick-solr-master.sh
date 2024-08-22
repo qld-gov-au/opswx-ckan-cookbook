@@ -4,25 +4,29 @@
 
 . `dirname $0`/solr-env.sh
 
-# Look for a special file that marks the server as secondary
-# until it has imported an index
-if [ -e "$STARTUP_FILE" ]; then return 1; fi
-
 function is_healthy() {
   HEALTH_FILE=$1
   IGNORE_STARTUP=$2
   if [ ! -e "$HEALTH_FILE" ]; then
-    return 1
+    HEALTHY=1
+  else
+    HEALTH_TIME=$(cat $1 | tr -d '[:space:]')
+    if [ "$HEALTH_TIME" = "" ]; then
+      HEALTHY=1
+    else
+      AGE=$(expr $NOW - $HEALTH_TIME)
+      HEALTHY=$(expr $AGE '>' $MAX_AGE)
+    fi
+    # clean up redundant "secondary" markers on servers that aren't active
+    if [ "$HEALTHY" = "0" ]; then
+      if [ -e "$HEALTH_FILE.start" ]; then
+        HEALTHY=1
+      fi
+    else
+      rm -f $HEALTH_FILE.start
+    fi
   fi
-  if [ -e "$HEALTH_FILE.start" ]; then
-    return 1
-  fi
-  HEALTH_TIME=$(cat $1 | tr -d '[:space:]')
-  if [ "$HEALTH_TIME" = "" ]; then
-    return 1
-  fi
-  AGE=$(expr $NOW - $HEALTH_TIME)
-  return $(expr $AGE '>' $MAX_AGE)
+  return $HEALTHY
 }
 
 NOW=$(date +'%s')
