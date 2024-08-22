@@ -8,6 +8,7 @@ BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME"
 SYNC_SNAPSHOT="$SYNC_DIR/${SNAPSHOT_NAME}.tgz"
+OVERRIDE_SNAPSHOT="$SYNC_DIR/override-snapshot.$CORE_NAME.tgz"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -56,6 +57,9 @@ function export_snapshot () {
 }
 
 function import_snapshot () {
+  if [ -e "$OVERRIDE_SNAPSHOT" ]; then
+    SYNC_SNAPSHOT="$OVERRIDE_SNAPSHOT"
+  fi
   # Give the master time to update the sync copy
   for i in $(eval echo "{1..40}"); do
     # If the snapshot is a readable tar archive, then import it.
@@ -94,6 +98,10 @@ if (/usr/local/bin/pick-solr-master.sh); then
   for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
     sudo -u solr rm -r "$old_snapshot"
   done
+  # Remove override snapshot once all servers have consumed it
+  if ! (ls /data/solr-healthcheck-*.start); then
+    rm -f $OVERRIDE_SNAPSHOT
+  fi
   # Drop this server from being master if export failed
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
@@ -114,5 +122,5 @@ else
 fi
 OLD_SNAPSHOTS=$(ls -d $LOCAL_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME")
 if [ "$OLD_SNAPSHOTS" != "" ]; then
-    sudo -u solr rm -r $OLD_SNAPSHOTS
+  sudo -u solr rm -r $OLD_SNAPSHOTS
 fi
