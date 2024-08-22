@@ -62,11 +62,12 @@ function import_snapshot () {
     # Ignore it if it's missing or malformed.
     if (tar tzf "$SYNC_SNAPSHOT" >/dev/null 2>&1); then
       sudo service solr stop
-      sudo -u solr mkdir $LOCAL_DIR/index
+      sudo -u solr mkdir $DATA_DIR/index
       # Wipe old index files if any, and unpack the archived index.
       # Fail the whole import if we can't.
-      rm -f $LOCAL_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $LOCAL_DIR/index || exit 1
+      rm -f $DATA_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $DATA_DIR/index || exit 1
       sudo systemctl start solr
+      rm -f $STARTUP_FILE
       return 0
     else
       sleep 5
