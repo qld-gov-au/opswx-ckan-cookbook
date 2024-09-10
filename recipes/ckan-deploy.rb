@@ -79,7 +79,7 @@ log "#{DateTime.now}: Installing pinned dependencies for CKAN"
 execute "Pin pip versions" do
 	user service_name
 	group service_name
-	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0' 'pyOpenSSL>=23.0.0'"
+	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0,<71' 'pyOpenSSL>=23.0.0'"
 end
 
 log "#{DateTime.now}: Installing CKAN source"
