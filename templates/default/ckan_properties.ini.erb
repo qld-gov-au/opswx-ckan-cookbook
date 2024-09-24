@@ -134,6 +134,8 @@ ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
 
+urlm.app_path = {ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/purl_endpoint}
+
 ## QA
 qa.resource_format_openness_scores_json = <%= @src_dir %>/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
 
