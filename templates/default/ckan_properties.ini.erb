@@ -284,7 +284,7 @@ ckanext-archiver.archive_dir = /var/shared_content/<%= @app_name %>/resource_cac
 #the plan; drop this for patten /dataset/{id}/resource/{resource_id}/archive/{filename}
 ckanext-archiver.cache_url_root = /resource_cache
 ckanext-archiver.max_content_length = 250000000
-ckanext-archiver.user_agent_string = "CKAN archiver https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>"
+ckanext-archiver.user_agent_string = CKAN archiver (https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>)
 ckanext-archiver.verify_https = True
 
 ## Cache
