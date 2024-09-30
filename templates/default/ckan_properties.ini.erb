@@ -97,6 +97,7 @@ ckan.auth.create_user_via_api = <%= node['datashades']['ckan_web']['auth']['crea
 ckan.auth.create_user_via_web = <%= node['datashades']['ckan_web']['auth']['create_user_via_web'] %>
 ckan.auth.roles_that_cascade_to_sub_groups = <%= node['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] %>
 ckan.auth.public_user_details = False
+ckan.auth.reveal_private_datasets = True
 
 ## QGOV Settings
 
@@ -133,6 +134,8 @@ disqus.name = <%= node['datashades']['ckan_web']['disqus'] %>
 ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
+
+urlm.app_path = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/purl_endpoint}
 
 ## QA
 qa.resource_format_openness_scores_json = <%= @src_dir %>/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
@@ -281,7 +284,7 @@ ckanext-archiver.archive_dir = /var/shared_content/<%= @app_name %>/resource_cac
 #the plan; drop this for patten /dataset/{id}/resource/{resource_id}/archive/{filename}
 ckanext-archiver.cache_url_root = /resource_cache
 ckanext-archiver.max_content_length = 250000000
-ckanext-archiver.user_agent_string = "CKAN archiver https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>"
+ckanext-archiver.user_agent_string = CKAN archiver (https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>)
 ckanext-archiver.verify_https = True
 
 ## Cache
