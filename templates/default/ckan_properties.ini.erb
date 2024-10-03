@@ -188,7 +188,7 @@ ckan.recaptcha.privatekey = ${ssm:/config/CKAN/<%= node['datashades']['version']
 
 # Single Sign-on
 
-ckanext.oidc_pkce.base_url = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_url}
+ckanext.oidc_pkce.base_url = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/sso_url}
 ckanext.oidc_pkce.client_id = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_id}
 ckanext.oidc_pkce.client_secret = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_secret}
 ckanext.oidc_pkce.auth_path = /auth
