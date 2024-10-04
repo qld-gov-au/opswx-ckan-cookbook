@@ -186,6 +186,15 @@ ckan.recaptcha.privatekey = ${ssm:/config/CKAN/<%= node['datashades']['version']
 #licenses_group_url = http://licenses.opendefinition.org/licenses/groups/ckan.json
 # ckan.template_footer_end =
 
+# Single Sign-on
+
+ckanext.oidc_pkce.base_url = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/sso_url}
+ckanext.oidc_pkce.client_id = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_id}
+ckanext.oidc_pkce.client_secret = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_secret}
+ckanext.oidc_pkce.auth_path = /auth
+ckanext.oidc_pkce.token_path = /token
+ckanext.oidc_pkce.userinfo_path = /userinfo
+
 # Exclude AJAX from CSRF protection as it's not state-changing
 ckanext.csrf_filter.exempt_rules = [ "^/datatables/ajax/.*" ]
 
