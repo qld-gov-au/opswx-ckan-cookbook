@@ -7,6 +7,11 @@ BACKUP_DIR=/data/db_backups
 
 import_database () {
   LATEST_BACKUP=$(ls -d $BACKUP_DIR/$PGDATABASE.*.dump.dir |tail -1)
+  echo "Are you sure you want to overwrite the $PGDATABASE database with snapshot ${LATEST_BACKUP}? (y/n)"
+  read CONFIRM
+  if [ "$CONFIRM" != "y" ]; then
+    exit 1
+  fi
   pg_restore -v -j 4 $LATEST_BACKUP --disable-triggers 2>&1 | tee -a $HOME/$PGDATABASE.$NOW.log
 }
 
