@@ -22,11 +22,10 @@
 #
 
 default['datashades']['ckan_web']['endpoint'] = '/'
-default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'xalan-j2', 'unzip', 'squid']
+default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'python3-devel', 'xalan-j2', 'unzip', 'squid']
 default['datashades']['ckan_web']['alternative_packages'] = [
     ['postgresql', 'postgresql15'],
     ['postgresql-devel', 'postgresql15-server-devel'],
-    ['python27-devel', 'python3-devel'],
     ['policycoreutils-python', 'policycoreutils-python-utils'],
 ]
 
