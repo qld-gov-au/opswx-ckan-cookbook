@@ -155,3 +155,17 @@ cookbook_file "/usr/local/bin/psql-ckan.sh" do
     group "root"
     mode "0644"
 end
+
+cookbook_file "/usr/local/bin/pgdump-ckan.sh" do
+    source "pgdump-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/pgrestore-ckan.sh" do
+    source "pgrestore-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
