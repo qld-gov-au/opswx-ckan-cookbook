@@ -133,13 +133,6 @@ datashades_move_and_link "#{virtualenv_dir}/lib" do
 	owner service_name
 end
 
-# 'uv' is mostly a drop-in replacement for pip but much faster
-execute "Install uv package manager" do
-	user service_name
-	group service_name
-	command "#{virtualenv_dir}/bin/pip install uv"
-end
-
 #
 # Create CKAN configuration directory
 #

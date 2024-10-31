@@ -28,7 +28,7 @@ batchnode = node['datashades']['layer'] == 'batch'
 account_name = "ckan"
 virtualenv_dir = "/usr/lib/ckan/default"
 python = "#{virtualenv_dir}/bin/python"
-pip = ". #{virtualenv_dir}/bin/activate; uv pip --cache-dir=/tmp/"
+pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 config_dir = "/etc/ckan/default"
 config_file = "production.ini"
