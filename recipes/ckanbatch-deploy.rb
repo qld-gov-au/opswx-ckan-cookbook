@@ -25,7 +25,7 @@ config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
-pip = "#{virtualenv_dir}/bin/uv pip --cache-dir=/tmp/"
+pip = ". #{virtualenv_dir}/bin/activate; uv pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
