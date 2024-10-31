@@ -31,7 +31,7 @@ config_dir = "/etc/ckan/default"
 config_file = "#{config_dir}/production.ini"
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 virtualenv_dir = "/usr/lib/ckan/default"
-pip = "#{virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+pip = "#{virtualenv_dir}/bin/uv pip --cache-dir=/tmp/"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 install_dir = "#{virtualenv_dir}/src/#{service_name}"
 
@@ -74,12 +74,19 @@ end
 
 log "#{DateTime.now}: Installing pinned dependencies for CKAN"
 
-# #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
-# #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
-execute "Pin pip versions" do
+# 'uv' is mostly a drop-in replacement for pip but much faster
+execute "Install uv package manager" do
 	user service_name
 	group service_name
-	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0,<71' 'pyOpenSSL>=23.0.0'"
+	command "#{virtualenv_dir}/bin/pip install uv"
+end
+
+# #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
+# #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
+execute "Pin dependency versions" do
+	user service_name
+	group service_name
+	command "#{pip} install 'setuptools>=44.1.0,<71' 'pyOpenSSL>=23.0.0'"
 end
 
 log "#{DateTime.now}: Installing CKAN source"

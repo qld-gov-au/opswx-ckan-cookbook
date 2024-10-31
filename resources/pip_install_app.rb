@@ -1,5 +1,5 @@
 #
-# Installs an OpsWorks app's source via pip, including dependencies.
+# Installs an app's source, including dependencies.
 # datashades_pip_install_app
 #
 # Copyright 2021, Queensland Government
@@ -31,7 +31,7 @@ property :url, String
 property :virtualenv_dir, String, default: '/usr/lib/ckan/default'
 
 action :create do
-    pip = "#{new_resource.virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+    pip = "#{new_resource.virtualenv_dir}/bin/uv pip --cache-dir=/tmp/"
     install_dir = "#{new_resource.virtualenv_dir}/src/#{new_resource.service_name}"
     is_git = new_resource.type.casecmp("git") == 0
 
