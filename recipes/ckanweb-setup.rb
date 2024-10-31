@@ -27,5 +27,5 @@ virtualenv_dir = "/usr/lib/ckan/default"
 # but it's an old and buggy version, so use pip.
 execute "Install uWSGI" do
     user 'ckan'
-    command "#{virtualenv_dir}/bin/pip install uwsgi"
+    command "#{virtualenv_dir}/bin/uv pip install uwsgi"
 end
