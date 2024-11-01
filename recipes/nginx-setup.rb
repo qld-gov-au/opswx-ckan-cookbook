@@ -43,9 +43,3 @@ bash 'install ssl certs' do
 	EOH
 	not_if { ::File.exist?("/etc/ssl/certs/wild.#{node['datashades']['tld']}.crt") }
 end
-
-# Startup services
-#
-service 'nginx' do
-	action [:enable, :start]
-end

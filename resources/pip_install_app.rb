@@ -1,5 +1,5 @@
 #
-# Installs an OpsWorks app's source via pip, including dependencies.
+# Installs an app's source, including dependencies.
 # datashades_pip_install_app
 #
 # Copyright 2021, Queensland Government

@@ -276,6 +276,8 @@ bash "Copy latest index from EFS" do
         # If not, then it's either a directory (obsolete) or malformed, so ignore it.
         if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
             mkdir -p "$CORE_DATA/index"
+            # remove the index.properties file so default index config is used
+            rm -f $CORE_DATA/index.properties
             # wipe old index files if any, and unpack the archived index
             rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
         fi

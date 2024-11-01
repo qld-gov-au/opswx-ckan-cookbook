@@ -139,3 +139,33 @@ template "/usr/local/bin/ckan-monitor-job-queue.sh" do
     group 'root'
     mode '0755'
 end
+
+# Set up useful scripts for support staff
+
+cookbook_file "/usr/local/bin/psql-env-ckan.sh" do
+    source "psql-env-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/psql-ckan.sh" do
+    source "psql-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/pgdump-ckan.sh" do
+    source "pgdump-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/pgrestore-ckan.sh" do
+    source "pgrestore-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
