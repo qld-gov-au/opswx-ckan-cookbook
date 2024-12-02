@@ -155,13 +155,6 @@ cookbook_file '/bin/updatedns' do
 	mode '0755'
 end
 
-template "/usr/local/bin/solr-env.sh" do
-	source "solr-env.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
 cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
 	source "solr-healthcheck.sh"
 	owner "root"
