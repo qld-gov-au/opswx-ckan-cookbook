@@ -38,6 +38,13 @@ if not system('yum info supervisor')
     end
 end
 
+template "/usr/local/bin/pick-job-server.sh" do
+    source "pick-job-server.sh.erb"
+    owner "root"
+    group "root"
+    mode "0755"
+end
+
 # Run tracking update at 8:30am everywhere
 file "/etc/cron.d/ckan-tracking-update" do
     content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
