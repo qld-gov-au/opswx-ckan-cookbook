@@ -23,6 +23,8 @@
 # Batch nodes only need a limited set of extensions for harvesting
 # Ascertain whether or not the instance deploying is a batch node
 #
+require 'json'
+
 batchnode = node['datashades']['layer'] == 'batch'
 
 account_name = "ckan"
@@ -148,16 +150,23 @@ sorted_plugin_names.concat(dependent_plugin_names)
 sorted_plugin_names.each do |plugin|
 
 	retries = 0
-	while retries < 5
-		egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
-		source_type = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-		source_revision = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
-		source_url = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
-		if egg_name.nil? or egg_name == '' or source_revision.nil? or source_revision == '' or source_url.nil? or source_revision == '' then
-			retries += 1
-		else
-			if source_type.nil? then
-				source_type = 'git'
+	egg_name = nil
+	source_type = 'git'
+	source_revision = nil
+	source_url = nil
+	5.times do
+		plugin_parameters = `aws ssm get-parameters-by-path --region "#{node['datashades']['region']}" --recursive --path "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}" --query "Parameters[].{Name: Name, Value: Value}"`.strip
+		if not (plugin_parameters.nil? or plugin_parameters == '') then
+			JSON.parse(plugin_parameters).each do |parameter|
+				if parameter['Name'].end_with?('/shortname') then
+					egg_name = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/type') then
+					source_type = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/revision') then
+					source_revision = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/url') then
+					source_url = parameter['Value']
+				end
 			end
 			break
 		end
