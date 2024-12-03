@@ -35,6 +35,8 @@ action :create do
     install_dir = "#{new_resource.virtualenv_dir}/src/#{new_resource.service_name}"
     is_git = new_resource.type.casecmp("git") == 0
 
+    log "#{DateTime.now}: Installing '#{new_resource.service_name}' and its dependencies"
+
     apprelease = new_resource.url
     apprelease = apprelease.dup if apprelease.frozen?
 
