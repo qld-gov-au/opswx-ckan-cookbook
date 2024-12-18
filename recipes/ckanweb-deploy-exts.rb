@@ -127,6 +127,7 @@ end
 #
 harvester_data_qld_geoscience_present = false
 archiver_present = false
+report_present = false
 resource_visibility_present = false
 harvest_present = false
 csrf_present = false
@@ -467,6 +468,17 @@ sorted_plugin_names.each do |plugin|
 			user "#{account_name}"
 			command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
 		end
+
+		if batchnode
+			report_present = true
+
+			file "/etc/cron.daily/refresh_reports" do
+				content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} report generate >> /var/log/ckan/ckan-report-run.log\n"
+				mode '0755'
+				owner "root"
+				group "root"
+			end
+		end
 	end
 
 	if "#{pluginname}".eql? 'datarequests'
@@ -547,6 +559,12 @@ end
 if not resource_visibility_present then
 	execute "Clean Resource Visibility cron" do
 		command "rm -f /etc/cron.d/ckan-dataset-resource-visibility-notify-privacy-assessments*"
+	end
+end
+
+if not report_present then
+	execute "Clean Report cron" do
+		command "rm -f /etc/cron.daily/refresh_reports*"
 	end
 end
 
