@@ -56,11 +56,6 @@ beaker.session.cookie_domain = <%= @app_url %>
 # a config file.
 app_instance_uuid = {92aeda63-ac98-4f56-8b42-2613071039f8}
 
-# repoze.who config
-who.config_file = %(here)s/who.ini
-who.log_level = warning
-who.log_file = %(cache_dir)s/who_log.ini
-
 ## Database Settings
 sqlalchemy.url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
