@@ -121,11 +121,6 @@ cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
 	mode "0755"
 end
 
-link "#{config_dir}/who.ini" do
-	to "#{install_dir}/who.ini"
-	link_type :symbolic
-end
-
 #
 # Initialise data
 #

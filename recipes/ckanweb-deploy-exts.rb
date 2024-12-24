@@ -130,7 +130,6 @@ archiver_present = false
 report_present = false
 resource_visibility_present = false
 harvest_present = false
-csrf_present = false
 
 # Ensure plugins that depend on others are installed last
 dependent_plugins = ['CKANExtArchiver', 'CKANExtQa', 'CKANExtHarvestDataQldGeoScience']
@@ -494,14 +493,6 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
-	if "#{pluginname}".eql? 'csrf-filter'
-		csrf_present = true
-		execute "set CSRF plugin in Repoze config" do
-			user "#{account_name}"
-			command "sed -i 's|^\\(use\s*=\\)\\(.*:FriendlyFormPlugin\\)|#\\1\\2\\n\\1 ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin|g' #{config_dir}/who.ini"
-		end
-	end
-
 	# Viewhelpers is a special case because stats needs to be loaded before it
 	#
 	if "#{pluginname}".eql? 'viewhelpers' then
@@ -599,16 +590,6 @@ end
 #         EOS
 #     end
 # end
-
-if not csrf_present then
-	bash "revert CSRF plugin from Repoze config" do
-		user "#{account_name}"
-		code <<-EOS
-			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
-			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' "#{config_dir}/who.ini"
-		EOS
-	end
-end
 
 # Enable DataStore extension if desired
 if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
