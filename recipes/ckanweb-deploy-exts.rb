@@ -127,9 +127,9 @@ end
 #
 harvester_data_qld_geoscience_present = false
 archiver_present = false
+report_present = false
 resource_visibility_present = false
 harvest_present = false
-csrf_present = false
 
 # Ensure plugins that depend on others are installed last
 dependent_plugins = ['CKANExtArchiver', 'CKANExtQa', 'CKANExtHarvestDataQldGeoScience']
@@ -467,6 +467,17 @@ sorted_plugin_names.each do |plugin|
 			user "#{account_name}"
 			command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
 		end
+
+		if batchnode
+			report_present = true
+
+			file "/etc/cron.daily/refresh_reports" do
+				content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} report generate >> /var/log/ckan/ckan-report-run.log\n"
+				mode '0755'
+				owner "root"
+				group "root"
+			end
+		end
 	end
 
 	if "#{pluginname}".eql? 'datarequests'
@@ -479,14 +490,6 @@ sorted_plugin_names.each do |plugin|
 					#{ckan_cli} datarequests update-db
 				fi
 			EOS
-		end
-	end
-
-	if "#{pluginname}".eql? 'csrf-filter'
-		csrf_present = true
-		execute "set CSRF plugin in Repoze config" do
-			user "#{account_name}"
-			command "sed -i 's|^\\(use\s*=\\)\\(.*:FriendlyFormPlugin\\)|#\\1\\2\\n\\1 ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin|g' #{config_dir}/who.ini"
 		end
 	end
 
@@ -550,6 +553,12 @@ if not resource_visibility_present then
 	end
 end
 
+if not report_present then
+	execute "Clean Report cron" do
+		command "rm -f /etc/cron.daily/refresh_reports*"
+	end
+end
+
 if not harvest_present then
 	if system('yum info supervisor')
 		execute "Clean Harvest supervisor config" do
@@ -581,16 +590,6 @@ end
 #         EOS
 #     end
 # end
-
-if not csrf_present then
-	bash "revert CSRF plugin from Repoze config" do
-		user "#{account_name}"
-		code <<-EOS
-			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
-			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' "#{config_dir}/who.ini"
-		EOS
-	end
-end
 
 # Enable DataStore extension if desired
 if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
