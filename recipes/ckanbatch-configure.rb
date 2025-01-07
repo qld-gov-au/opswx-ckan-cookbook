@@ -74,6 +74,13 @@ file "/etc/cron.daily/prune-health-checks" do
     group "root"
 end
 
+file "/etc/cron.daily/solr-reindex" do
+    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} search-index rebuild -ieo >/dev/null 2>&1\n"
+    mode "0755"
+    owner "root"
+    group "root"
+end
+
 file "/etc/cron.d/ckan-worker" do
     content "*/5 * * * * root /usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
     mode '0644'
