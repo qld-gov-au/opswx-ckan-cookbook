@@ -149,6 +149,13 @@ end
 
 include_recipe "datashades::ckanweb-deploy-exts"
 
+# Re-run DB upgrade with plugins enabled, in case they add migration steps
+execute "Update DB schema with plugins" do
+	user service_name
+	group service_name
+	command "#{ckan_cli} db upgrade"
+end
+
 # Just in case something created files as root
 execute "Refresh virtualenv ownership round2" do
 	command "chown -RH ckan:ckan #{virtualenv_dir}"
