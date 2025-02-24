@@ -2,7 +2,7 @@
 
 APPLICATION="<%= node['datashades']['sitename'] %>"
 BUCKET="<%= node['datashades']['log_bucket'] %>"
-INSTANCE="<%= node['datashades']['hostname'] %>-<%= node['datashades']['instid'] %>"
+INSTANCE="<%= node['datashades']['app_id'] %>-<%= node['datashades']['layer'] %>-<%= node['datashades']['instid'] %>"
 SERVICE="$1"
 
 TIMESTAMP=`date +'%Y-%m-%dT%H:%M:%S_%s'`
