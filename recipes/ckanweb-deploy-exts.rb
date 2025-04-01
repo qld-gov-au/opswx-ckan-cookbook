@@ -101,8 +101,10 @@ extordering =
 	'odi_certificates' => 60,
 	'resource_visibility' => 70,
 	'ssm_config' => 80,
+	'datastore' => 80,
 	'xloader' => 85,
-	'datastore' => 80
+	'clamav' => 90,
+	's3filestore' => 95
 }
 
 installed_ordered_exts = Set[]
@@ -328,10 +330,10 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
-    if "#{pluginname}".eql? 'harvester-data-qld-geoscience'
-        harvester_data_qld_geoscience_present = true
-        #Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
-        bash "Inject geoscience_dataset if missing" do
+	if "#{pluginname}".eql? 'harvester-data-qld-geoscience'
+		harvester_data_qld_geoscience_present = true
+		#Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
+		bash "Inject geoscience_dataset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -343,8 +345,8 @@ sorted_plugin_names.each do |plugin|
 		end
     end
 
-    if "#{pluginname}".eql? 'resource-visibility'
-        bash "Inject resource-visibility scheming preset if missing" do
+	if "#{pluginname}".eql? 'resource-visibility'
+		bash "Inject resource-visibility scheming preset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -368,16 +370,31 @@ sorted_plugin_names.each do |plugin|
 
 	if "#{pluginname}".eql? 'data-qld'
 		if batchnode
-        	# Run dataset require updates notifications at 7am and 7:15am on batch
-            file "/etc/cron.d/ckan-dataset-notification-due" do
-                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
-                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
-                mode '0644'
-                owner "root"
-                group "root"
-            end
-        end
-    end
+			# Run dataset require updates notifications at 7am and 7:15am on batch
+			file "/etc/cron.d/ckan-dataset-notification-due" do
+				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
+				mode '0644'
+				owner "root"
+				group "root"
+			end
+		end
+	end
+
+	if "#{pluginname}".eql? 'clamav'
+		if not batchnode
+			package 'clamav'
+			package 'clamd'
+
+			bash "Enable Clam daemons" do
+				code <<-EOS
+					freshclam
+					systemctl enable clamav-freshclam
+					systemctl enable clamd@scan
+				EOS
+			end
+		end
+	end
 
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
