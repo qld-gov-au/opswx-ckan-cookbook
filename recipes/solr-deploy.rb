@@ -183,6 +183,13 @@ cookbook_file "/usr/local/bin/solr-sync.sh" do
 	mode "0755"
 end
 
+cookbook_file "/usr/local/bin/solr-restore-from-backup.sh" do
+	source "solr-restore-from-backup.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 cookbook_file "/etc/logrotate.d/solr" do
 	source "solr-logrotate"
 end
