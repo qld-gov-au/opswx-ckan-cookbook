@@ -132,6 +132,22 @@ service 'aws-smtp-relay' do
     action [:enable, :restart]
 end
 
+# Enable yum-cron so updates are downloaded on running nodes
+#
+service 'crond' do
+    action [:enable, :start]
+end
+
+if system('yum info yum-cron')
+    service "yum-cron" do
+        action [:enable, :start]
+    end
+else
+    execute "Enable automatic DNF updates" do
+        command "systemctl enable dnf-automatic-install.timer"
+    end
+end
+
 if system('yum info supervisor')
     service "supervisord start" do
         service_name "supervisord"

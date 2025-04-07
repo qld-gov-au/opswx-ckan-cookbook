@@ -56,11 +56,6 @@ beaker.session.cookie_domain = <%= @app_url %>
 # a config file.
 app_instance_uuid = {92aeda63-ac98-4f56-8b42-2613071039f8}
 
-# repoze.who config
-who.config_file = %(here)s/who.ini
-who.log_level = warning
-who.log_file = %(cache_dir)s/who_log.ini
-
 ## Database Settings
 sqlalchemy.url = postgresql://<%= node['datashades']['ckan_web']['dbuser'] %>:<%= node['datashades']['postgres']['password'] %>@<%= node['datashades']['version'] %>pg.<%= node['datashades']['tld'] %>/<%= node['datashades']['ckan_web']['dbname'] %>
 
@@ -97,6 +92,8 @@ ckan.auth.create_user_via_api = <%= node['datashades']['ckan_web']['auth']['crea
 ckan.auth.create_user_via_web = <%= node['datashades']['ckan_web']['auth']['create_user_via_web'] %>
 ckan.auth.roles_that_cascade_to_sub_groups = <%= node['datashades']['ckan_web']['auth']['roles_that_cascade_to_sub_groups'] %>
 ckan.auth.public_user_details = False
+ckan.auth.reveal_private_datasets = True
+ckan.auth.reveal_deleted_datasets = False
 
 ## QGOV Settings
 
@@ -125,7 +122,7 @@ ckan.redis.url = redis://<%= node['datashades']['redis']['hostname'] %>:<%= node
 #       Add ``resource_proxy`` to enable resource proxying and get around the
 #       same origin policy
 
-ckan.plugins = stats resource_proxy text_view webpage_view recline_grid_view image_view audio_view video_view recline_view recline_graph_view recline_map_view datatables_view
+ckan.plugins = stats resource_proxy text_view webpage_view image_view audio_view video_view datatables_view
 
 trak.display_pageviews = true
 
@@ -133,6 +130,8 @@ disqus.name = <%= node['datashades']['ckan_web']['disqus'] %>
 ckan.harvest.mq.type = redis
 ckan.harvest.mq.hostname = <%= node['datashades']['redis']['hostname'] %>
 ckan.harvest.mq.port = <%= node['datashades']['redis']['port'] %>
+
+urlm.app_path = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/purl_endpoint}
 
 ## QA
 qa.resource_format_openness_scores_json = <%= @src_dir %>/ckanext-data-qld/ckanext/data_qld/resource_format_openness_scores.json
@@ -164,7 +163,7 @@ ckan.gravatar_default = identicon
 ckan.preview.direct = png jpg gif
 ckan.preview.loadable = html htm rdf+xml owl+xml xml n3 n-triples turtle plain atom csv tsv rss txt json
 
-ckan.views.default_views = text_view image_view recline_view datatables_view
+ckan.views.default_views = text_view image_view datatables_view
 ckan.preview.json_formats = json
 ckan.preview.xml_formats = xml red rdf rdf+xml owl+xml atom rss xsd
 ckan.preview.text_formats = text plain text/plain
@@ -181,6 +180,16 @@ ckan.recaptcha.publickey = ${ssm:/config/CKAN/<%= node['datashades']['version'] 
 ckan.recaptcha.privatekey = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/recaptcha.privatekey}
 #licenses_group_url = http://licenses.opendefinition.org/licenses/groups/ckan.json
 # ckan.template_footer_end =
+
+# Single Sign-on
+
+ckanext.oidc_pkce.base_url = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/sso_url}
+ckanext.oidc_pkce.client_id = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_id}
+ckanext.oidc_pkce.client_secret = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/sso_client_secret}
+ckanext.oidc_pkce.auth_path = /auth
+ckanext.oidc_pkce.token_path = /token
+ckanext.oidc_pkce.userinfo_path = /userinfo
+ckanext.oidc_pkce.logout_path = /logout
 
 # Exclude AJAX from CSRF protection as it's not state-changing
 ckanext.csrf_filter.exempt_rules = [ "^/datatables/ajax/.*" ]
@@ -256,6 +265,8 @@ ckan.storage_path = /var/shared_content/<%= @app_name %>/ckan_storage
 ckan.storage.key_prefix = qgovdata-filestore
 ckan.webassets.path = /var/cache/ckan
 
+ckanext.clamav.upload_unscanned = False
+
 ## S3 Storage Settings
 
 ckanext.s3filestore.aws_use_ami_role = true
@@ -281,7 +292,7 @@ ckanext-archiver.archive_dir = /var/shared_content/<%= @app_name %>/resource_cac
 #the plan; drop this for patten /dataset/{id}/resource/{resource_id}/archive/{filename}
 ckanext-archiver.cache_url_root = /resource_cache
 ckanext-archiver.max_content_length = 250000000
-ckanext-archiver.user_agent_string = "CKAN archiver https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>"
+ckanext-archiver.user_agent_string = CKAN archiver (https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>)
 ckanext-archiver.verify_https = True
 
 ## Cache
@@ -307,6 +318,7 @@ ckanext.xloader.parse_dates_dayfirst = True
 ckanext.xloader.api_token = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/app/<%= node['datashades']['app_id'] %>/job_token}
 ckanext.xloader.use_type_guessing = True
 ckanext.xloader.clean_datastore_tables = True
+ckanext.xloader.debug_badges = True
 ckanext.xloader.queue_names = default default2
 
 

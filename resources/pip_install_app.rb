@@ -1,5 +1,5 @@
 #
-# Installs an OpsWorks app's source via pip, including dependencies.
+# Installs an app's source, including dependencies.
 # datashades_pip_install_app
 #
 # Copyright 2021, Queensland Government
@@ -34,6 +34,8 @@ action :create do
     pip = "#{new_resource.virtualenv_dir}/bin/pip --cache-dir=/tmp/"
     install_dir = "#{new_resource.virtualenv_dir}/src/#{new_resource.service_name}"
     is_git = new_resource.type.casecmp("git") == 0
+
+    log "#{DateTime.now}: Installing '#{new_resource.service_name}' and its dependencies"
 
     apprelease = new_resource.url
     apprelease = apprelease.dup if apprelease.frozen?

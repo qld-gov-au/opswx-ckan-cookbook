@@ -32,6 +32,14 @@ execute "Add instance to Solr health check pool" do
 	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
 end
 
+# Generate properties specific to this server
+template "/usr/local/bin/solr-env.sh" do
+	source "solr-env.sh.erb"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 file "/etc/cron.d/solr-healthcheck" do
 	content "* * * * * root /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n"
 	mode "0644"

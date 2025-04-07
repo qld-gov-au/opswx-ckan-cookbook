@@ -102,22 +102,6 @@ end
 #
 include_recipe "datashades::stackparams"
 
-# Enable yum-cron so updates are downloaded on running nodes
-#
-service 'crond' do
-    action [:enable, :start]
-end
-
-if system('yum info yum-cron')
-    service "yum-cron" do
-        action [:enable, :start]
-    end
-else
-    execute "Enable automatic DNF updates" do
-        command "systemctl enable dnf-automatic-install.timer"
-    end
-end
-
 # Tag the root EBS volume so we can manage it in AWS Backup etc.
 #
 bash "Tag root EBS volume" do
@@ -159,8 +143,8 @@ directory "/usr/share/aws-smtp-relay" do
     action :create
 end
 
-cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-1.0.0-jar-with-dependencies.jar" do
-    source "aws-smtp-relay-1.0.0-jar-with-dependencies.jar"
+cookbook_file "/usr/share/aws-smtp-relay/aws-smtp-relay-2.0.1-jar-with-dependencies.jar" do
+    source "aws-smtp-relay-2.0.1-jar-with-dependencies.jar"
 end
 
 template "/etc/init.d/aws-smtp-relay" do

@@ -23,6 +23,8 @@
 # Batch nodes only need a limited set of extensions for harvesting
 # Ascertain whether or not the instance deploying is a batch node
 #
+require 'json'
+
 batchnode = node['datashades']['layer'] == 'batch'
 
 account_name = "ckan"
@@ -99,8 +101,10 @@ extordering =
 	'odi_certificates' => 60,
 	'resource_visibility' => 70,
 	'ssm_config' => 80,
+	'datastore' => 80,
 	'xloader' => 85,
-	'datastore' => 80
+	'clamav' => 90,
+	's3filestore' => 95
 }
 
 installed_ordered_exts = Set[]
@@ -125,9 +129,9 @@ end
 #
 harvester_data_qld_geoscience_present = false
 archiver_present = false
+report_present = false
 resource_visibility_present = false
 harvest_present = false
-csrf_present = false
 
 # Ensure plugins that depend on others are installed last
 dependent_plugins = ['CKANExtArchiver', 'CKANExtQa', 'CKANExtHarvestDataQldGeoScience']
@@ -147,15 +151,36 @@ dependent_plugin_names.sort!
 sorted_plugin_names.concat(dependent_plugin_names)
 sorted_plugin_names.each do |plugin|
 
-	egg_name = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/shortname" --query "Parameter.Value" --output text`.strip
+	retries = 0
+	egg_name = nil
+	source_type = 'git'
+	source_revision = nil
+	source_url = nil
+	5.times do
+		plugin_parameters = `aws ssm get-parameters-by-path --region "#{node['datashades']['region']}" --recursive --path "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}" --query "Parameters[].{Name: Name, Value: Value}"`.strip
+		if not (plugin_parameters.nil? or plugin_parameters == '') then
+			JSON.parse(plugin_parameters).each do |parameter|
+				if parameter['Name'].end_with?('/shortname') then
+					egg_name = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/type') then
+					source_type = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/revision') then
+					source_revision = parameter['Value']
+				elsif parameter['Name'].end_with?('/app_source/url') then
+					source_url = parameter['Value']
+				end
+			end
+			break
+		end
+	end
 
 	# Install Extension
 	#
 
 	datashades_pip_install_app egg_name do
-		type `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/type" --query "Parameter.Value" --output text`.strip
-		revision `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/revision" --query "Parameter.Value" --output text`.strip
-		url `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/plugin_apps/#{plugin}/app_source/url" --query "Parameter.Value" --output text`.strip
+		type source_type
+		revision source_revision
+		url source_url
 	end
 
 	# Many extensions use a different name on the plugins line so these need to be managed
@@ -274,7 +299,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 				systemd_unit "ckan-worker-harvest-gather.service" do
 					content({
@@ -293,7 +318,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 			end
 
@@ -305,10 +330,10 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
-    if "#{pluginname}".eql? 'harvester-data-qld-geoscience'
-        harvester_data_qld_geoscience_present = true
-        #Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
-        bash "Inject geoscience_dataset if missing" do
+	if "#{pluginname}".eql? 'harvester-data-qld-geoscience'
+		harvester_data_qld_geoscience_present = true
+		#Add ckanext.harvester_data_qld_geoscience:geoscience_dataset.json to scheming.dataset_schemas
+		bash "Inject geoscience_dataset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -320,8 +345,8 @@ sorted_plugin_names.each do |plugin|
 		end
     end
 
-    if "#{pluginname}".eql? 'resource-visibility'
-        bash "Inject resource-visibility scheming preset if missing" do
+	if "#{pluginname}".eql? 'resource-visibility'
+		bash "Inject resource-visibility scheming preset if missing" do
 			user "#{account_name}"
 			cwd "#{config_dir}"
 			code <<-EOS
@@ -345,16 +370,31 @@ sorted_plugin_names.each do |plugin|
 
 	if "#{pluginname}".eql? 'data-qld'
 		if batchnode
-        	# Run dataset require updates notifications at 7am and 7:15am on batch
-            file "/etc/cron.d/ckan-dataset-notification-due" do
-                content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
-                        "15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
-                mode '0644'
-                owner "root"
-                group "root"
-            end
-        end
-    end
+			# Run dataset require updates notifications at 7am and 7:15am on batch
+			file "/etc/cron.d/ckan-dataset-notification-due" do
+				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
+				mode '0644'
+				owner "root"
+				group "root"
+			end
+		end
+	end
+
+	if "#{pluginname}".eql? 'clamav'
+		if not batchnode
+			package 'clamav'
+			package 'clamd'
+
+			bash "Enable Clam daemons" do
+				code <<-EOS
+					freshclam
+					systemctl enable clamav-freshclam
+					systemctl enable clamd@scan
+				EOS
+			end
+		end
+	end
 
 	if "#{pluginname}".eql? 'archiver'
 		execute "Archiver CKAN ext database init" do
@@ -394,7 +434,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 				systemd_unit "ckan-worker-priority.service" do
 					content({
@@ -413,7 +453,7 @@ sorted_plugin_names.each do |plugin|
 							WantedBy: 'multi-user.target'
 						}
 					})
-					action [:create, :enable, :start]
+					action [:create, :enable]
 				end
 			end
 
@@ -444,6 +484,17 @@ sorted_plugin_names.each do |plugin|
 			user "#{account_name}"
 			command "PASTER_PLUGIN=ckanext-report #{ckan_cli} report initdb || echo 'Ignoring expected error'"
 		end
+
+		if batchnode
+			report_present = true
+
+			file "/etc/cron.daily/refresh_reports" do
+				content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} report generate >> /var/log/ckan/ckan-report-run.log\n"
+				mode '0755'
+				owner "root"
+				group "root"
+			end
+		end
 	end
 
 	if "#{pluginname}".eql? 'datarequests'
@@ -456,14 +507,6 @@ sorted_plugin_names.each do |plugin|
 					#{ckan_cli} datarequests update-db
 				fi
 			EOS
-		end
-	end
-
-	if "#{pluginname}".eql? 'csrf-filter'
-		csrf_present = true
-		execute "set CSRF plugin in Repoze config" do
-			user "#{account_name}"
-			command "sed -i 's|^\\(use\s*=\\)\\(.*:FriendlyFormPlugin\\)|#\\1\\2\\n\\1 ckanext.csrf_filter.token_protected_friendlyform:TokenProtectedFriendlyFormPlugin|g' #{config_dir}/who.ini"
 		end
 	end
 
@@ -527,6 +570,12 @@ if not resource_visibility_present then
 	end
 end
 
+if not report_present then
+	execute "Clean Report cron" do
+		command "rm -f /etc/cron.daily/refresh_reports*"
+	end
+end
+
 if not harvest_present then
 	if system('yum info supervisor')
 		execute "Clean Harvest supervisor config" do
@@ -558,16 +607,6 @@ end
 #         EOS
 #     end
 # end
-
-if not csrf_present then
-	bash "revert CSRF plugin from Repoze config" do
-		user "#{account_name}"
-		code <<-EOS
-			sed -i 's/^\\(use\\s*=ckanext[.]csrf_filter[.]token_protected_friendlyform:TokenProtectedFriendlyFormPlugin\\)/#\\1/g' #{config_dir}/who.ini
-			sed -i 's/^#\\(use\\s*=.*:FriendlyFormPlugin\\)/\\1/g' "#{config_dir}/who.ini"
-		EOS
-	end
-end
 
 # Enable DataStore extension if desired
 if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then

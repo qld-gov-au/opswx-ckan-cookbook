@@ -155,13 +155,6 @@ cookbook_file '/bin/updatedns' do
 	mode '0755'
 end
 
-template "/usr/local/bin/solr-env.sh" do
-	source "solr-env.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
-end
-
 cookbook_file "/usr/local/bin/solr-healthcheck.sh" do
 	source "solr-healthcheck.sh"
 	owner "root"
@@ -185,6 +178,13 @@ end
 
 cookbook_file "/usr/local/bin/solr-sync.sh" do
 	source "solr-sync.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
+cookbook_file "/usr/local/bin/solr-restore-from-backup.sh" do
+	source "solr-restore-from-backup.sh"
 	owner "root"
 	group "root"
 	mode "0755"
@@ -267,10 +267,20 @@ service service_name do
     action [:stop]
 end
 bash "Copy latest index from EFS" do
+    user account_name
     code <<-EOS
         rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
-        LATEST_INDEX=`ls -dtr #{efs_data_dir}/data/#{core_name}/data/snapshot.* |tail -1`
-        rsync $LATEST_INDEX/ #{real_data_dir}/data/#{core_name}/data/index/
+        CORE_DATA="#{real_data_dir}/data/#{core_name}/data"
+        LATEST_INDEX=`ls -dtr $CORE_DATA/snapshot.* |tail -1`
+        # If the latest snapshot is a readable tar archive, then import it.
+        # If not, then it's either a directory (obsolete) or malformed, so ignore it.
+        if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
+            mkdir -p "$CORE_DATA/index"
+            # remove the index.properties file so default index config is used
+            rm -f $CORE_DATA/index.properties
+            # wipe old index files if any, and unpack the archived index
+            rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
+        fi
     EOS
     only_if { ::File.directory? efs_data_dir }
 end

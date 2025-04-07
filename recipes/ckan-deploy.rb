@@ -76,10 +76,10 @@ log "#{DateTime.now}: Installing pinned dependencies for CKAN"
 
 # #pyOpenSSL 22.0.0 (2022-01-29) - dropped py2 support but has issues on py3 which stops harvester working
 # #pyOpenSSL 23.0.0 (2023-01-01) - required due to harvest:  Error: HTTP general exception: module 'lib' has no attribute 'SSL_CTX_set_ecdh_auto'
-execute "Pin pip versions" do
+execute "Pin dependency versions" do
 	user service_name
 	group service_name
-	command "#{virtualenv_dir}/bin/pip install 'setuptools>=44.1.0' 'pyOpenSSL>=23.0.0'"
+	command "#{pip} install 'setuptools>=44.1.0,<71' 'pyOpenSSL>=23.0.0'"
 end
 
 log "#{DateTime.now}: Installing CKAN source"
@@ -121,11 +121,6 @@ cookbook_file "#{virtualenv_dir}/bin/activate_this.py" do
 	mode "0755"
 end
 
-link "#{config_dir}/who.ini" do
-	to "#{install_dir}/who.ini"
-	link_type :symbolic
-end
-
 #
 # Initialise data
 #
@@ -153,6 +148,13 @@ bash "Create CKAN Admin user" do
 end
 
 include_recipe "datashades::ckanweb-deploy-exts"
+
+# Re-run DB upgrade with plugins enabled, in case they add migration steps
+execute "Update DB schema with plugins" do
+	user service_name
+	group service_name
+	command "#{ckan_cli} db upgrade"
+end
 
 # Just in case something created files as root
 execute "Refresh virtualenv ownership round2" do

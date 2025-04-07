@@ -120,13 +120,6 @@ cookbook_file "/usr/local/bin/archive-resource-revisions.sh" do
     mode "0755"
 end
 
-template "/usr/local/bin/pick-job-server.sh" do
-    source "pick-job-server.sh.erb"
-    owner "root"
-    group "root"
-    mode "0755"
-end
-
 template "/usr/local/bin/ckan-email-notifications.sh" do
     source "ckan-email-notifications.sh.erb"
     owner "root"
@@ -157,4 +150,34 @@ template "/usr/local/bin/ckan-monitor-job-queue.sh" do
     owner 'root'
     group 'root'
     mode '0755'
+end
+
+# Set up useful scripts for support staff
+
+cookbook_file "/usr/local/bin/psql-env-ckan.sh" do
+    source "psql-env-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/psql-ckan.sh" do
+    source "psql-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/pgdump-ckan.sh" do
+    source "pgdump-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
+end
+
+cookbook_file "/usr/local/bin/pgrestore-ckan.sh" do
+    source "pgrestore-ckan.sh"
+    owner "root"
+    group "root"
+    mode "0644"
 end

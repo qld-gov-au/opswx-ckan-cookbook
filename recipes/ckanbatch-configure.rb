@@ -25,6 +25,24 @@ if not system('yum info supervisor')
     service "ckan-worker" do
         action [:enable, :start]
     end
+
+    bash "Enable extra job queues if available" do
+        code <<-EOS
+            UNITS="ckan-worker-priority ckan-worker-bulk ckan-worker-harvest-fetch ckan-worker-harvest-gather"
+            for UNIT_NAME in $UNITS; do
+                if (systemctl -a |grep "$UNIT_NAME"); then
+                    systemctl start "$UNIT_NAME"
+                fi
+            done
+        EOS
+    end
+end
+
+template "/usr/local/bin/pick-job-server.sh" do
+    source "pick-job-server.sh.erb"
+    owner "root"
+    group "root"
+    mode "0755"
 end
 
 # Run tracking update at 8:30am everywhere
@@ -45,6 +63,20 @@ end
 file "/etc/cron.daily/ckan-revision-archival" do
     content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n"
     mode '0755'
+    owner "root"
+    group "root"
+end
+
+file "/etc/cron.daily/prune-health-checks" do
+    content "/usr/local/bin/pick-job-server.sh && find /data -maxdepth 1 -name '*-healthcheck_*' -mmin '+60' -execdir rm '{}' ';' >/dev/null 2>&1\n"
+    mode "0755"
+    owner "root"
+    group "root"
+end
+
+file "/etc/cron.daily/solr-reindex" do
+    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} search-index rebuild -ieo >/dev/null 2>&1\n"
+    mode "0755"
     owner "root"
     group "root"
 end

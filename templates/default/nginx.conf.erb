@@ -61,19 +61,6 @@
             # Rewrite to remove locale
             rewrite (?i)^/(a[fmrsz]|b[egnos]|c[asy]|d[aev]|e[lnstu]|f[aior]|g[dlnu]|h[eiruy]|i[dst]|ja|k[akmnos]|l[aotv]|m[iklnrsty]|n[elo]|or|p[alt]|r[mou]|s[abdikloqrvw]|sr_Latn|t[aeghklnrst]|u[krz]|vi|xh|yi|z[hu])(_[A-Z][A-Z])?(/.*) $3 permanent;
 
-            # redirect 'group' URLs to organisations
-            rewrite ^/group/(aboriginal-and-torres-strait-islander-and-multicultural-affairs|agriculture-fisheries-and-forestry|communities-child-safety-and-disability-services|crime-and-misconduct-commission-queensland|education-training-and-employment|energy-and-water-supply|environment-and-heritage-protection|housing-and-public-works|justice-and-attorney-general|local-government-community-recovery-and-resilience|national-parks-recreation-sport-and-racing|natural-resources-and-mines|police|premier-and-cabinet|public-safety-business-agency|queensland-fire-and-emergency-services|queensland-health|science-information-technology-innovation-and-the-arts|state-development-infrastructure-and-planning|tourism-major-events-small-business-and-the-commonwealth-games|transport-and-main-roads|treasury-and-trade) /organization/$1 permanent;
-
-            # MoG changes
-            rewrite ^/organization/aboriginal-and-torres-strait-islander-and-multicultural-affairs /organization/aboriginal-and-torres-strait-islander-partnerships permanent;
-            rewrite ^/organization/agriculture-fisheries-and-forestry /organization/agriculture-and-fisheries permanent;
-            rewrite ^/organization/education-and-employment /organization/education-and-training permanent;
-            rewrite ^/organization/local-government-community-recovery-and-resilience /organization/infrastructure-local-government-and-planning permanent;
-            rewrite ^/organization/national-parks-recreation-sport-and-racing /organization/national-parks-sport-and-racing permanent;
-            rewrite ^/organization/treasury-and-trade /organization/treasury permanent;
-            rewrite ^/organization/science-information-technology-innovation-and-the-arts /organization/science-information-technology-and-innovation permanent;
-            rewrite ^/organization/state-development-infrastructure-and-planning /organization/state-development permanent;
-
             # Require site to be served over HTTPS
             add_header Strict-Transport-Security "max-age=31536000" always;
 

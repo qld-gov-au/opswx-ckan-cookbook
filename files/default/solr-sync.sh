@@ -7,7 +7,8 @@ set -x
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME"
-SYNC_SNAPSHOT="$SYNC_DIR/$SNAPSHOT_NAME"
+SYNC_SNAPSHOT="$SYNC_DIR/${SNAPSHOT_NAME}.tgz"
+OVERRIDE_SNAPSHOT="$SYNC_DIR/override-snapshot.$CORE_NAME.tgz"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -52,18 +53,26 @@ function export_snapshot () {
   if [ "$REPLICATION_STATUS" != "0" ]; then
     return $REPLICATION_STATUS
   fi
-  sudo -u solr sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && rsync -a --delete $LOCAL_SNAPSHOT/ $SYNC_SNAPSHOT/" || return 1
+  sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && sudo -u solr tar --force-local --exclude=write.lock -czf $SYNC_SNAPSHOT -C $LOCAL_SNAPSHOT ." || return 1
 }
 
 function import_snapshot () {
+  if [ -e "$OVERRIDE_SNAPSHOT" ]; then
+    SYNC_SNAPSHOT="$OVERRIDE_SNAPSHOT"
+  fi
   # Give the master time to update the sync copy
   for i in $(eval echo "{1..40}"); do
-    if [ -f "$SYNC_SNAPSHOT/write.lock" ]; then
-      sudo -u solr rm -r $LOCAL_DIR/snapshot.$CORE_NAME-*
-      sudo -u solr rsync -a --delete "$SYNC_SNAPSHOT/" "$LOCAL_SNAPSHOT/" || exit 1
-      rm $LOCAL_SNAPSHOT/write.lock
-      curl "$HOST/$CORE_NAME/replication?command=restore&location=$LOCAL_DIR&name=$BACKUP_NAME"
-      return 1
+    # If the snapshot is a readable tar archive, then import it.
+    # Ignore it if it's missing or malformed.
+    if (tar tzf "$SYNC_SNAPSHOT" >/dev/null 2>&1); then
+      sudo service solr stop
+      sudo -u solr mkdir $DATA_DIR/index
+      # Wipe old index files if any, and unpack the archived index.
+      # Fail the whole import if we can't.
+      rm -f $DATA_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $DATA_DIR/index || exit 1
+      sudo systemctl start solr
+      rm -f $STARTUP_FILE
+      return 0
     else
       sleep 5
     fi
@@ -89,6 +98,10 @@ if (/usr/local/bin/pick-solr-master.sh); then
   for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
     sudo -u solr rm -r "$old_snapshot"
   done
+  # Remove override snapshot once all servers have consumed it
+  if ! (ls /data/solr-healthcheck-*.start); then
+    rm -f $OVERRIDE_SNAPSHOT
+  fi
   # Drop this server from being master if export failed
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
@@ -100,9 +113,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
 
   # Hourly backup to S3
   if [ "$MINUTE" = "00" ]; then
-    cd "$LOCAL_DIR"
-    tar --force-local -czf "$SNAPSHOT_NAME.tgz" "$SNAPSHOT_NAME"
-    aws s3 mv "$SNAPSHOT_NAME.tgz" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
+    aws s3 cp "$SYNC_SNAPSHOT" "s3://$BUCKET/solr_backup/$CORE_NAME/" --expires $(date -d '30 days' --iso-8601=seconds)
   fi
 else
   # make traffic come to this instance only as a backup option
@@ -111,5 +122,5 @@ else
 fi
 OLD_SNAPSHOTS=$(ls -d $LOCAL_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME")
 if [ "$OLD_SNAPSHOTS" != "" ]; then
-    sudo -u solr rm -r $OLD_SNAPSHOTS
+  sudo -u solr rm -r $OLD_SNAPSHOTS
 fi
