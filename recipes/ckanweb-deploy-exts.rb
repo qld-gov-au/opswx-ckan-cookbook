@@ -383,12 +383,18 @@ sorted_plugin_names.each do |plugin|
 
 	if "#{pluginname}".eql? 'clamav'
 		if not batchnode
-			package 'clamav'
-			package 'clamd'
+			package 'clam' do
+				package_name ['clamav', 'clamav-update', 'clamd']
+			end
 
 			bash "Enable Clam daemons" do
 				code <<-EOS
 					freshclam
+					# Default clamd config doesn't enable any socket and will therefore fail
+					CLAMD_CONFIG=$(ls /etc/clamd.d/*.conf |head 1)
+					sed -i 's|^#LocalSocket |LocalSocket /var/run/clamd.scan/clamd.ctl|g' $CLAMD_CONFIG
+					sed -i 's|^#LocalSocketMode |LocalSocketMode 660|g' $CLAMD_CONFIG
+
 					systemctl enable clamav-freshclam
 					systemctl enable clamd@scan
 				EOS
