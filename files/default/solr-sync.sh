@@ -77,6 +77,7 @@ function import_snapshot () {
       sleep 5
     fi
   done
+  rm -f $STARTUP_FILE
   echo "Snapshot did not become available for import: $SYNC_SNAPSHOT"
   return 1
 }
@@ -106,7 +107,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
       echo "Export failed; assume server is unhealthy"
-      touch $HEARTBEAT_FILE.start
+      touch $STARTUP_FILE
     fi
     exit 1
   fi
