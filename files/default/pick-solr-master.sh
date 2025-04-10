@@ -8,25 +8,17 @@ function is_healthy() {
   HEALTH_FILE=$1
   IGNORE_STARTUP=$2
   if [ ! -e "$HEALTH_FILE" ]; then
-    HEALTHY=1
-  else
-    HEALTH_TIME=$(cat $1 | tr -d '[:space:]')
-    if [ "$HEALTH_TIME" = "" ]; then
-      HEALTHY=1
-    else
-      AGE=$(expr $NOW - $HEALTH_TIME)
-      HEALTHY=$(expr $AGE '>' $MAX_AGE)
-    fi
-    # clean up redundant "secondary" markers on servers that aren't active
-    if [ "$HEALTHY" = "0" ]; then
-      if [ -e "$HEALTH_FILE.start" ]; then
-        HEALTHY=1
-      fi
-    else
-      rm -f $HEALTH_FILE.start
-    fi
+    return 1
   fi
-  return $HEALTHY
+  if [ -e "$HEALTH_FILE.start" ] && [ "$IGNORE_STARTUP" != "true" ]; then
+    return 1
+  fi
+  HEALTH_TIME=$(cat $1 | tr -d '[:space:]')
+  if [ "$HEALTH_TIME" = "" ]; then
+    return 1
+  fi
+  AGE=$(expr $NOW - $HEALTH_TIME)
+  return $(expr $AGE '>' $MAX_AGE)
 }
 
 NOW=$(date +'%s')
@@ -39,4 +31,12 @@ for health_check_file in $HEALTH_CHECK_FILES; do
     SELECTED_SERVER="$health_check_file"
   fi
 done
+# if we have no master, try grabbing one that's only passed a single health check
+if [ "$SELECTED_SERVER" = "" ]; then
+  for health_check_file in $HEALTH_CHECK_FILES; do
+    if is_healthy "$health_check_file" true; then
+      SELECTED_SERVER="$health_check_file"
+    fi
+  done
+fi
 exit $([ "$SELECTED_SERVER" = "${HEALTH_CHECK_PREFIX}$opsworks_hostname" ])

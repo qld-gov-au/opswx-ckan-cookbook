@@ -7,7 +7,7 @@ set +o pipefail
 
 # Only update heartbeat if it is present.
 # This allows us to manually drop a server from the pool
-if [ -e "$STARTUP_FILE" ] || ! [ -e "$HEARTBEAT_FILE" ]; then
+if ! [ -e "$HEARTBEAT_FILE" ]; then
   exit 0
 fi
 
@@ -26,6 +26,8 @@ else
   AGE=$(expr $CURRENT_TIME - $PREVIOUS_HEALTH_TIME)
   IS_HEALTHY=$(expr $AGE '>' $MAX_AGE)
 fi
-if [ "$IS_HEALTHY" != "0" ]; then
+if [ "$IS_HEALTHY" = "0" ]; then
+  rm -f $STARTUP_FILE
+else
   touch $STARTUP_FILE
 fi
