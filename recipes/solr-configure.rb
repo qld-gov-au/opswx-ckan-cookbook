@@ -23,10 +23,8 @@
 include_recipe "datashades::default-configure"
 
 service_name = 'solr'
-
-service service_name do
-	action [:enable, :start]
-end
+efs_data_dir = "/data/#{service_name}"
+core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 
 execute "Add instance to Solr health check pool" do
 	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
@@ -45,10 +43,28 @@ file "/etc/cron.d/solr-healthcheck" do
 	mode "0644"
 end
 
-# synchronise Solr cores via EFS
-file "/etc/cron.d/solr-sync" do
-	content "*/5 * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
-	mode "0644"
+# copy latest EFS contents
+service "Stop Solr if needed to load latest index" do
+	service_name service_name
+	action [:stop]
+end
+bash "Copy latest index from EFS" do
+	user account_name
+	code <<-EOS
+		rsync -a --delete #{efs_data_dir}/ /var/#{service_name}
+		CORE_DATA="/var/#{service_name}/data/#{core_name}/data"
+		LATEST_INDEX=`ls -dtr $CORE_DATA/snapshot.* |tail -1`
+		# If the latest snapshot is a readable tar archive, then import it.
+		# If not, then it's either a directory (obsolete) or malformed, so ignore it.
+		if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
+			mkdir -p "$CORE_DATA/index"
+			# remove the index.properties file so default index config is used
+			rm -f $CORE_DATA/index.properties
+			# wipe old index files if any, and unpack the archived index
+			rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
+		fi
+	EOS
+	only_if { ::File.directory? efs_data_dir }
 end
 
 # Add DNS entry for service host
@@ -68,3 +84,8 @@ bash "Add #{service_name} DNS entry" do
 		echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
 	EOS
 end
+
+service service_name do
+	action [:enable, :start]
+end
+

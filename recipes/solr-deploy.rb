@@ -255,27 +255,8 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-# copy latest EFS contents
 service service_name do
     action [:stop]
-end
-bash "Copy latest index from EFS" do
-    user account_name
-    code <<-EOS
-        rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
-        CORE_DATA="#{real_data_dir}/data/#{core_name}/data"
-        LATEST_INDEX=`ls -dtr $CORE_DATA/snapshot.* |tail -1`
-        # If the latest snapshot is a readable tar archive, then import it.
-        # If not, then it's either a directory (obsolete) or malformed, so ignore it.
-        if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
-            mkdir -p "$CORE_DATA/index"
-            # remove the index.properties file so default index config is used
-            rm -f $CORE_DATA/index.properties
-            # wipe old index files if any, and unpack the archived index
-            rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
-        fi
-    EOS
-    only_if { ::File.directory? efs_data_dir }
 end
 
 datashades_move_and_link(var_data_dir) do
@@ -291,13 +272,3 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
-
-if system('yum info supervisor')
-    execute "Start Solr" do
-        command "supervisorctl start 'solr:*'"
-    end
-else
-    execute "Start Solr" do
-        command "systemctl start solr"
-    end
-end
