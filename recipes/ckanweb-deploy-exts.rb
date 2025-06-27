@@ -83,7 +83,8 @@ extextras =
 #
 extordering =
 {
-	'data_qld data_qld_google_analytics' => 1,
+	'datastore' => 1,
+	'data_qld data_qld_google_analytics' => 3,
 	'dcat structured_data' => 5,
 	'validation' => 10,
 	'resource_type_validation' => 20,
@@ -101,7 +102,6 @@ extordering =
 	'odi_certificates' => 60,
 	'resource_visibility' => 70,
 	'ssm_config' => 80,
-	'datastore' => 80,
 	'xloader' => 85,
 	'clamav' => 90,
 	's3filestore' => 95
