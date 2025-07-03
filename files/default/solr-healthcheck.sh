@@ -5,18 +5,17 @@ set +o pipefail
 
 . `dirname $0`/solr-env.sh
 
-MAX_AGE=120
-
-is_ping_healthy () {
-  (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
-}
-
 # Only update heartbeat if it is present.
 # This allows us to manually drop a server from the pool
 if ! [ -e "$HEARTBEAT_FILE" ]; then
   exit 0
 fi
 
+is_ping_healthy () {
+  (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
+}
+
+MAX_AGE=120
 CURRENT_TIME=$(date +%s)
 is_ping_healthy || exit 1
 PREVIOUS_HEALTH_TIME=$(cat $HEARTBEAT_FILE | tr -d '[:space:]')

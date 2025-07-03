@@ -28,3 +28,12 @@ if not system('yum info supervisor')
         action [:enable, :start]
     end
 end
+
+bash "Start Clam daemons" do
+    code <<-EOS
+        if (which freshclam); then
+            systemctl start clamav-freshclam
+            systemctl start clamd@scan
+        fi
+    EOS
+end
