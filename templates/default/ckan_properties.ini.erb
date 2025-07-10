@@ -145,6 +145,7 @@ googleanalytics_resource_prefix = /downloads/
 googleanalytics.domain = auto
 
 ckan.data_qld_googleanalytics.id = <%= node['datashades']['ckan_web']['google']['analytics_id'] %>
+ckanext.data_qld_googleanalytics.Ga4Id = {{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4MeasurementId}}
 ckan.data_qld_googleanalytics.collection_url = http://www.google-analytics.com/collect
 ckanext.data_qld_googleanalytics.ga4_collection_url = https://www.google-analytics.com/mp/collect?api_secret={{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4ApiSecret}}&measurement_id={{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4MeasurementId}}
 
