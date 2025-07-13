@@ -49,7 +49,7 @@ service "Stop Solr if needed to load latest index" do
 	action [:stop]
 end
 bash "Copy latest index from EFS" do
-	user account_name
+	user service_name
 	code <<-EOS
 		rsync -a --delete #{efs_data_dir}/ /var/#{service_name}
 		CORE_DATA="/var/#{service_name}/data/#{core_name}/data"
