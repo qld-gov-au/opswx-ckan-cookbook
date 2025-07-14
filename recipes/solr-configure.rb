@@ -43,13 +43,19 @@ file "/etc/cron.d/solr-healthcheck" do
 	mode "0644"
 end
 
+# synchronise Solr cores via EFS
+file "/etc/cron.d/solr-sync" do
+	content "*/5 * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
+	mode "0644"
+end
+
 # copy latest EFS contents
 service "Stop Solr if needed to load latest index" do
 	service_name service_name
 	action [:stop]
 end
 bash "Copy latest index from EFS" do
-	user account_name
+	user service_name
 	code <<-EOS
 		rsync -a --delete #{efs_data_dir}/ /var/#{service_name}
 		CORE_DATA="/var/#{service_name}/data/#{core_name}/data"
