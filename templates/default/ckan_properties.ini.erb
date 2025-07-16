@@ -145,7 +145,8 @@ googleanalytics_resource_prefix = /downloads/
 googleanalytics.domain = auto
 
 ckanext.data_qld_googleanalytics.Ga4Id = {{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4MeasurementId}}
-ckanext.data_qld_googleanalytics.ga4_collection_url = https://www.google-analytics.com/mp/collect?api_secret={{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4ApiSecret}}&measurement_id={{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4MeasurementId}}
+ckanext.data_qld_googleanalytics.Ga4ApiSecret = {{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4ApiSecret}}
+ckanext.data_qld_googleanalytics.ga4_collection_url = https://www.google-analytics.com/mp/collect
 
 ## ckanext-data-qld Reporting
 ckan.reporting.datarequest_open_max_days = 60
