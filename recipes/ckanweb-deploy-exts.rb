@@ -125,6 +125,26 @@ bash "Install NPM and NodeJS" do
 	EOS
 end
 
+# Enable DataStore extension if desired
+if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
+	bash "Enable DataStore-related extensions" do
+		user "ckan"
+		cwd "#{config_dir}"
+		code <<-EOS
+			if [ -z  "$(grep 'ckan.plugins.*datastore' #{config_file})" ]; then
+				sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
+			fi
+		EOS
+	end
+
+	cookbook_file "#{config_dir}/allowed_functions.txt" do
+		source 'allowed_functions.txt'
+		owner "#{account_name}"
+		group "#{account_name}"
+		mode "0755"
+	end
+end
+
 # Do the actual extension installation using pip
 #
 harvester_data_qld_geoscience_present = false
@@ -613,26 +633,6 @@ end
 #         EOS
 #     end
 # end
-
-# Enable DataStore extension if desired
-if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
-	bash "Enable DataStore-related extensions" do
-		user "ckan"
-		cwd "#{config_dir}"
-		code <<-EOS
-			if [ -z  "$(grep 'ckan.plugins.*datastore' #{config_file})" ]; then
-				sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
-			fi
-		EOS
-	end
-
-	cookbook_file "#{config_dir}/allowed_functions.txt" do
-		source 'allowed_functions.txt'
-		owner "#{account_name}"
-		group "#{account_name}"
-		mode "0755"
-	end
-end
 
 bash "Enable Activity Streams extension on CKAN 2.10+" do
 	user "#{account_name}"
