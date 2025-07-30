@@ -33,6 +33,6 @@ sh `dirname $0`/solr-healthcheck.sh
 sh `dirname $0`/solr-sync.sh
 
 # Allow other servers, if any, to re-enter the pool
-if `ls /tmp/solr-healthcheck_*`; then
+if (ls /tmp/solr-healthcheck_*); then
     mv /tmp/solr-healthcheck_* /data/;
 fi
