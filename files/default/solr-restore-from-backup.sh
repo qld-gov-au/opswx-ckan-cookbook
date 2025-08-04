@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "$(id -ru)" != "0" ]; then
+if [ "$(whoami)" != "root" ]; then
     echo "$0 must be run as root"
     exit 1
 fi

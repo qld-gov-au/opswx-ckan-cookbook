@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "$(id -ru)" != "0" ] || [ "$#" -lt 1 ]; then
+if [ "$(whoami)" != "root" ] || [ "$#" -lt 1 ]; then
     echo "Usage: $0 <archive path>" >&2
     echo "$0 must be run as root"
     exit 1
