@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ "$(id -ru)" != "0" ]; then
+    echo "$0 must be run as root"
+    exit 1
+fi
+
 . `dirname $0`/solr-env.sh
 
 LATEST_BACKUP=$(aws s3 ls "s3://$BUCKET/solr_backup/$CORE_NAME/" |awk '{print $4}' |sort |tail -1)
@@ -33,6 +38,6 @@ sh `dirname $0`/solr-healthcheck.sh
 sh `dirname $0`/solr-sync.sh
 
 # Allow other servers, if any, to re-enter the pool
-if (ls /tmp/solr-healthcheck_*); then
+if (ls /tmp/ | grep 'solr-healthcheck_'); then
     mv /tmp/solr-healthcheck_* /data/;
 fi
