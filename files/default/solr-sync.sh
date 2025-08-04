@@ -71,10 +71,6 @@ if (/usr/local/bin/pick-solr-master.sh); then
 
   # Export a snapshot of the index
   export_snapshot; EXPORT_STATUS=$?
-  # Remove old snapshots
-  for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
-    sudo -u solr rm -r "$old_snapshot"
-  done
   # Drop this server from being master if export failed
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
