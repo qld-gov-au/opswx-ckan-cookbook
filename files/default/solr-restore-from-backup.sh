@@ -26,4 +26,4 @@ fi
 sudo -u solr aws s3 cp "s3://$BUCKET/solr_backup/$CORE_NAME/$LATEST_BACKUP" $LOCAL_DIR/override-snapshot.$CORE_NAME.tgz || exit 1
 
 # Import index into current server
-sh `dirname $0`/solr-import-backup.sh $SYNC_DIR/override-snapshot.$CORE_NAME.tgz
+sh `dirname $0`/solr-import-backup.sh $LOCAL_DIR/override-snapshot.$CORE_NAME.tgz
