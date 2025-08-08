@@ -51,7 +51,6 @@ end
 
 # copy latest exported snapshot
 bash "Copy latest index from export" do
-	user service_name
 	code <<-EOS
 		/usr/local/bin/solr-restore-from-backup.sh || echo "WARNING: Solr index could not be loaded from S3"
 	EOS
