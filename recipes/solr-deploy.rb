@@ -66,6 +66,7 @@ solr_path = "/opt/solr"
 installed_solr_version = "#{solr_path}-#{solr_version}"
 solr_environment_file = "/etc/default/solr.in.sh"
 
+# run Solr install if we're not already using the target version
 unless ::File.identical?(installed_solr_version, solr_path)
     solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
     if extra_disk_present then
