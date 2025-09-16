@@ -392,8 +392,8 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			# Run dataset require updates notifications at 7am and 7:15am on batch
 			file "/etc/cron.d/ckan-dataset-notification-due" do
-				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
-						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
+				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
 				mode '0644'
 				owner "root"
 				group "root"
