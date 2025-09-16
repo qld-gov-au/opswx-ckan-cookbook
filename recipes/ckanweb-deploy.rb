@@ -157,3 +157,14 @@ template "#{nginx_config_file}" do
 end
 
 node.default['datashades']['auditd']['rules'].push("/etc/nginx/conf.d/#{node['datashades']['sitename']}-#{app['shortname']}.conf")
+
+template "/usr/local/bin/ckan-selfinfo_collect.sh" do
+    source "ckan-selfinfo_collect.sh.erb"
+    owner "root"
+    group "root"
+    mode "0755"
+    variables({
+        :app_name => app['shortname'],
+        :app_url => node['datashades']['ckan_web']['site_domain']
+    })
+end
