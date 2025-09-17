@@ -297,6 +297,17 @@ ckanext-archiver.max_content_length = 250000000
 ckanext-archiver.user_agent_string = CKAN archiver (https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>)
 ckanext-archiver.verify_https = True
 
+ckan.selfinfo.redis_prefix_key = <%= node['datashades']['app_id'] %>
+ckan.selfinfo.page_url = /ckan-admin/selfinfo
+ckan.selfinfo.main_action_name = get_selfinfo
+ckan.selfinfo.partitions = / /mnt/local_data
+ckan.selfinfo.errors_limit = 40
+ckan.selfinfo.ckan_repos_path = /usr/lib/ckan/default/src
+# Needed for multi server environments
+ckan.selfinfo.duplicated_envs.mode = True
+#25200 7 days
+ckan.selfinfo.additional_profiles_expire_time = 25200
+
 ## Cache
 ckan.cache_enabled = True
 ckan.static_max_age = 1800

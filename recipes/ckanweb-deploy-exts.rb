@@ -52,7 +52,8 @@ extnames =
 	'datajson' => 'datajson datajson_harvest',
 	'harvest' => 'harvest ckan_harvester',
 	'spatial' => 'spatial_metadata spatial_query',
-	'zippreview' => 'zip_view'
+	'zippreview' => 'zip_view',
+	'selfinfo ' => 'selfinfo'
 }
 
 # Hash to add plugin to default_views line
@@ -104,7 +105,8 @@ extordering =
 	'ssm_config' => 80,
 	'xloader' => 85,
 	'clamav' => 90,
-	's3filestore' => 95
+	's3filestore' => 95,
+	'selfinfo' => 100
 }
 
 installed_ordered_exts = Set[]
