@@ -37,11 +37,3 @@ bash "Start Clam daemons" do
         fi
     EOS
 end
-
-
-file "/etc/cron.hourly/ckan-selfinfo-collect" do
-    content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
-end

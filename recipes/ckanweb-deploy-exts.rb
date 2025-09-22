@@ -553,6 +553,25 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
+    if "#{pluginname}".eql? 'selfinfo' then
+        template "/usr/local/bin/ckan-selfinfo_collect.sh" do
+            source "ckan-selfinfo_collect.sh.erb"
+            owner "root"
+            group "root"
+            mode "0755"
+            variables({
+                :app_name => app['shortname'],
+                :app_url => node['datashades']['ckan_web']['site_domain']
+            })
+        end
+        file "/etc/cron.hourly/ckan-selfinfo-collect" do
+            content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
+            mode '0755'
+            owner "root"
+            group "root"
+        end
+    end
+
 	# Install any additional pip packages required
 	#
 	if extextras.has_key? pluginname

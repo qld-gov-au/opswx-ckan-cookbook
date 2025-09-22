@@ -112,17 +112,6 @@ template "/usr/local/bin/ckan-email-notifications.sh" do
     })
 end
 
-template "/usr/local/bin/ckan-selfinfo_collect.sh" do
-    source "ckan-selfinfo_collect.sh.erb"
-    owner "root"
-    group "root"
-    mode "0755"
-    variables({
-        :app_name => app['shortname'],
-        :app_url => node['datashades']['ckan_web']['site_domain']
-    })
-end
-
 template "/usr/local/bin/redis-clear.py" do
     source "redis-clear.py.erb"
     owner "root"
