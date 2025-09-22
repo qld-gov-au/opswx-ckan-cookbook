@@ -52,7 +52,8 @@ extnames =
 	'datajson' => 'datajson datajson_harvest',
 	'harvest' => 'harvest ckan_harvester',
 	'spatial' => 'spatial_metadata spatial_query',
-	'zippreview' => 'zip_view'
+	'zippreview' => 'zip_view',
+	'selfinfo ' => 'selfinfo'
 }
 
 # Hash to add plugin to default_views line
@@ -104,7 +105,8 @@ extordering =
 	'ssm_config' => 80,
 	'xloader' => 85,
 	'clamav' => 90,
-	's3filestore' => 95
+	's3filestore' => 95,
+	'selfinfo' => 100
 }
 
 installed_ordered_exts = Set[]
@@ -550,6 +552,25 @@ sorted_plugin_names.each do |plugin|
 			EOS
 		end
 	end
+
+    if "#{pluginname}".eql? 'selfinfo' then
+        template "/usr/local/bin/ckan-selfinfo_collect.sh" do
+            source "ckan-selfinfo_collect.sh.erb"
+            owner "root"
+            group "root"
+            mode "0755"
+            variables({
+                :app_name => app['shortname'],
+                :app_url => node['datashades']['ckan_web']['site_domain']
+            })
+        end
+        file "/etc/cron.hourly/ckan-selfinfo-collect" do
+            content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
+            mode '0755'
+            owner "root"
+            group "root"
+        end
+    end
 
 	# Install any additional pip packages required
 	#
