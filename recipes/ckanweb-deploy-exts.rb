@@ -551,6 +551,22 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
+	if "#{pluginname}".eql? 'selfinfo' then
+		ckan_cookbook "/usr/local/bin/ckan-selfinfo_collect.sh" do
+			source "ckan-selfinfo_collect.sh"
+			owner "root"
+			group "root"
+			mode "0755"
+		end
+
+		file "/etc/cron.hourly/ckan-selfinfo-collect" do
+			content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
+			mode '0755'
+			owner "root"
+			group "root"
+		end
+	end
+
 	# Install any additional pip packages required
 	#
 	if extextras.has_key? pluginname
