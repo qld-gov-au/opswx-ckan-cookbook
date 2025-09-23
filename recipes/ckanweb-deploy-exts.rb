@@ -559,11 +559,8 @@ sorted_plugin_names.each do |plugin|
             owner "root"
             group "root"
             mode "0755"
-            variables({
-                :app_name => app['shortname'],
-                :app_url => node['datashades']['ckan_web']['site_domain']
-            })
         end
+
         file "/etc/cron.hourly/ckan-selfinfo-collect" do
             content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
             mode '0755'
