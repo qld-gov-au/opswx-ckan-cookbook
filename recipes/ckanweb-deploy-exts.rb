@@ -552,7 +552,7 @@ sorted_plugin_names.each do |plugin|
 	end
 
 	if "#{pluginname}".eql? 'selfinfo' then
-		ckan_cookbook "/usr/local/bin/ckan-selfinfo_collect.sh" do
+		cookbook_file "/usr/local/bin/ckan-selfinfo_collect.sh" do
 			source "ckan-selfinfo_collect.sh"
 			owner "root"
 			group "root"
