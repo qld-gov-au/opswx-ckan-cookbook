@@ -66,6 +66,7 @@ solr_path = "/opt/solr"
 installed_solr_version = "#{solr_path}-#{solr_version}"
 solr_environment_file = "/etc/default/solr.in.sh"
 
+# run Solr install if we're not already using the target version
 unless ::File.identical?(installed_solr_version, solr_path)
     solr_artefact = "#{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip"
     if extra_disk_present then
@@ -183,6 +184,13 @@ cookbook_file "/usr/local/bin/solr-sync.sh" do
 	mode "0755"
 end
 
+cookbook_file "/usr/local/bin/solr-import-backup.sh" do
+	source "solr-import-backup.sh"
+	owner "root"
+	group "root"
+	mode "0755"
+end
+
 cookbook_file "/usr/local/bin/solr-restore-from-backup.sh" do
 	source "solr-restore-from-backup.sh"
 	owner "root"
@@ -262,27 +270,8 @@ directory "#{efs_data_dir}/data/#{core_name}/data" do
     recursive true
 end
 
-# copy latest EFS contents
 service service_name do
     action [:stop]
-end
-bash "Copy latest index from EFS" do
-    user account_name
-    code <<-EOS
-        rsync -a --delete #{efs_data_dir}/ #{real_data_dir}/
-        CORE_DATA="#{real_data_dir}/data/#{core_name}/data"
-        LATEST_INDEX=`ls -dtr $CORE_DATA/snapshot.* |tail -1`
-        # If the latest snapshot is a readable tar archive, then import it.
-        # If not, then it's either a directory (obsolete) or malformed, so ignore it.
-        if (tar tzf "$LATEST_INDEX" >/dev/null 2>&1); then
-            mkdir -p "$CORE_DATA/index"
-            # remove the index.properties file so default index config is used
-            rm -f $CORE_DATA/index.properties
-            # wipe old index files if any, and unpack the archived index
-            rm -f $CORE_DATA/index/*; tar -xzf "$LATEST_INDEX" -C $CORE_DATA/index
-        fi
-    EOS
-    only_if { ::File.directory? efs_data_dir }
 end
 
 datashades_move_and_link(var_data_dir) do
@@ -298,13 +287,3 @@ execute "Ensure directory ownership is correct" do
 end
 
 include_recipe "datashades::solr-deploycore"
-
-if system('yum info supervisor')
-    execute "Start Solr" do
-        command "supervisorctl start 'solr:*'"
-    end
-else
-    execute "Start Solr" do
-        command "systemctl start solr"
-    end
-end

@@ -7,9 +7,18 @@ set +o pipefail
 
 # Only update heartbeat if it is present.
 # This allows us to manually drop a server from the pool
-if [ -e "$STARTUP_FILE" ] || ! [ -e "$HEARTBEAT_FILE" ]; then
+if ! [ -e "$HEARTBEAT_FILE" ]; then
   exit 0
 fi
+
+function set_dns_primary () {
+  if [ "$1" = "true" ]; then
+    sed -i 's/^solr_slave=/solr_master=/' /etc/hostnames
+  else
+    sed -i 's/^solr_master=/solr_slave=/' /etc/hostnames
+  fi
+  updatedns &
+}
 
 is_ping_healthy () {
   (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
@@ -26,6 +35,14 @@ else
   AGE=$(expr $CURRENT_TIME - $PREVIOUS_HEALTH_TIME)
   IS_HEALTHY=$(expr $AGE '>' $MAX_AGE)
 fi
-if [ "$IS_HEALTHY" != "0" ]; then
+if [ "$IS_HEALTHY" = "0" ]; then
+  rm -f $STARTUP_FILE
+else
   touch $STARTUP_FILE
+fi
+
+if (/usr/local/bin/pick-solr-master.sh); then
+  set_dns_primary true
+else
+  set_dns_primary false
 fi

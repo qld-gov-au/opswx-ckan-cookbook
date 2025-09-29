@@ -23,10 +23,8 @@
 include_recipe "datashades::default-configure"
 
 service_name = 'solr'
-
-service service_name do
-	action [:enable, :start]
-end
+efs_data_dir = "/data/#{service_name}"
+core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 
 execute "Add instance to Solr health check pool" do
 	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
@@ -47,8 +45,15 @@ end
 
 # synchronise Solr cores via EFS
 file "/etc/cron.d/solr-sync" do
-	content "*/5 * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
+	content "*/20 * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
 	mode "0644"
+end
+
+# copy latest exported snapshot
+bash "Copy latest index from export" do
+	code <<-EOS
+		/usr/local/bin/solr-restore-from-backup.sh || echo "WARNING: Solr index could not be loaded from S3"
+	EOS
 end
 
 # Add DNS entry for service host
@@ -68,3 +73,8 @@ bash "Add #{service_name} DNS entry" do
 		echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
 	EOS
 end
+
+service service_name do
+	action [:enable, :start]
+end
+

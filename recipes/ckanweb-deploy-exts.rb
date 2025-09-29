@@ -83,7 +83,8 @@ extextras =
 #
 extordering =
 {
-	'data_qld data_qld_google_analytics' => 1,
+	'datastore' => 1,
+	'data_qld data_qld_google_analytics' => 3,
 	'dcat structured_data' => 5,
 	'validation' => 10,
 	'resource_type_validation' => 20,
@@ -101,7 +102,6 @@ extordering =
 	'odi_certificates' => 60,
 	'resource_visibility' => 70,
 	'ssm_config' => 80,
-	'datastore' => 80,
 	'xloader' => 85,
 	'clamav' => 90,
 	's3filestore' => 95
@@ -123,6 +123,26 @@ bash "Install NPM and NodeJS" do
 			yum -y install nodejs --skip-broken
 		fi
 	EOS
+end
+
+# Enable DataStore extension if desired
+if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
+	bash "Enable DataStore-related extensions" do
+		user "ckan"
+		cwd "#{config_dir}"
+		code <<-EOS
+			if [ -z  "$(grep 'ckan.plugins.*datastore' #{config_file})" ]; then
+				sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
+			fi
+		EOS
+	end
+
+	cookbook_file "#{config_dir}/allowed_functions.txt" do
+		source 'allowed_functions.txt'
+		owner "#{account_name}"
+		group "#{account_name}"
+		mode "0755"
+	end
 end
 
 # Do the actual extension installation using pip
@@ -372,8 +392,8 @@ sorted_plugin_names.each do |plugin|
 		if batchnode
 			# Run dataset require updates notifications at 7am and 7:15am on batch
 			file "/etc/cron.d/ckan-dataset-notification-due" do
-				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
-						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=ckanext-data-qld #{ckan_cli} send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
+				content "00 7 * * MON root /usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1\n"\
+						"15 7 * * MON root /usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1\n"
 				mode '0644'
 				owner "root"
 				group "root"
@@ -383,12 +403,18 @@ sorted_plugin_names.each do |plugin|
 
 	if "#{pluginname}".eql? 'clamav'
 		if not batchnode
-			package 'clamav'
-			package 'clamd'
+			package 'clam' do
+				package_name ['clamav', 'clamav-update', 'clamd']
+			end
 
 			bash "Enable Clam daemons" do
 				code <<-EOS
 					freshclam
+					# Default clamd config doesn't enable any socket and will therefore fail
+					CLAMD_CONFIG=$(ls /etc/clamd.d/*.conf |head 1)
+					sed -i 's|^#LocalSocket .*|LocalSocket /var/run/clamd.scan/clamd.ctl|g' $CLAMD_CONFIG
+					sed -i 's|^#LocalSocketMode .*|LocalSocketMode 660|g' $CLAMD_CONFIG
+
 					systemctl enable clamav-freshclam
 					systemctl enable clamd@scan
 				EOS
@@ -525,6 +551,22 @@ sorted_plugin_names.each do |plugin|
 		end
 	end
 
+	if "#{pluginname}".eql? 'selfinfo' then
+		cookbook_file "/usr/local/bin/ckan-selfinfo_collect.sh" do
+			source "ckan-selfinfo_collect.sh"
+			owner "root"
+			group "root"
+			mode "0755"
+		end
+
+		file "/etc/cron.hourly/ckan-selfinfo-collect" do
+			content "/usr/local/bin/ckan-selfinfo_collect.sh > /dev/null 2>&1\n"
+			mode '0755'
+			owner "root"
+			group "root"
+		end
+	end
+
 	# Install any additional pip packages required
 	#
 	if extextras.has_key? pluginname
@@ -607,26 +649,6 @@ end
 #         EOS
 #     end
 # end
-
-# Enable DataStore extension if desired
-if ["yes", "y", "true", "t"].include? node['datashades']['ckan_web']['dsenable'].downcase then
-	bash "Enable DataStore-related extensions" do
-		user "ckan"
-		cwd "#{config_dir}"
-		code <<-EOS
-			if [ -z  "$(grep 'ckan.plugins.*datastore' #{config_file})" ]; then
-				sed -i "/^ckan.plugins/ s/$/ datastore/" #{config_file}
-			fi
-		EOS
-	end
-
-	cookbook_file "#{config_dir}/allowed_functions.txt" do
-		source 'allowed_functions.txt'
-		owner "#{account_name}"
-		group "#{account_name}"
-		mode "0755"
-	end
-end
 
 bash "Enable Activity Streams extension on CKAN 2.10+" do
 	user "#{account_name}"

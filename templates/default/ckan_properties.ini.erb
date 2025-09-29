@@ -144,8 +144,9 @@ googleanalytics.collection_url = https://www.google-analytics.com/collect
 googleanalytics_resource_prefix = /downloads/
 googleanalytics.domain = auto
 
-ckan.data_qld_googleanalytics.id = <%= node['datashades']['ckan_web']['google']['analytics_id'] %>
-ckan.data_qld_googleanalytics.collection_url = http://www.google-analytics.com/collect
+ckanext.data_qld_googleanalytics.Ga4Id = {{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4MeasurementId}}
+ckanext.data_qld_googleanalytics.Ga4ApiSecret = {{ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/Ga4ApiSecret}}
+ckanext.data_qld_googleanalytics.ga4_collection_url = https://www.google-analytics.com/mp/collect
 
 ## ckanext-data-qld Reporting
 ckan.reporting.datarequest_open_max_days = 60
@@ -266,6 +267,7 @@ ckan.storage.key_prefix = qgovdata-filestore
 ckan.webassets.path = /var/cache/ckan
 
 ckanext.clamav.upload_unscanned = False
+ckanext.clamav.socket_path = /var/run/clamd.scan/clamd.ctl
 
 ## S3 Storage Settings
 
@@ -294,6 +296,17 @@ ckanext-archiver.cache_url_root = /resource_cache
 ckanext-archiver.max_content_length = 250000000
 ckanext-archiver.user_agent_string = CKAN archiver (https://<%= @app_url %><% node['datashades']['ckan_web']['endpoint'] %>)
 ckanext-archiver.verify_https = True
+
+ckan.selfinfo.redis_prefix_key = <%= node['datashades']['app_id'] %>
+ckan.selfinfo.page_url = /ckan-admin/selfinfo
+ckan.selfinfo.main_action_name = get_selfinfo
+ckan.selfinfo.partitions = / /mnt/local_data
+ckan.selfinfo.errors_limit = 40
+ckan.selfinfo.ckan_repos_path = /usr/lib/ckan/default/src
+# Needed for multi server environments
+ckan.selfinfo.duplicated_envs.mode = True
+#25200 7 days
+ckan.selfinfo.additional_profiles_expire_time = 25200
 
 ## Cache
 ckan.cache_enabled = True
@@ -389,6 +402,12 @@ propagate = 0
 level = ERROR
 handlers = console
 qualname = ckanext.archiver
+propagate = 0
+
+[logger_ckanext_data_qld_googleanalytics]
+level = INFO
+handlers = console
+qualname = ckanext.data_qld.google_analytics
 propagate = 0
 
 [logger_ckanext_qa]

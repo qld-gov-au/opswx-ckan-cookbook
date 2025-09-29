@@ -1,14 +1,16 @@
 #!/bin/sh
 
-set -x
+if [ "$(whoami)" != "root" ]; then
+    echo "$0 must be run as root"
+    exit 1
+fi
 
 . `dirname $0`/solr-env.sh
 
 BACKUP_NAME="$CORE_NAME-$(date +'%Y-%m-%dT%H:%M')"
 SNAPSHOT_NAME="snapshot.$BACKUP_NAME"
 LOCAL_SNAPSHOT="$LOCAL_DIR/$SNAPSHOT_NAME"
-SYNC_SNAPSHOT="$SYNC_DIR/${SNAPSHOT_NAME}.tgz"
-OVERRIDE_SNAPSHOT="$SYNC_DIR/override-snapshot.$CORE_NAME.tgz"
+SYNC_SNAPSHOT="${LOCAL_SNAPSHOT}.tgz"
 MINUTE=$(date +%M)
 
 function set_dns_primary () {
@@ -56,31 +58,6 @@ function export_snapshot () {
   sh -c "$LUCENE_CHECK $LOCAL_SNAPSHOT && sudo -u solr tar --force-local --exclude=write.lock -czf $SYNC_SNAPSHOT -C $LOCAL_SNAPSHOT ." || return 1
 }
 
-function import_snapshot () {
-  if [ -e "$OVERRIDE_SNAPSHOT" ]; then
-    SYNC_SNAPSHOT="$OVERRIDE_SNAPSHOT"
-  fi
-  # Give the master time to update the sync copy
-  for i in $(eval echo "{1..40}"); do
-    # If the snapshot is a readable tar archive, then import it.
-    # Ignore it if it's missing or malformed.
-    if (tar tzf "$SYNC_SNAPSHOT" >/dev/null 2>&1); then
-      sudo service solr stop
-      sudo -u solr mkdir $DATA_DIR/index
-      # Wipe old index files if any, and unpack the archived index.
-      # Fail the whole import if we can't.
-      rm -f $DATA_DIR/index/* && sudo -u solr tar -xzf "$SYNC_SNAPSHOT" -C $DATA_DIR/index || exit 1
-      sudo systemctl start solr
-      rm -f $STARTUP_FILE
-      return 0
-    else
-      sleep 5
-    fi
-  done
-  echo "Snapshot did not become available for import: $SYNC_SNAPSHOT"
-  return 1
-}
-
 # we can't perform any replication operations if Solr is stopped
 if ! (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null); then
   set_dns_primary false
@@ -94,19 +71,11 @@ if (/usr/local/bin/pick-solr-master.sh); then
 
   # Export a snapshot of the index
   export_snapshot; EXPORT_STATUS=$?
-  # Remove old snapshots
-  for old_snapshot in $(ls -d $SYNC_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME"); do
-    sudo -u solr rm -r "$old_snapshot"
-  done
-  # Remove override snapshot once all servers have consumed it
-  if ! (ls /data/solr-healthcheck-*.start); then
-    rm -f $OVERRIDE_SNAPSHOT
-  fi
   # Drop this server from being master if export failed
   if [ "$EXPORT_STATUS" != "0" ]; then
     if [ "$EXPORT_STATUS" != "2" ]; then
       echo "Export failed; assume server is unhealthy"
-      touch $HEARTBEAT_FILE.start
+      touch $STARTUP_FILE
     fi
     exit 1
   fi
@@ -118,7 +87,7 @@ if (/usr/local/bin/pick-solr-master.sh); then
 else
   # make traffic come to this instance only as a backup option
   set_dns_primary false
-  import_snapshot
+  sudo /usr/local/bin/solr-restore-from-backup.sh
 fi
 OLD_SNAPSHOTS=$(ls -d $LOCAL_DIR/snapshot.$CORE_NAME-* |grep -v "$SNAPSHOT_NAME")
 if [ "$OLD_SNAPSHOTS" != "" ]; then
