@@ -22,8 +22,10 @@ virtualenv_dir = "/usr/lib/ckan/default"
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 
 if not system('yum info supervisor')
-    service "ckan-worker" do
-        action [:enable, :start]
+    ["ckan-worker", "ckan-worker2"].each do |default_worker|
+        service default_worker do
+            action [:enable, :start]
+        end
     end
 
     bash "Enable extra job queues if available" do
