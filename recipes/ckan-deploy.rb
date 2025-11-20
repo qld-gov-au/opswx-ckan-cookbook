@@ -22,6 +22,7 @@
 require 'date'
 
 include_recipe "datashades::ckanparams"
+include_recipe "datashades::squid-deploy"
 
 service_name = "ckan"
 

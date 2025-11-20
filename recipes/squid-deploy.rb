@@ -1,7 +1,7 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
 # Cookbook Name:: datashades
-# Recipe:: squid-configure
+# Recipe:: squid-deploy
 #
 # Configures Squid proxy server to blacklist private addresses.
 #
@@ -28,6 +28,5 @@ cookbook_file '/etc/squid/squid.conf' do
 end
 
 service "squid" do
-	supports :restart => true, :reload => true, :status => true
-	action [:enable, :start, :reload]
+	action [:enable]
 end
