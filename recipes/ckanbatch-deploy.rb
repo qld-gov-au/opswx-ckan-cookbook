@@ -81,7 +81,7 @@ else
                 WantedBy: 'multi-user.target'
             }
         })
-        action [:create]
+        action [:create, :enable]
     end
     systemd_unit "ckan-worker2.service" do
         content({
@@ -100,7 +100,7 @@ else
                 WantedBy: 'multi-user.target'
             }
         })
-        action [:create]
+        action [:create, :enable]
     end
 end
 
