@@ -86,7 +86,7 @@ end
 bash "Link 'pip' if not present" do
     code <<-EOS
         if ! (which pip); then
-            PIP3=`which pip3`
+            PIP3=`which pip3 || which pip3.11`
             if [ "$PIP3" != "" ]; then
                 ln -s "$PIP3" /usr/bin/pip
             fi
