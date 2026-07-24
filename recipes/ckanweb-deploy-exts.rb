@@ -89,6 +89,7 @@ extordering =
 	'validation' => 10,
 	'resource_type_validation' => 20,
 	'validation_schema_generator' => 21,
+	'auth' => 22,
 	'qgovext' => 25,
 	'report' => 30,
 	'datarequests' => 31,
