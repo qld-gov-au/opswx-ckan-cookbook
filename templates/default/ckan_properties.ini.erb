@@ -199,8 +199,8 @@ ckanext.oidc_pkce.userinfo_path = /userinfo
 ckanext.oidc_pkce.logout_path = /logout
 ckanext.oidc_pkce.munge_password = False
 
-# Exclude AJAX from CSRF protection as it's not state-changing
-ckanext.csrf_filter.exempt_rules = [ "^/datatables/ajax/.*" ]
+# Exclude AJAX from CSRF protection as it's not state-changing, exclude passkey as its WebAuthn.
+ckanext.csrf_filter.exempt_rules = [ "^/datatables/ajax/.*", "^/user/passkey/.*" ]
 
 ckan.datarequests.comments = true
 ckan.datarequests.show_datarequests_badge = true
