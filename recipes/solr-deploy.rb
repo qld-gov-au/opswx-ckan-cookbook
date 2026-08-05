@@ -63,8 +63,16 @@ core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 solr_source = node['datashades']['solr_app']['app_source']['url']
 solr_version = solr_source[/\/solr-([^\/]+)[.]zip$/, 1]
 solr_path = "/opt/solr"
+solr_data_path = "/var/solr/data"
 installed_solr_version = "#{solr_path}-#{solr_version}"
 solr_environment_file = "/etc/default/solr.in.sh"
+
+cookbook_file '/usr/local/bin/solr-generate-security-file.sh' do
+	source 'solr-generate-security-file.sh'
+	owner 'root'
+	group 'root'
+	mode '0755'
+end
 
 # run Solr install if we're not already using the target version
 unless ::File.identical?(installed_solr_version, solr_path)
@@ -109,6 +117,20 @@ unless ::File.identical?(installed_solr_version, solr_path)
     execute "install #{service_name} #{solr_version}" do
         cwd "#{working_dir}/solr-#{solr_version}"
         command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f -n"
+    end
+
+    if { !node['datashades']['solr_password'].empty? }
+        file "#{solr_data_path}/security.json" do
+            mode '0600'
+            owner service_name
+            group service_name
+        end
+
+        execute "Generate Solr security configuration" do
+            user service_name
+            cwd solr_data_path
+            command "/usr/local/bin/solr-generate-security-file.sh '#{node['datashades']['solr_password']}' > security.json"
+        end
     end
 end
 
