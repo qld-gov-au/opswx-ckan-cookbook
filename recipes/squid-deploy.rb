@@ -1,11 +1,11 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: squid-deploy
 #
 # Configures Squid proxy server to blacklist private addresses.
 #
-# Copyright 2021, Queensland Government
+# Copyright:: 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,12 @@
 # limitations under the License.
 
 cookbook_file '/etc/squid/squid.conf' do
-	source 'squid.conf'
-	owner 'root'
-	group 'root'
-	mode '0755'
+  source 'squid.conf'
+  owner 'root'
+  group 'root'
+  mode '0755'
 end
 
-service "squid" do
-	action [:enable]
+service 'squid' do
+  action [:enable]
 end

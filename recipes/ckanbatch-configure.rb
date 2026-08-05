@@ -1,14 +1,14 @@
 #
 # Start/restart background job services.
 #
-# Copyright 2021, Queensland Government
+# Copyright:: 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,87 +16,88 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::ckan-configure"
+include_recipe 'datashades::ckan-configure'
 
-virtualenv_dir = "/usr/lib/ckan/default"
+virtualenv_dir = '/usr/lib/ckan/default'
 ckan_cli = "#{virtualenv_dir}/bin/ckan_cli"
 
-if not system('yum info supervisor')
-    ["ckan-worker", "ckan-worker2"].each do |default_worker|
-        service default_worker do
-            action [:enable, :start]
-        end
+unless system('yum info supervisor')
+  ['ckan-worker', 'ckan-worker2'].each do |default_worker|
+    service default_worker do
+      action [:enable, :start]
     end
+  end
 
-    bash "Enable extra job queues if available" do
-        code <<-EOS
-            UNITS="ckan-worker-priority ckan-worker-bulk ckan-worker-harvest-fetch ckan-worker-harvest-gather"
-            for UNIT_NAME in $UNITS; do
-                if (systemctl -a |grep "$UNIT_NAME"); then
-                    systemctl start "$UNIT_NAME"
-                fi
-            done
-        EOS
-    end
+  bash 'Enable extra job queues if available' do
+    code <<-EOS
+      UNITS="ckan-worker-priority ckan-worker-bulk ckan-worker-harvest-fetch ckan-worker-harvest-gather"
+      for UNIT_NAME in $UNITS; do
+        if (systemctl -a |grep "$UNIT_NAME"); then
+          systemctl start "$UNIT_NAME"
+        fi
+      done
+    EOS
+  end
 end
 
-template "/usr/local/bin/pick-job-server.sh" do
-    source "pick-job-server.sh.erb"
-    owner "root"
-    group "root"
-    mode "0755"
+template '/usr/local/bin/pick-job-server.sh' do
+  source 'pick-job-server.sh.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
 end
 
 # Run tracking update at 8:30am everywhere
-file "/etc/cron.d/ckan-tracking-update" do
-    content "30 8 * * * root /usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
-    mode '0644'
-    owner "root"
-    group "root"
+cron_d 'ckan-tracking-update' do
+  action :create
+  minute '30'
+  hour '8'
+  command "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
 end
 
-file "/etc/cron.hourly/ckan-email-notifications" do
-    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
+file '/etc/cron.hourly/ckan-email-notifications' do
+  content '/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n'
+  mode '0755'
+  owner 'root'
+  group 'root'
 end
 
-file "/etc/cron.daily/ckan-revision-archival" do
-    content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
+file '/etc/cron.daily/ckan-revision-archival' do
+  content '/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n'
+  mode '0755'
+  owner 'root'
+  group 'root'
 end
 
-file "/etc/cron.daily/prune-health-checks" do
-    content "/usr/local/bin/pick-job-server.sh && find /data -maxdepth 1 -name '*-healthcheck_*' -mmin '+60' -execdir rm '{}' ';' >/dev/null 2>&1\n"
-    mode "0755"
-    owner "root"
-    group "root"
+file '/etc/cron.daily/prune-health-checks' do
+  content "/usr/local/bin/pick-job-server.sh && find /data -maxdepth 1 -name '*-healthcheck_*' -mmin '+60' -execdir rm '{}' ';' >/dev/null 2>&1\n"
+  mode '0755'
+  owner 'root'
+  group 'root'
 end
 
-file "/etc/cron.hourly/solr-reindex" do
-    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} search-index rebuild -ieo >/dev/null 2>&1\n"
-    mode "0755"
-    owner "root"
-    group "root"
+file '/etc/cron.hourly/solr-reindex' do
+  content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} search-index rebuild -ieo >/dev/null 2>&1\n"
+  mode '0755'
+  owner 'root'
+  group 'root'
 end
 
-file "/etc/cron.d/ckan-worker" do
-    content "*/5 * * * * root /usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n"
-    mode '0644'
+cron_d 'ckan-worker' do
+  action :create
+  minute '*/5'
+  command '/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n'
 end
 
 # Only set cron job for lower environments
 file '/etc/cron.hourly/ckan-tracking-update' do
-    content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
-    mode '0755'
-    owner "root"
-    group "root"
-    only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
+  content "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
+  mode '0755'
+  owner 'root'
+  group 'root'
+  only_if { node['datashades']['version'] == 'DEV' || node['datashades']['version'] == 'TEST' }
 end
 
 # Make any other instances aware of us
 #
-execute "/usr/local/bin/pick-job-server.sh || true"
+execute '/usr/local/bin/pick-job-server.sh || true'

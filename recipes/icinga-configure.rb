@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: icinga2-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2017, Link Digital
+# Copyright:: 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+include_recipe 'datashades::default-configure'
 
 service_name = 'icinga2'
 
