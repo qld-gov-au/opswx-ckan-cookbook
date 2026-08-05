@@ -14,7 +14,11 @@ SYNC_DIR="/data/solr/data/$CORE_NAME/data"
 HOST="http://localhost:8983/solr"
 PING_URL="$HOST/$CORE_NAME/admin/ping"
 SOLR_PASSWORD=$(aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/solr_password" --query "Parameter.Value" --with-decryption --output text)
-SOLR_CURL="curl -u solr:$SOLR_PASSWORD"
+if [ "$SOLR_PASSWORD" = "" ]; then
+  SOLR_CURL=curl
+else
+  SOLR_CURL="curl -u solr:$SOLR_PASSWORD"
+fi
 SOLR_LIBS=/opt/solr/server/solr-webapp/webapp/WEB-INF/lib
 LUCENE_JAR=$(ls $SOLR_LIBS/lucene-core-*.jar | tail -1)
 LUCENE_COMPAT_JAR=$(ls $SOLR_LIBS/lucene-backward-codecs-*.jar | tail -1)
