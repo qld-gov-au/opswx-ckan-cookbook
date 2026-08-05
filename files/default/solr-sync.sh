@@ -30,7 +30,7 @@ function wait_for_replication_success () {
   MAX_BACKUP_WAIT=120
   for i in $(eval echo "{1..$MAX_BACKUP_WAIT}"); do
     if [ "$BACKUP_STATUS" = "unknown" ]; then
-      DETAILS=$($SOLR_CURL "$HOST/$CORE_NAME/replication?command=details")
+      DETAILS=$(solr_curl "$HOST/$CORE_NAME/replication?command=details")
       echo "Backup status on attempt $i: $DETAILS"
       if (echo "$DETAILS" |grep "$BACKUP_NAME"); then
         echo "$DETAILS" |grep 'status[^a-zA-Z]*success' && return 0
@@ -48,7 +48,7 @@ function wait_for_replication_success () {
 function export_snapshot () {
   # export a snapshot of the index and verify its integrity,
   # then copy to EFS so secondary servers can read it
-  BACKUP_DETAILS=$($SOLR_CURL "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME")
+  BACKUP_DETAILS=$(solr_curl "$HOST/$CORE_NAME/replication?command=backup&location=$LOCAL_DIR&name=$BACKUP_NAME")
   echo "Backup status: $BACKUP_DETAILS"
   echo "$BACKUP_DETAILS" | grep 'status[^a-zA-Z]*OK' || return 1
   wait_for_replication_success; REPLICATION_STATUS=$?
@@ -59,7 +59,7 @@ function export_snapshot () {
 }
 
 # we can't perform any replication operations if Solr is stopped
-if ! ($SOLR_CURL -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null); then
+if ! (solr_curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null); then
   set_dns_primary false
   exit 0
 fi
