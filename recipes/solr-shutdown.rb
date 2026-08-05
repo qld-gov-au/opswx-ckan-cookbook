@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: solr-shutdown
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,28 +20,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::stackparams"
+include_recipe 'datashades::stackparams'
 
 service_name = 'solr'
 
 # Remove DNS records to stop requests to this host
 #
 bash "Delete #{service_name} DNS record" do
-	ignore_failure true # just in case it does not exist
-	user "root"
-	code <<-EOS
-		zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
-		metadata_token=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 60" http://169.254.169.254/latest/api/token)
-		instance_hostname=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/hostname)
-		dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
-		aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
-			{"Changes": [
-				{"Action": "DELETE", "ResourceRecordSet": {
-					"Name": "${dns_name}", "Type": "CNAME", "TTL": 60,
-					"ResourceRecords": [{"Value": "$instance_hostname"}]
-				}}
-			]}
-		EOF
-		)
-	EOS
+  ignore_failure true # just in case it does not exist
+  user 'root'
+  code <<-EOS
+    zone_id=$(cat /etc/awszoneid | grep zoneid | cut -d'=' -f 2)
+    metadata_token=$(curl -X PUT -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)
+    instance_hostname=$(curl -H "X-aws-ec2-metadata-token: $metadata_token" http://169.254.169.254/latest/meta-data/hostname)
+    dns_name=$(grep "#{service_name}_" /etc/hostnames | cut -d'=' -f 2)
+    aws route53 change-resource-record-sets --hosted-zone-id ${zone_id} --change-batch file://<(cat <<-EOF
+      {"Changes": [
+        {"Action": "DELETE", "ResourceRecordSet": {
+          "Name": "${dns_name}", "Type": "CNAME", "TTL": 60,
+          "ResourceRecords": [{"Value": "$instance_hostname"}]
+        }}
+      ]}
+    EOF
+    )
+  EOS
 end
