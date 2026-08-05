@@ -1,12 +1,12 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: apply-patch-baseline
 #
 # Applies critical security patches, and then reboots if necessary.
 # This should typically be run only after all other actions are complete.
 #
-# Copyright 2026, Queensland Government
+# Copyright:: 2026, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,9 @@
 # Run updateDNS script
 #
 bash 'Apply operating system patches' do
-    user 'root'
-    group 'root'
-    code <<-EOH
+  user 'root'
+  group 'root'
+  code <<-EOH
         dnf upgrade-minimal --security -y
         dnf needs-restarting || reboot
     EOH

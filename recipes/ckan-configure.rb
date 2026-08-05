@@ -1,5 +1,5 @@
 #
-# Copyright 2021, Queensland Government
+# Copyright:: 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+include_recipe 'datashades::default-configure'
 
 # Fix Amazon PYTHON_INSTALL_LAYOUT so items are installed in sites/packages not distr/packages
 #
-bash "Fix Python Install Layout" do
-    user 'root'
-    code <<-EOS
+bash 'Fix Python Install Layout' do
+  user 'root'
+  code <<-EOS
     sed -i 's~setenv PYTHON_INSTALL_LAYOUT "amzn"~# setenv PYTHON_INSTALL_LAYOUT "amzn"~g' /etc/profile.d/python-install-layout.csh
     sed -i 's~export PYTHON_INSTALL_LAYOUT="amzn"~# export PYTHON_INSTALL_LAYOUT="amzn"~g' /etc/profile.d/python-install-layout.sh
     unset PYTHON_INSTALL_LAYOUT
     EOS
-    not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
+  not_if "grep '# export PYTHON_INSTALL_LAYOUT' /etc/profile.d/python-install-layout.sh"
 end

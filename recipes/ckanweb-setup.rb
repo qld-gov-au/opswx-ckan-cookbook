@@ -1,7 +1,7 @@
 #
 # Creates web server for CKAN
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include_recipe 'datashades::default'
+include_recipe 'datashades::ckan-setup'
+include_recipe 'datashades::nginx-setup'
 
-include_recipe "datashades::default"
-include_recipe "datashades::ckan-setup"
-include_recipe "datashades::nginx-setup"
-
-virtualenv_dir = "/usr/lib/ckan/default"
+virtualenv_dir = '/usr/lib/ckan/default'
 
 # uWSGI is available from the yum repositories,
 # but it's an old and buggy version, so use pip.
-execute "Install uWSGI" do
-    user 'ckan'
-    command "#{virtualenv_dir}/bin/pip install uwsgi --cache-dir=/tmp/"
+execute 'Install uWSGI' do
+  user 'ckan'
+  command "#{virtualenv_dir}/bin/pip install uwsgi --cache-dir=/tmp/"
 end

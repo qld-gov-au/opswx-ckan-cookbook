@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: autoupdatedns
 #
 # Creates script to call update DNS on boot
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,5 +28,3 @@ cookbook_file '/bin/updatedns' do
   group 'root'
   mode '0755'
 end
-
-

@@ -1,11 +1,11 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: ckanparams
 #
 # Defines some default parameters for CKAN deployments.
 #
-# Copyright 2024, Queensland Government
+# Copyright:: 2024, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 # Obtain some stack attributes for the recipes to use
 #
 
-include_recipe "datashades::stackparams"
+include_recipe 'datashades::stackparams'
 
 # Retrieve attributes from SSM Parameter Store
 node.default['datashades']['ckan_web']['google']['analytics_id'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/GaId" --query "Parameter.Value" --output text`.strip

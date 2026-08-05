@@ -1,7 +1,7 @@
 #
 # Installs prerequisites for CKAN itself.
 #
-# Copyright 2021, Queensland Government
+# Copyright:: 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,30 +18,29 @@
 
 require 'date'
 
-include_recipe "datashades::default"
-include_recipe "datashades::ckanparams"
+include_recipe 'datashades::default'
+include_recipe 'datashades::ckanparams'
 
-service_name = "ckan"
+service_name = 'ckan'
 
 # Install CKAN services and dependencies
 #
 log "#{DateTime.now}: Installing packages required for CKAN"
 node['datashades']['ckan_web']['packages'].each do |p|
-	package p
+  package p
 end
-
 
 # Install packages that have different names on different systems
 node['datashades']['ckan_web']['alternative_packages'].each do |p|
-	bash "Install one of #{p}" do
-		code <<-EOS
-			if (yum info "#{p[0]}"); then
-				yum install -y "#{p[0]}"
+  bash "Install one of #{p}" do
+    code <<-EOS
+			if (yum info "#{p.first}"); then
+				yum install -y "#{p.first}"
 			else
 				yum install -y "#{p[1]}"
 			fi
-		EOS
-	end
+    EOS
+  end
 end
 
 log "#{DateTime.now}: Creating accounts and directories for CKAN"
@@ -49,88 +48,88 @@ log "#{DateTime.now}: Creating accounts and directories for CKAN"
 # Create CKAN Group
 #
 group service_name do
-	action :create
-	gid '2000'
-	members "ec2-user"
-	not_if { ::File.directory? "/home/ckan" }
+  action :create
+  gid '2000'
+  members 'ec2-user'
+  not_if { ::File.directory? '/home/ckan' }
 end
 
 # Create CKAN User
 #
 user service_name do
-	comment "CKAN User"
-	home "/home/ckan"
-	shell "/sbin/nologin"
-	action :create
-	uid '2000'
-	group service_name
-	not_if { ::File.directory? "/home/ckan" }
+  comment 'CKAN User'
+  home '/home/ckan'
+  shell '/sbin/nologin'
+  action :create
+  uid '2000'
+  group service_name
+  not_if { ::File.directory? '/home/ckan' }
 end
 
 # Explicitly set permissions on ckan directory so it's readable by Apache
 #
 directory '/home/ckan' do
-	owner service_name
-	group service_name
-	mode '0755'
-	action :create
-	recursive true
+  owner service_name
+  group service_name
+  mode '0755'
+  action :create
+  recursive true
 end
 
 directory '/usr/lib/ckan' do
-	owner service_name
-	group service_name
-	mode '0755'
-	action :create
-	recursive true
+  owner service_name
+  group service_name
+  mode '0755'
+  action :create
+  recursive true
 end
 
 # Set up shared directories
 #
-include_recipe "datashades::ckan-efs-setup"
+include_recipe 'datashades::ckan-efs-setup'
 
 #
 # Set up Python virtual environment
 #
 
 log "#{DateTime.now}: Creating Python virtual environment for CKAN"
-execute "Install Python Virtual Environment" do
-	command "pip --cache-dir=/tmp/ install virtualenv"
+execute 'Install Python Virtual Environment' do
+  command 'pip --cache-dir=/tmp/ install virtualenv'
 end
 
-virtualenv_dir = "/usr/lib/ckan/default"
-extra_disk = "/mnt/local_data"
+virtualenv_dir = '/usr/lib/ckan/default'
+extra_disk = '/mnt/local_data'
 extra_disk_present = ::File.exist? extra_disk
-if extra_disk_present then
-	real_virtualenv_dir = "#{extra_disk}/ckan_venv"
+if extra_disk_present
+  real_virtualenv_dir = "#{extra_disk}/ckan_venv"
 
-	datashades_move_and_link virtualenv_dir do
-		target real_virtualenv_dir
-		owner service_name
-	end
+  datashades_move_and_link virtualenv_dir do
+    target real_virtualenv_dir
+    owner service_name
+  end
 else
-	real_virtualenv_dir = virtualenv_dir
+  real_virtualenv_dir = virtualenv_dir
 end
 
-bash "Create CKAN Default Virtual Environment" do
-	code <<-EOS
+bash 'Create CKAN Default Virtual Environment' do
+  code <<-EOS
 		PATH="$PATH:/usr/local/bin"
 		python3.11 -m venv #{real_virtualenv_dir}
 		chown -R #{service_name}:#{service_name} #{real_virtualenv_dir}
-	EOS
-	not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
+  EOS
+  not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
 end
 
 directory real_virtualenv_dir do
-	owner service_name
-	group service_name
-	mode '0755'
-	recursive true
+  owner service_name
+  group service_name
+  mode '0755'
+  recursive true
 end
 
 datashades_move_and_link "#{virtualenv_dir}/lib" do
-	target "#{virtualenv_dir}/lib64"
-	owner service_name
+  target "#{virtualenv_dir}/lib64"
+  owner service_name
 end
 
 #
@@ -138,33 +137,33 @@ end
 #
 
 directory "#{virtualenv_dir}/etc" do
-	owner service_name
-	group service_name
-	mode '0755'
-	action :create
-	recursive true
+  owner service_name
+  group service_name
+  mode '0755'
+  action :create
+  recursive true
 end
 
-directory "/etc/ckan" do
-	owner service_name
-	group service_name
-	mode '0755'
-	action :create
-	recursive true
+directory '/etc/ckan' do
+  owner service_name
+  group service_name
+  mode '0755'
+  action :create
+  recursive true
 end
 
-link "/etc/ckan/default" do
-	to "#{virtualenv_dir}/etc"
-	link_type :symbolic
+link '/etc/ckan/default' do
+  to "#{virtualenv_dir}/etc"
+  link_type :symbolic
 end
 
 # Add Bash alias to automatically use 'ckan' account for Git commands
-if not system("grep 'alias git=' ~ec2-user/.bash_profile")
-    bash "Add CKAN Git alias to Bash" do
-		user 'ec2-user'
-		code <<-EOS
+unless system("grep 'alias git=' ~ec2-user/.bash_profile")
+  bash 'Add CKAN Git alias to Bash' do
+    user 'ec2-user'
+    code <<-EOS
 			touch ~/.bash_profile
 			echo "alias git='sudo -u #{service_name} git'" >> ~ec2-user/.bash_profile
-		EOS
-    end
+    EOS
+  end
 end

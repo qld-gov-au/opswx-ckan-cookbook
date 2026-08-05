@@ -1,11 +1,11 @@
 #
 # Author:: Carl Antuar (<carl.antuar@smartservice.qld.gov.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: ckanweb-maintenance
 #
 # Runs long tasks such as Solr index rebuilds. This is not run automatically.
 #
-# Copyright 2019, Queensland Government
+# Copyright:: 2019, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,24 +20,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::ckanparams"
+include_recipe 'datashades::ckanparams'
 
 app = node['datashades']['ckan_web']['ckan_app']
 
-ckan_cli = "/usr/lib/ckan/default/bin/ckan_cli"
-config_file = "/etc/ckan/default/production.ini"
+ckan_cli = '/usr/lib/ckan/default/bin/ckan_cli'
 shared_fs_dir = "/var/shared_content/#{app['shortname']}"
 
 # Update tracking data
 #
-execute "Tracking update" do
-	user "root"
-	command "#{ckan_cli} tracking update 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
-	not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
+execute 'Tracking update' do
+  user 'root'
+  command "#{ckan_cli} tracking update 2>&1 >> '#{shared_fs_dir}/private/tracking-update.log.tmp' && mv '#{shared_fs_dir}/private/tracking-update.log.tmp' '#{shared_fs_dir}/private/tracking-update.log'"
+  not_if { ::File.exist? "#{shared_fs_dir}/private/tracking-update.log" }
 end
 
 # Update the Solr search index
-execute "Build search index" do
-	user "root"
-	command "#{ckan_cli} search-index rebuild -r 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
+execute 'Build search index' do
+  user 'root'
+  command "#{ckan_cli} search-index rebuild -r 2>&1 > '#{shared_fs_dir}/private/solr-index-build.log'"
 end
