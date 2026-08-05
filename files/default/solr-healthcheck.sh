@@ -21,7 +21,7 @@ function set_dns_primary () {
 }
 
 is_ping_healthy () {
-  (curl -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
+  ($SOLR_CURL -I --connect-timeout 5 "$PING_URL" 2>/dev/null |grep '200 OK' > /dev/null) || return 1
 }
 
 MAX_AGE=120
