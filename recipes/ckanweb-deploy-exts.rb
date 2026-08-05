@@ -229,7 +229,7 @@ sorted_plugin_names.each do |plugin|
       user account_name
       cwd config_dir
       code <<-EOS
-        if [ -z  "$(grep 'ckan.plugins.*#{extname} #{config_file}')" ]; then
+        if [ -z  "$(grep 'ckan.plugins.*#{extname}' #{config_file})" ]; then
           sed -i "/^ckan.plugins/ s/ #{insert_before} / #{extname} #{insert_before} /" #{config_file}
         fi
       EOS
@@ -615,7 +615,7 @@ unless archiver_present
 end
 
 unless resource_visibility_present
-  execute 'Clean Resource Visibility cron' do
+  cron_d 'Clean Resource Visibility cron' do
     cron_name 'ckan-dataset-resource-visibility-notify-privacy-assessments'
     action :delete
   end

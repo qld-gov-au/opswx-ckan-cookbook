@@ -135,8 +135,7 @@ end
 
 cron_d 'cwpump' do
   minute '*/5'
-  group 'perl'
-  command 'root perl /opt/aws/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --swap-util --disk-space-util --disk-space-avail --disk-path=/ --auto-scaling --from-cron'
+  command 'perl /opt/aws/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --swap-util --disk-space-util --disk-space-avail --disk-path=/ --auto-scaling --from-cron'
 end
 
 # Replace default mail relay with Nuxeo AWS SMTP Relay
