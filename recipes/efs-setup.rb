@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: efs-setup
 #
 # Creates data directory and mounts EFS
 #
-# Copyright 2017, Link Digital
+# Copyright:: 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 # Create and mount EFS Data directory
 #
 
-include_recipe "datashades::stackparams"
+include_recipe 'datashades::stackparams'
 
 directory '/mnt/efs' do
   action :create
@@ -32,31 +32,31 @@ end
 mount 'connect efs root' do
   device "#{node['datashades']['version']}efs.#{node['datashades']['tld']}:/"
   mount_point '/mnt/efs'
-  fstype "nfs4"
-  options "nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2"
+  fstype 'nfs4'
+  options 'nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2'
   action :mount
 end
 
 directory "/mnt/efs/#{node['datashades']['app_id']}" do
-	owner 'ec2-user'
-	group 'ec2-user'
-	mode '0775'
+  owner 'ec2-user'
+  group 'ec2-user'
+  mode '0775'
   action :create
 end
 
-directory "/data" do
-	owner 'ec2-user'
-	group 'ec2-user'
-	mode '0775'
-	recursive true
-	action :create
+directory '/data' do
+  owner 'ec2-user'
+  group 'ec2-user'
+  mode '0775'
+  recursive true
+  action :create
 end
 
 mount '/data' do
-	device "#{node['datashades']['version']}efs.#{node['datashades']['tld']}:/#{node['datashades']['app_id']}"
-	fstype "nfs4"
-	options "nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2"
-	action [:mount, :enable]
+  device "#{node['datashades']['version']}efs.#{node['datashades']['tld']}:/#{node['datashades']['app_id']}"
+  fstype 'nfs4'
+  options 'nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2'
+  action [:mount, :enable]
 end
 
 mount 'disconnect efs root' do

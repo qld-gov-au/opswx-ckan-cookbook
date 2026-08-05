@@ -34,7 +34,7 @@ bash 'Deploy Icinga2' do
     # create ticket for client so it can register against server
     ticketclient="link-ticket-client"
     ticketpass="#{node['datashades']['icinga']['password']}"
-    ticket=$(curl -k -s -u ${ticketclient}:${ticketpass} -H 'Accept: application/json' -X POST "https://${icingamaster}:5665/v1/actions/generate-ticket" -d "{ \"cn\": \"${client}\" }" | jq '.results[].ticket' | tr -d '"')
+    ticket=$(curl -k -s -u ${ticketclient}:${ticketpass} -H 'Accept: application/json' -X POST "https://${icingamaster}:5665/v1/actions/generate-ticket" -d '{ "cn": "'"${client}"'" }' | jq '.results[].ticket' | tr -d '"')
     echo "Ticket ID: ${ticket}"
 
     # force fqdn in hosts and setup node
@@ -46,7 +46,7 @@ bash 'Deploy Icinga2' do
 
     echo 'object Zone "global-templates" { global = true }' >> /etc/icinga2/zones.conf
 
-    sed -i 's/include_recursive "conf.d"/\/\/include_recursive "conf.d"/g' /etc/icinga2/icinga2.conf
+    sed -i 's|include_recursive "conf.d"|//include_recursive "conf.d"|g' /etc/icinga2/icinga2.conf
 
     chkconfig icinga2 on
     service icinga2 start

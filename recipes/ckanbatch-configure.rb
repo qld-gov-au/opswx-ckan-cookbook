@@ -49,10 +49,9 @@ end
 
 # Run tracking update at 8:30am everywhere
 cron_d 'ckan-tracking-update' do
-  action :create
   minute '30'
   hour '8'
-  command "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1\n"
+  command "/usr/local/bin/pick-job-server.sh && #{ckan_cli} tracking update >/dev/null 2>&1"
 end
 
 file '/etc/cron.hourly/ckan-email-notifications' do
@@ -84,9 +83,8 @@ file '/etc/cron.hourly/solr-reindex' do
 end
 
 cron_d 'ckan-worker' do
-  action :create
   minute '*/5'
-  command '/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1\n'
+  command '/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-monitor-job-queue.sh >/dev/null 2>&1'
 end
 
 # Only set cron job for lower environments

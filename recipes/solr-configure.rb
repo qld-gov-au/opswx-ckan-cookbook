@@ -37,16 +37,14 @@ template '/usr/local/bin/solr-env.sh' do
 end
 
 cron_d 'solr-healthcheck' do
-  action :create
   minute '*'
-  command '/usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n'
+  command '/usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1'
 end
 
 # synchronise Solr cores via EFS
 cron_d 'solr-sync' do
-  action :create
   minute '*/20'
-  command '/usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n'
+  command '/usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1'
 end
 
 # copy latest exported snapshot

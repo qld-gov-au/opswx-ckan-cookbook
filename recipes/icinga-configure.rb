@@ -25,5 +25,5 @@ include_recipe 'datashades::default-configure'
 service_name = 'icinga2'
 
 service service_name do
-	action [:restart]
+  action [:restart]
 end
