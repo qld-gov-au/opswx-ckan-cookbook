@@ -39,6 +39,7 @@ node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbna
 node.default['datashades']['hostname'] = "#{node['datashades']['app_id']}-#{node['datashades']['instid']}"
 
 # Retrieve attributes from SSM Parameter Store
+node.default['datashades']['solr_password'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/solr_password" --query "Parameter.Value" --with-decryption --output text`.strip
 node.default['datashades']['tld'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/tld" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['log_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/s3LogsBucket" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
