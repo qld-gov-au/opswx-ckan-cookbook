@@ -38,6 +38,7 @@ end
 
 cron_d 'solr-healthcheck' do
   action :create
+  minute '*'
   command '/usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n'
 end
 
