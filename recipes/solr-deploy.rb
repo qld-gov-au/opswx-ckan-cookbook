@@ -119,7 +119,7 @@ unless ::File.identical?(installed_solr_version, solr_path)
         command "./bin/install_solr_service.sh #{Chef::Config[:file_cache_path]}/solr-#{solr_version}.zip -f -n"
     end
 
-    if { !node['datashades']['solr_password'].empty? }
+    if !node['datashades']['solr_password'].empty?
         file "#{solr_data_path}/security.json" do
             mode '0600'
             owner service_name
