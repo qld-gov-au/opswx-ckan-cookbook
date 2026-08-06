@@ -381,7 +381,8 @@ sorted_plugin_names.each do |plugin|
       cron_d 'ckan-dataset-resource-visibility-notify-privacy-assessments' do
         minute 0
         hour 7
-        weekday 'MON-FRI'
+        # Monday to Friday
+        weekday '1-5'
         command "/usr/local/bin/pick-job-server.sh && PASTER_PLUGIN=resource_visibility #{ckan_cli} resource_visibility notify_privacy_assessments >> /var/log/ckan/ckan-dataset-resource-visibility-notify-privacy-assessments.log 2>&1"
       end
     end
@@ -393,13 +394,15 @@ sorted_plugin_names.each do |plugin|
       cron_d 'ckan-dataset-notification-due' do
         minute 0
         hour 7
-        weekday 'MON'
+        # Monday
+        weekday '1'
         command "/usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_due_to_publishing_notification >> /var/log/ckan/ckan-dataset-notification-due.log 2>&1"
       end
       cron_d 'ckan-dataset-notification-overdue' do
         minute 15
         hour 7
-        weekday 'MON'
+        # Monday
+        weekday '1'
         command "/usr/local/bin/pick-job-server.sh && #{ckan_cli} data-qld send_email_dataset_overdue_notification >> /var/log/ckan/ckan-dataset-notification-overdue.log 2>&1"
       end
     end
