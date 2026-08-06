@@ -166,7 +166,7 @@ else
         WantedBy: 'multi-user.target',
       },
     })
-    action [:create]
+    action [:create, :enable]
   end
 end
 
