@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Attributes:: default
 #
 # Defines default attributes required by Datashades OpsWorks Stack
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@
 
 # default['datashades']['timezone'] = 'Australia/Brisbane' using Queensland due to pythong 2 not having Brisbane
 default['datashades']['timezone'] = 'Australia/Queensland'
-default["datashades"]["swapfile_name"] = "/var/swapfile4g"
+default['datashades']['swapfile_name'] = '/var/swapfile4g'
 # 4gb x 1024 * 1024 = 4194304
-default["datashades"]["swapfile_size"] = "4194304"
+default['datashades']['swapfile_size'] = '4194304'
 
 default['datashades']['sitename'] = 'ckan'
 
@@ -33,8 +33,8 @@ default['datashades']['backup']['retention'] = '30'
 
 default['datashades']['core']['packages'] = ['nfs-utils', 'clamav', 'gcc', 'jq', 'perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA', 'python3.11-pip', 'git', 'telnet', 'cronie']
 default['datashades']['core']['alternative_packages'] = [
-    ['postfix', 'sendmail'],
-    ['yum-cron', 'dnf-automatic'],
+  ['postfix', 'sendmail'],
+  ['yum-cron', 'dnf-automatic'],
 ]
 default['datashades']['core']['unwanted-packages'] = ['java-1.7.0-openjdk']
 
@@ -42,9 +42,8 @@ default['datashades']['log_bucket'] = 'osssio-ckan-web-logs'
 
 default['datashades']['auditd']['rules'] = []
 
-include_attribute "datashades::ckan"
-include_attribute "datashades::nfs"
-include_attribute "datashades::nginx"
-include_attribute "datashades::solr"
-include_attribute "datashades::icinga"
-
+include_attribute 'datashades::ckan'
+include_attribute 'datashades::nfs'
+include_attribute 'datashades::nginx'
+include_attribute 'datashades::solr'
+include_attribute 'datashades::icinga'

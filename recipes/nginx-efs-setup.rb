@@ -1,11 +1,11 @@
 #
 # Author:: Carl Antuar (<carl.antuar@qld.gov.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: nginx-efs-setup
 #
 # Sets up EFS and EBS directories and links for Nginx.
 #
-# Copyright 2020, Queensland Government
+# Copyright:: 2020, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,36 +22,36 @@
 
 # Update EFS Data directory for Nginx logging
 #
-include_recipe "datashades::efs-setup"
+include_recipe 'datashades::efs-setup'
 
 service_name = 'nginx'
 
 var_log_dir = "/var/log/#{service_name}"
-extra_disk = "/mnt/local_data"
+extra_disk = '/mnt/local_data'
 extra_disk_present = ::File.exist? extra_disk
 
-if extra_disk_present then
-    real_log_dir = "#{extra_disk}/#{service_name}"
+if extra_disk_present
+  real_log_dir = "#{extra_disk}/#{service_name}"
 
-    datashades_move_and_link(var_log_dir) do
-        target real_log_dir
-        client_service service_name
-        owner service_name
-    end
+  datashades_move_and_link(var_log_dir) do
+    target real_log_dir
+    client_service service_name
+    owner service_name
+  end
 else
-    real_log_dir = var_log_dir
+  real_log_dir = var_log_dir
 end
 
 directory real_log_dir do
-    owner service_name
-    group 'ec2-user'
-    mode '0755'
-    recursive true
+  owner service_name
+  group 'ec2-user'
+  mode '0755'
+  recursive true
 end
 
 directory "#{real_log_dir}/#{node['datashades']['sitename']}" do
-    owner service_name
-    group 'ec2-user'
-    mode '0755'
-    recursive true
+  owner service_name
+  group 'ec2-user'
+  mode '0755'
+  recursive true
 end

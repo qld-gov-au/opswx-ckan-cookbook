@@ -1,18 +1,18 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: stackparams
 #
 # Defines some default paramaters from AWS OpsWorks Stack being provisioned.
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@
 #
 
 # Retrieve attributes from instance metadata
-metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token`
+metadata_token = `curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token`
 node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
 node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
 
@@ -57,19 +57,19 @@ node.default['datashades']['solr_app']['app_source']['url'] = `aws ssm get-param
 
 # Get the VPC CIDR for NFS services
 #
-bash "Get VPC CIDR" do
-	user "root"
-	code <<-EOS
-		mac_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
-		vpc_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
-		aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
-	EOS
+bash 'Get VPC CIDR' do
+  user 'root'
+  code <<-EOS
+    mac_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+    vpc_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
+    aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
+  EOS
 end
 
 # Put the VPC CIDR into a node variable for use in templates
 #
-ruby_block "Override NFS CIDR attribute" do
-	block do
-		node.override['datashades']['nfs']['cidr'] = File.read("/etc/vpccidr").delete!("\n")
-	end
+ruby_block 'Override NFS CIDR attribute' do
+  block do
+    node.override['datashades']['nfs']['cidr'] = File.read('/etc/vpccidr').delete!('\n')
+  end
 end

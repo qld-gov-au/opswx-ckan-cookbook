@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Attributes:: ckan
 #
 # Defines attributes required by CKAN recipes
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,9 @@
 default['datashades']['ckan_web']['endpoint'] = '/'
 default['datashades']['ckan_web']['packages'] = ['xml-commons', 'git', 'libxslt', 'libxslt-devel', 'libxml2', 'libxml2-devel', 'libxslt', 'libxslt-devel', 'gcc', 'gcc-c++', 'make', 'python3.11-devel', 'xalan-j2', 'unzip', 'squid']
 default['datashades']['ckan_web']['alternative_packages'] = [
-    ['postgresql', 'postgresql15'],
-    ['postgresql-devel', 'postgresql15-server-devel'],
-    ['policycoreutils-python', 'policycoreutils-python-utils'],
+  ['postgresql', 'postgresql15'],
+  ['postgresql-devel', 'postgresql15-server-devel'],
+  ['policycoreutils-python', 'policycoreutils-python-utils'],
 ]
 
 default['datashades']['ckan_web']['dbuser'] = 'ckan_default'
