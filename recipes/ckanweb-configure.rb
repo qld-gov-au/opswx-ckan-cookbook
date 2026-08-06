@@ -22,18 +22,3 @@
 
 include_recipe 'datashades::ckan-configure'
 include_recipe 'datashades::nginx-configure'
-
-unless system('yum info supervisor')
-  service 'ckan-uwsgi' do
-    action [:enable, :start]
-  end
-end
-
-bash 'Start Clam daemons' do
-  code <<-EOS
-        if (which freshclam); then
-            systemctl start clamav-freshclam
-            systemctl start clamd@scan
-        fi
-    EOS
-end

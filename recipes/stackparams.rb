@@ -28,6 +28,10 @@ metadata_token = `curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" htt
 node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
 node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
 
+mac_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+vpc_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/#{mac_id}/vpc-id`
+node.default['datashades']['nfs']['cidr'] = `aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "#{vpc_id}" --query 'Vpcs[].CidrBlock' --output text`
+
 # Retrieve attributes from instance tags
 node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
 node.default['datashades']['layer'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Layer' --query 'Tags[].Value' --output text`.strip
@@ -54,22 +58,3 @@ node.default['datashades']['solr_app']['name'] = `aws ssm get-parameter --region
 node.default['datashades']['solr_app']['shortname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/shortname" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['solr_app']['app_source']['type'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/app_source/type" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['solr_app']['app_source']['url'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/app_source/url" --query "Parameter.Value" --output text`.strip
-
-# Get the VPC CIDR for NFS services
-#
-bash 'Get VPC CIDR' do
-  user 'root'
-  code <<-EOS
-    mac_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
-    vpc_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
-    aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
-  EOS
-end
-
-# Put the VPC CIDR into a node variable for use in templates
-#
-ruby_block 'Override NFS CIDR attribute' do
-  block do
-    node.override['datashades']['nfs']['cidr'] = File.read('/etc/vpccidr').delete!('\n')
-  end
-end
