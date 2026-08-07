@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: nginx-setup
 #
 # Installs NGINX Web Server Role
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,24 +22,24 @@
 
 require 'date'
 
-include_recipe "datashades::stackparams"
+include_recipe 'datashades::stackparams'
 
 # Install NGINX packages
 #
 log "#{DateTime.now}: Installing packages required for Nginx"
 node['datashades']['nginx']['packages'].each do |p|
-	package p
+  package p
 end
 
 log "#{DateTime.now}: Creating directories required for Nginx"
-include_recipe "datashades::nginx-efs-setup"
+include_recipe 'datashades::nginx-efs-setup'
 
 # Create self-signed temporary SSL cert for Datashades
 #
 bash 'install ssl certs' do
-	user 'root'
-	code <<-EOH
+  user 'root'
+  code <<-EOH
 		openssl req -x509 -newkey rsa:2048 -nodes -keyout /etc/ssl/certs/wild."#{node['datashades']['tld']}".key -out /etc/ssl/certs/wild."#{node['datashades']['tld']}".crt -days 365 -subj "/C=AU/ST=ACT/L=Canberra/O=Datashades/CN=*.#{node['datashades']['tld']}"
-	EOH
-	not_if { ::File.exist?("/etc/ssl/certs/wild.#{node['datashades']['tld']}.crt") }
+  EOH
+  not_if { ::File.exist?("/etc/ssl/certs/wild.#{node['datashades']['tld']}.crt") }
 end

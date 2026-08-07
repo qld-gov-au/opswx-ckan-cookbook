@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: solr-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,61 +20,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default-configure"
+include_recipe 'datashades::default-configure'
 
 service_name = 'solr'
-efs_data_dir = "/data/#{service_name}"
-core_name = "#{node['datashades']['app_id']}-#{node['datashades']['version']}"
 
-execute "Add instance to Solr health check pool" do
-	command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
+execute 'Add instance to Solr health check pool' do
+  command "touch /data/solr-healthcheck_#{node['datashades']['hostname']}"
 end
 
 # Generate properties specific to this server
-template "/usr/local/bin/solr-env.sh" do
-	source "solr-env.sh.erb"
-	owner "root"
-	group "root"
-	mode "0755"
+template '/usr/local/bin/solr-env.sh' do
+  source 'solr-env.sh.erb'
+  owner 'root'
+  group 'root'
+  mode '0755'
 end
 
-file "/etc/cron.d/solr-healthcheck" do
-	content "* * * * * root /usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1\n"
-	mode "0644"
+cron_d 'solr-healthcheck' do
+  minute '*'
+  command '/usr/local/bin/solr-healthcheck.sh > /dev/null 2>&1'
 end
 
 # synchronise Solr cores via EFS
-file "/etc/cron.d/solr-sync" do
-	content "*/20 * * * * root /usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1\n"
-	mode "0644"
+cron_d 'solr-sync' do
+  minute '*/20'
+  command '/usr/local/bin/solr-sync.sh >> /var/log/solr/solr-sync.cron.log 2>&1'
 end
 
 # copy latest exported snapshot
-bash "Copy latest index from export" do
-	code <<-EOS
-		/usr/local/bin/solr-restore-from-backup.sh || echo "WARNING: Solr index could not be loaded from S3"
-	EOS
+bash 'Copy latest index from export' do
+  code <<-EOS
+    /usr/local/bin/solr-restore-from-backup.sh || echo 'WARNING: Solr index could not be loaded from S3'
+  EOS
 end
 
 # Add DNS entry for service host
 #
 bash "Add #{service_name} DNS entry" do
-	user "root"
-	code <<-EOS
-		server_id=$(echo "#{node['datashades']['hostname']}" |tr -cd '[[:digit:]]')
-		echo "${server_id}" > /etc/#{service_name}id
-		sed -i "/#{service_name}_/d" /etc/hostnames
-		if [ "${server_id}" -eq 1 ]; then
-			failover_type=master
-		else
-			failover_type=slave
-		fi
-		alias="#{node['datashades']['app_id']}#{service_name}${server_id}.#{node['datashades']['tld']}"
-		echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
-	EOS
+  user 'root'
+  code <<-EOS
+    server_id=$(echo "#{node['datashades']['hostname']}" |tr -cd '[[:digit:]]')
+    echo "${server_id}" > /etc/#{service_name}id
+    sed -i "/#{service_name}_/d" /etc/hostnames
+    if [ "${server_id}" -eq 1 ]; then
+      failover_type=master
+    else
+      failover_type=slave
+    fi
+    alias="#{node['datashades']['app_id']}#{service_name}${server_id}.#{node['datashades']['tld']}"
+    echo "#{service_name}_${failover_type}=${alias}" >> /etc/hostnames
+  EOS
 end
 
 service service_name do
-	action [:enable, :start]
+  action [:enable, :start]
 end
-

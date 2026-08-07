@@ -2,7 +2,7 @@
 # Installs an app's source, including dependencies.
 # datashades_pip_install_app
 #
-# Copyright 2021, Queensland Government
+# Copyright:: 2021, Queensland Government
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+unified_mode true
 
 # Installed name, eg 'ckan'
 property :service_name, String, name_property: true
@@ -31,65 +33,65 @@ property :url, String
 property :virtualenv_dir, String, default: '/usr/lib/ckan/default'
 
 action :create do
-    pip = "#{new_resource.virtualenv_dir}/bin/pip --cache-dir=/tmp/"
-    install_dir = "#{new_resource.virtualenv_dir}/src/#{new_resource.service_name}"
-    is_git = new_resource.type.casecmp("git") == 0
+  pip = "#{new_resource.virtualenv_dir}/bin/pip --cache-dir=/tmp/"
+  install_dir = "#{new_resource.virtualenv_dir}/src/#{new_resource.service_name}"
+  is_git = new_resource.type.casecmp('git') == 0
 
-    log "#{DateTime.now}: Installing '#{new_resource.service_name}' and its dependencies"
+  log "#{DateTime.now}: Installing '#{new_resource.service_name}' and its dependencies"
 
-    apprelease = new_resource.url
-    apprelease = apprelease.dup if apprelease.frozen?
+  apprelease = new_resource.url
+  apprelease = apprelease.dup if apprelease.frozen?
 
-    # Get the version number from the app revision, by preference,
-    # or from the app URL if revision is not defined.
-    # Either way, ensure that the version number is stripped from the URL.
-    if is_git then
-        version = new_resource.revision
-        apprelease.sub!("#{new_resource.service_name}/archive/", "#{new_resource.service_name}.git@")
-        apprelease.sub!('.zip', "")
-    end
-    if apprelease.include? "@" then
-        urlrevision = apprelease[/@(.*)/].sub '@', ''
-        apprelease.sub!(/@(.*)/, '')
-    end
-    version ||= urlrevision
-    version ||= "master"
+  # Get the version number from the app revision, by preference,
+  # or from the app URL if revision is not defined.
+  # Either way, ensure that the version number is stripped from the URL.
+  if is_git
+    version = new_resource.revision
+    apprelease.sub!("#{new_resource.service_name}/archive/", "#{new_resource.service_name}.git@")
+    apprelease.sub!('.zip', '')
+  end
+  if apprelease.include? '@'
+    urlrevision = apprelease[/@(.*)/].sub '@', ''
+    apprelease.sub!(/@(.*)/, '')
+  end
+  version ||= urlrevision
+  version ||= 'master'
 
-    #
-    # Install selected revision
-    #
+  #
+  # Install selected revision
+  #
 
-    if (::File.exist? "#{install_dir}/setup.py") then
-        new_install = false
-        if is_git then
-            execute "Ensure correct #{new_resource.service_name} Git origin" do
-                user new_resource.account_name
-                group new_resource.account_name
-                cwd install_dir
-                command "git remote set-url origin '#{apprelease}'"
-            end
-        end
-    else
-        new_install = true
-        if is_git then
-            apprelease.sub!(/^(https?:)/, 'git+\1')
-            apprelease << "@#{version}"
-        end
-        if ! apprelease.include? '#egg' then
-            apprelease << "#egg=#{new_resource.service_name}"
-        end
-        execute "Install #{new_resource.service_name} #{version}" do
-            user new_resource.account_name
-            group new_resource.account_name
-            command "#{pip} install -e '#{apprelease}'"
-        end
-    end
-
-    bash "Install #{version} revision of #{new_resource.service_name}" do
+  if ::File.exist? "#{install_dir}/setup.py"
+    new_install = false
+    if is_git
+      execute "Ensure correct #{new_resource.service_name} Git origin" do
         user new_resource.account_name
         group new_resource.account_name
         cwd install_dir
-        code <<-EOS
+        command "git remote set-url origin '#{apprelease}'"
+      end
+    end
+  else
+    new_install = true
+    if is_git
+      apprelease.sub!(/^(https?:)/, 'git+\1')
+      apprelease << "@#{version}"
+    end
+    unless apprelease.include? '#egg'
+      apprelease << "#egg=#{new_resource.service_name}"
+    end
+    execute "Install #{new_resource.service_name} #{version}" do
+      user new_resource.account_name
+      group new_resource.account_name
+      command "#{pip} install -e '#{apprelease}'"
+    end
+  end
+
+  bash "Install #{version} revision of #{new_resource.service_name}" do
+    user new_resource.account_name
+    group new_resource.account_name
+    cwd install_dir
+    code <<-EOS
             if [ "#{is_git}" = "true" ]; then
                 # retrieve latest branch metadata
                 git fetch --tags -f origin '#{version}' || exit 1
@@ -136,5 +138,5 @@ action :create do
                 #{pip} install -e . $REQUIREMENTS_FILES || exit 1
             fi
         EOS
-    end
+  end
 end

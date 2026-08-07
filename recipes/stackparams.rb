@@ -1,18 +1,18 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: stackparams
 #
 # Defines some default paramaters from AWS OpsWorks Stack being provisioned.
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,13 @@
 #
 
 # Retrieve attributes from instance metadata
-metadata_token=`curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token`
+metadata_token = `curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 300" http://169.254.169.254/latest/api/token`
 node.default['datashades']['region'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/placement/region`
 node.default['datashades']['instid'] = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/instance-id`
+
+mac_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
+vpc_id = `curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/#{mac_id}/vpc-id`
+node.default['datashades']['nfs']['cidr'] = `aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "#{vpc_id}" --query 'Vpcs[].CidrBlock' --output text`
 
 # Retrieve attributes from instance tags
 node.default['datashades']['version'] = `aws ec2 describe-tags --region #{node['datashades']['region']} --filters "Name=resource-id,Values=#{node['datashades']['instid']}" 'Name=key,Values=Environment' --query 'Tags[].Value' --output text`.strip
@@ -39,6 +43,7 @@ node.default['datashades']['sitename'] = "#{node['datashades']['ckan_web']['dbna
 node.default['datashades']['hostname'] = "#{node['datashades']['app_id']}-#{node['datashades']['instid']}"
 
 # Retrieve attributes from SSM Parameter Store
+node.default['datashades']['solr_password'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/solr_password" --query "Parameter.Value" --with-decryption --output text`.strip
 node.default['datashades']['tld'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/tld" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['log_bucket'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/s3LogsBucket" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['redis']['hostname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/common/cache_address" --query "Parameter.Value" --output text`.strip
@@ -53,22 +58,3 @@ node.default['datashades']['solr_app']['name'] = `aws ssm get-parameter --region
 node.default['datashades']['solr_app']['shortname'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/shortname" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['solr_app']['app_source']['type'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/app_source/type" --query "Parameter.Value" --output text`.strip
 node.default['datashades']['solr_app']['app_source']['url'] = `aws ssm get-parameter --region "#{node['datashades']['region']}" --name "/config/CKAN/#{node['datashades']['version']}/app/#{node['datashades']['app_id']}/solr_app/app_source/url" --query "Parameter.Value" --output text`.strip
-
-# Get the VPC CIDR for NFS services
-#
-bash "Get VPC CIDR" do
-	user "root"
-	code <<-EOS
-		mac_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs`
-		vpc_id=`curl -H "X-aws-ec2-metadata-token: #{metadata_token}" http:/169.254.169.254/latest/meta-data/network/interfaces/macs/$mac_id/vpc-id`
-		aws ec2 describe-vpcs --region "#{node['datashades']['region']}" --vpc-ids "$vpc_id" | jq '.Vpcs[].CidrBlock' | tr -d '"' > /etc/vpccidr
-	EOS
-end
-
-# Put the VPC CIDR into a node variable for use in templates
-#
-ruby_block "Override NFS CIDR attribute" do
-	block do
-		node.override['datashades']['nfs']['cidr'] = File.read("/etc/vpccidr").delete!("\n")
-	end
-end

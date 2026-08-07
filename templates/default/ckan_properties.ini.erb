@@ -114,6 +114,8 @@ feedback_redirection = <%= node['datashades']['ckan_web']['feedback_redirection'
 
 ckan.site_id = <%= @app_name %>
 solr_url = http://<%= node['datashades']['app_id'] %>solr.<%= node['datashades']['tld'] %>:8983/solr/<%= @app_name %>
+solr_user = solr
+solr_password = ${ssm:/config/CKAN/<%= node['datashades']['version'] %>/common/solr_password}
 
 #ckan.simple_search = 1
 

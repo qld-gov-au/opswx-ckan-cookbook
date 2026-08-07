@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Attributes:: icinga
 #
 # Defines attributes required by Solr service
 #
-# Copyright 2017, Link Digital
+# Copyright:: 2017, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

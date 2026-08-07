@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: ckanweb-nfs-setup
 #
 # Updates DNS and mounts whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,37 +23,35 @@
 # Setup NFS directories
 #
 paths =
-{
-	"/var/shared_content" => 'apache',
-	"/var/www/sites" => 'apache',
-	"/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx',
-}
+  {
+    '/var/shared_content' => 'apache',
+    '/var/www/sites' => 'apache',
+    "/var/log/nginx/#{node['datashades']['sitename']}" => 'nginx',
+  }
 
 paths.each do |nfs_path, dir_owner|
-	directory nfs_path do
-	  owner dir_owner
-	  group 'ec2-user'
-	  mode '0775'
-	  recursive true
-	  action :create
-	end
+  directory nfs_path do
+    owner dir_owner
+    group 'ec2-user'
+    mode '0775'
+    recursive true
+    action :create
+  end
 end
 
 # Mount NFS volumes
 #
 mounts =
-{
-	"/var/shared_content" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/shared_content",
-	"/var/log/nginx/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_nginx",
-}
+  {
+    '/var/shared_content' => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/shared_content",
+    "/var/log/nginx/#{node['datashades']['sitename']}" => "#{node['datashades']['version']}nfs.#{node['datashades']['tld']}:/data/nfs/logs/#{node['datashades']['sitename']}_nginx",
+  }
 
 mounts.each do |mount_point, mount_device|
-	mount mount_point do
-		device mount_device
-		fstype "nfs"
-		options "rw,hard,intr"
-		action [:mount, :enable]
-	end
+  mount mount_point do
+    device mount_device
+    fstype 'nfs'
+    options 'rw,hard,intr'
+    action [:mount, :enable]
+  end
 end
-
-

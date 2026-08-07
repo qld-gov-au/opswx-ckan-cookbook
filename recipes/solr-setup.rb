@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: solr-setup
 #
 # Installs Solr role to Layer
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,16 +20,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::default"
+include_recipe 'datashades::default'
 
 # Create and mount EFS Data directory
 #
-include_recipe "datashades::efs-setup"
+include_recipe 'datashades::efs-setup'
 
 service_name = 'solr'
 
 # Install necessary packages
 #
 node['datashades'][service_name]['packages'].each do |p|
-	package p
+  package p
 end

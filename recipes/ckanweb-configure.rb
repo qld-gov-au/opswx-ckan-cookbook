@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: ckanweb-configure
 #
 # Runs tasks whenever instance leaves or enters the online state or EIP/ELB config changes
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +20,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_recipe "datashades::ckan-configure"
-include_recipe "datashades::nginx-configure"
-
-if not system('yum info supervisor')
-    service "ckan-uwsgi" do
-        action [:enable, :start]
-    end
-end
-
-bash "Start Clam daemons" do
-    code <<-EOS
-        if (which freshclam); then
-            systemctl start clamav-freshclam
-            systemctl start clamd@scan
-        fi
-    EOS
-end
+include_recipe 'datashades::ckan-configure'
+include_recipe 'datashades::nginx-configure'

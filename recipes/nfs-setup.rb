@@ -1,11 +1,11 @@
 #
 # Author:: Shane Davis (<shane.davis@linkdigital.com.au>)
-# Cookbook Name:: datashades
+# Cookbook:: datashades
 # Recipe:: nfs-setup
 #
 # Creates NFS server role with data drive stored on separate EBS volume
 #
-# Copyright 2016, Link Digital
+# Copyright:: 2016, Link Digital
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-include_recipe "datashades::default"
+include_recipe 'datashades::default'
 
 service_name = 'nfs'
 
@@ -34,7 +33,7 @@ end
 # Add DNS entry for service host
 #
 bash "Add #{service_name} DNS entry" do
-  user "root"
+  user 'root'
   code <<-EOS
     echo "#{service_name}_name=#{node['datashades']['version']}#{service_name}.#{node['datashades']['tld']}" >> /etc/hostnames
   EOS
@@ -53,7 +52,7 @@ end
 # Run updateDNS script
 #
 execute "Update #{node['datashades']['hostname']} #{service_name} DNS" do
-  command	'/bin/updatedns'
+  command '/bin/updatedns'
   user 'root'
   group 'root'
 end
@@ -78,7 +77,7 @@ end
 
 # Tag the Data volume so it's easily identified
 #
-bash "Tagging Data Volume Instance" do
+bash 'Tagging Data Volume Instance' do
   user 'root'
   group 'root'
   code <<-EOS
