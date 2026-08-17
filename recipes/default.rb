@@ -86,8 +86,11 @@ end
 bash "Link 'pip' if not present" do
   code <<-EOS
     if ! (which pip); then
-      PIP3=`which pip3 || which pip3.12`
-      if [ "$PIP3" != "" ]; then
+      PIP3=$(which pip3 || which pip3.12 || ls /usr/bin/pip* |tail -1)
+      if [ "$PIP3" = "" ]; then
+        echo "No installed 'pip' version found"
+        exit 1
+      else
         ln -s "$PIP3" /usr/bin/pip
       fi
     fi
