@@ -114,7 +114,8 @@ end
 bash 'Create CKAN Default Virtual Environment' do
   code <<-EOS
 		PATH="$PATH:/usr/local/bin"
-		python3.12 -m venv #{real_virtualenv_dir}
+		PYTHON3=$(which python3 || which python3.11 || ls /usr/bin/python* |tail -1)
+		$PYTHON3 -m venv #{real_virtualenv_dir}
 		chown -R #{service_name}:#{service_name} #{real_virtualenv_dir}
   EOS
   not_if { ::File.directory? "#{real_virtualenv_dir}/bin" }
