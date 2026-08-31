@@ -55,14 +55,14 @@ cron_d 'ckan-tracking-update' do
 end
 
 file '/etc/cron.hourly/ckan-email-notifications' do
-  content '/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n'
+  content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/ckan-email-notifications.sh > /dev/null 2>&1\n"
   mode '0755'
   owner 'root'
   group 'root'
 end
 
 file '/etc/cron.daily/ckan-revision-archival' do
-  content '/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n'
+  content "/usr/local/bin/pick-job-server.sh && /usr/local/bin/archive-resource-revisions.sh >/dev/null 2>&1\n"
   mode '0755'
   owner 'root'
   group 'root'
